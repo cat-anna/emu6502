@@ -8,44 +8,9 @@
 #include <string>
 #include <vector>
 
-enum class AddressMode : uint8_t {
-    IM,
-    ABS,
-    ZP,
-    ZPX,
-    ABSX,
-    ABSY,
-    INDX,
-    INDY,
-    ACC,
-};
-
-inline std::string to_string(AddressMode mode) {
-    switch (mode) {
-    case AddressMode::IM:
-        return "IM";
-    case AddressMode::ABS:
-        return "ABS";
-    case AddressMode::ZP:
-        return "ZP";
-    case AddressMode::ZPX:
-        return "ZPX";
-    case AddressMode::ABSX:
-        return "ABSX";
-    case AddressMode::ABSY:
-        return "ABSY";
-    case AddressMode::INDY:
-        return "INDY";
-    case AddressMode::INDX:
-        return "INDX";
-    case AddressMode::ACC:
-        return "ACC";
-    }
-    throw std::runtime_error("Invalid address mode");
-}
-
 class BaseTest : public testing::Test {
 public:
+    using AddressMode = emu6502::cpu::opcode::AddressMode;
     using MemPtr = emu6502::cpu::MemPtr;
     using Registers = emu6502::cpu::Cpu6502::Registers;
     using Flags = Registers::Flags;

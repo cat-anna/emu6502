@@ -16,7 +16,7 @@ public:
         expected_regs.SetFlag(Flags::Negative, (target_byte & 0x80) > 0);
     }
 
-    virtual void Execute(const std::vector<uint8_t> &data, uint64_t cycles) {
+     void Execute(const std::vector<uint8_t> &data, uint64_t cycles) override {
         if (source_address.has_value()) {
             WriteMemory(source_address.value(), {target_byte});
         }

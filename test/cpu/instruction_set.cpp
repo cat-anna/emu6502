@@ -30,7 +30,7 @@ TEST_F(InstructionSet, VerifySupportedInstructions) {
         if (!text.empty()) {
             text += " ";
         }
-        text += name;
+        text += name.mnemonic;
     }
     EXPECT_EQ(missing_instructions.size(), 0) << "MISSING: " << text;
 }

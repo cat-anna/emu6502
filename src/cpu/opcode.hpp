@@ -8,7 +8,34 @@ namespace emu6502::cpu::opcode {
 
 using Opcode = uint8_t;
 
-std::unordered_map<Opcode, std::string_view> Get6502InstructionSet();
+enum class AddressMode {
+    Immediate,
+    Implied,
+    ABS,
+    ZP,
+    ZPX,
+    ZPY,
+    ABSX,
+    ABSY,
+    INDX,
+    INDY,
+    ACC,
+    REL,
+    ABS_IND,
+
+    IM = Immediate,
+};
+
+std::string to_string(AddressMode mode);
+size_t ArgumentByteSize(AddressMode mode);
+
+struct OpcodeInfo {
+    Opcode opcode;
+    std::string_view mnemonic;
+    AddressMode addres_mode;
+};
+
+std::unordered_map<Opcode, OpcodeInfo> Get6502InstructionSet();
 
 // constexpr Opcode INS_STA_INDZP = 0x92;
 // constexpr Opcode INS_LDA_INDZP = 0xB2;

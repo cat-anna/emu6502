@@ -1,200 +1,256 @@
 #include "opcode.hpp"
+#include <stdexcept>
+#include <string>
 
 namespace emu6502::cpu::opcode {
 
 using namespace std::string_view_literals;
 
-std::unordered_map<Opcode, std::string_view> Get6502InstructionSet() {
+std::string to_string(AddressMode mode) {
+    switch (mode) {
+    case AddressMode::IM:
+        return "Immediate";
+    case AddressMode::ABS:
+        return "ABS";
+    case AddressMode::ZP:
+        return "ZP";
+    case AddressMode::ZPX:
+        return "ZPX";
+    case AddressMode::ZPY:
+        return "ZPY";
+    case AddressMode::ABSX:
+        return "ABSX";
+    case AddressMode::ABSY:
+        return "ABSY";
+    case AddressMode::INDY:
+        return "INDY";
+    case AddressMode::INDX:
+        return "INDX";
+    case AddressMode::ACC:
+        return "ACC";
+    case AddressMode::REL:
+        return "REL";
+    case AddressMode::Implied:
+        return "Implied";
+    case AddressMode::ABS_IND:
+        return "ABS_IND";
+    }
+    throw std::runtime_error("Invalid address mode " + std::to_string((int)mode));
+}
+
+size_t ArgumentByteSize(AddressMode mode) {
+    switch (mode) {
+    case AddressMode::IM:
+    case AddressMode::ZP:
+    case AddressMode::ZPX:
+    case AddressMode::ZPY:
+    case AddressMode::INDY:
+    case AddressMode::INDX:
+    case AddressMode::REL:
+        return 1;
+    case AddressMode::ABS:
+    case AddressMode::ABSX:
+    case AddressMode::ABSY:
+    case AddressMode::ABS_IND:
+        return 2;
+    case AddressMode::ACC:
+    case AddressMode::Implied:
+        return 0;
+    }
+    throw std::runtime_error("Invalid address mode " + std::to_string((int)mode));
+}
+
+std::unordered_map<Opcode, OpcodeInfo> Get6502InstructionSet() {
     return {
-        {INS_LDA_IM, "LDA_IM"sv},
-        {INS_LDA_ZP, "LDA_ZP"sv},
-        {INS_LDA_ZPX, "LDA_ZPX"sv},
-        {INS_LDA_ABS, "LDA_ABS"sv},
-        {INS_LDA_ABSX, "LDA_ABSX"sv},
-        {INS_LDA_ABSY, "LDA_ABSY"sv},
-        {INS_LDA_INDX, "LDA_INDX"sv},
-        {INS_LDA_INDY, "LDA_INDY"sv},
+        {INS_LDA_IM, {INS_LDA_IM, "LDA"sv, AddressMode::Immediate}},
+        {INS_LDA_ZP, {INS_LDA_ZP, "LDA"sv, AddressMode::ZP}},
+        {INS_LDA_ZPX, {INS_LDA_ZPX, "LDA"sv, AddressMode::ZPX}},
+        {INS_LDA_ABS, {INS_LDA_ABS, "LDA"sv, AddressMode::ABS}},
+        {INS_LDA_ABSX, {INS_LDA_ABSX, "LDA"sv, AddressMode::ABSX}},
+        {INS_LDA_ABSY, {INS_LDA_ABSY, "LDA"sv, AddressMode::ABSY}},
+        {INS_LDA_INDX, {INS_LDA_INDX, "LDA"sv, AddressMode::INDX}},
+        {INS_LDA_INDY, {INS_LDA_INDY, "LDA"sv, AddressMode::INDY}},
         //LDX
-        {INS_LDX_IM, "LDX_IM"sv},
-        {INS_LDX_ZP, "LDX_ZP"sv},
-        {INS_LDX_ZPY, "LDX_ZPY"sv},
-        {INS_LDX_ABS, "LDX_ABS"sv},
-        {INS_LDX_ABSY, "LDX_ABSY"sv},
+        {INS_LDX_IM, {INS_LDX_IM, "LDX"sv, AddressMode::Immediate}},
+        {INS_LDX_ZP, {INS_LDX_ZP, "LDX"sv, AddressMode::ZP}},
+        {INS_LDX_ZPY, {INS_LDX_ZPY, "LDX"sv, AddressMode::ZPY}},
+        {INS_LDX_ABS, {INS_LDX_ABS, "LDX"sv, AddressMode::ABS}},
+        {INS_LDX_ABSY, {INS_LDX_ABSY, "LDX"sv, AddressMode::ABSY}},
         //LDY
-        {INS_LDY_IM, "LDY_IM"sv},
-        {INS_LDY_ZP, "LDY_ZP"sv},
-        {INS_LDY_ZPX, "LDY_ZPX"sv},
-        {INS_LDY_ABS, "LDY_ABS"sv},
-        {INS_LDY_ABSX, "LDY_ABSX"sv},
+        {INS_LDY_IM, {INS_LDY_IM, "LDY"sv, AddressMode::Immediate}},
+        {INS_LDY_ZP, {INS_LDY_ZP, "LDY"sv, AddressMode::ZP}},
+        {INS_LDY_ZPX, {INS_LDY_ZPX, "LDY"sv, AddressMode::ZPX}},
+        {INS_LDY_ABS, {INS_LDY_ABS, "LDY"sv, AddressMode::ABS}},
+        {INS_LDY_ABSX, {INS_LDY_ABSX, "LDY"sv, AddressMode::ABSX}},
         //STA
-        {INS_STA_ZP, "STA_ZP"sv},
-        {INS_STA_ZPX, "STA_ZPX"sv},
-        {INS_STA_ABS, "STA_ABS"sv},
-        {INS_STA_ABSX, "STA_ABSX"sv},
-        {INS_STA_ABSY, "STA_ABSY"sv},
-        {INS_STA_INDX, "STA_INDX"sv},
-        {INS_STA_INDY, "STA_INDY"sv},
+        {INS_STA_ZP, {INS_STA_ZP, "STA"sv, AddressMode::ZP}},
+        {INS_STA_ZPX, {INS_STA_ZPX, "STA"sv, AddressMode::ZPX}},
+        {INS_STA_ABS, {INS_STA_ABS, "STA"sv, AddressMode::ABS}},
+        {INS_STA_ABSX, {INS_STA_ABSX, "STA"sv, AddressMode::ABSX}},
+        {INS_STA_ABSY, {INS_STA_ABSY, "STA"sv, AddressMode::ABSY}},
+        {INS_STA_INDX, {INS_STA_INDX, "STA"sv, AddressMode::INDX}},
+        {INS_STA_INDY, {INS_STA_INDY, "STA"sv, AddressMode::INDY}},
         //STX
-        {INS_STX_ZP, "STX_ZP"sv},
-        {INS_STX_ZPY, "STX_ZPY"sv},
-        {INS_STX_ABS, "STX_ABS"sv},
+        {INS_STX_ZP, {INS_STX_ZP, "STX"sv, AddressMode::ZP}},
+        {INS_STX_ZPY, {INS_STX_ZPY, "STX"sv, AddressMode::ZPY}},
+        {INS_STX_ABS, {INS_STX_ABS, "STX"sv, AddressMode::ABS}},
         //STY
-        {INS_STY_ZP, "STY_ZP"sv},
-        {INS_STY_ZPX, "STY_ZPX"sv},
-        {INS_STY_ABS, "STY_ABS"sv},
+        {INS_STY_ZP, {INS_STY_ZP, "STY"sv, AddressMode::ZP}},
+        {INS_STY_ZPX, {INS_STY_ZPX, "STY"sv, AddressMode::ZPX}},
+        {INS_STY_ABS, {INS_STY_ABS, "STY"sv, AddressMode::ABS}},
 
-        {INS_TSX, "TSX"sv},
-        {INS_TXS, "TXS"sv},
-        {INS_PHA, "PHA"sv},
-        {INS_PLA, "PLA"sv},
-        {INS_PHP, "PHP"sv},
-        {INS_PLP, "PLP"sv},
+        {INS_TSX, {INS_TSX, "TSX"sv, AddressMode::Implied}},
+        {INS_TXS, {INS_TXS, "TXS"sv, AddressMode::Implied}},
+        {INS_PHA, {INS_PHA, "PHA"sv, AddressMode::Implied}},
+        {INS_PLA, {INS_PLA, "PLA"sv, AddressMode::Implied}},
+        {INS_PHP, {INS_PHP, "PHP"sv, AddressMode::Implied}},
+        {INS_PLP, {INS_PLP, "PLP"sv, AddressMode::Implied}},
 
-        {INS_JMP_ABS, "JMP_ABS"sv},
-        {INS_JMP_IND, "JMP_IND"sv},
-        {INS_JSR, "JSR"sv},
-        {INS_RTS, "RTS"sv},
+        {INS_JMP_ABS, {INS_JMP_ABS, "JMP"sv, AddressMode::ABS}},
+        {INS_JMP_IND, {INS_JMP_IND, "JMP"sv, AddressMode::ABS_IND}},
+        {INS_JSR, {INS_JSR, "JSR"sv, AddressMode::Immediate}},
+        {INS_RTS, {INS_RTS, "RTS"sv, AddressMode::Immediate}},
 
         //Logical Ops
 
         //AND
-        {INS_AND_IM, "AND_IM"sv},
-        {INS_AND_ZP, "AND_ZP"sv},
-        {INS_AND_ZPX, "AND_ZPX"sv},
-        {INS_AND_ABS, "AND_ABS"sv},
-        {INS_AND_ABSX, "AND_ABSX"sv},
-        {INS_AND_ABSY, "AND_ABSY"sv},
-        {INS_AND_INDX, "AND_INDX"sv},
-        {INS_AND_INDY, "AND_INDY"sv},
+        {INS_AND_IM, {INS_AND_IM, "AND"sv, AddressMode::Immediate}},
+        {INS_AND_ZP, {INS_AND_ZP, "AND"sv, AddressMode::ZP}},
+        {INS_AND_ZPX, {INS_AND_ZPX, "AND"sv, AddressMode::ZPX}},
+        {INS_AND_ABS, {INS_AND_ABS, "AND"sv, AddressMode::ABS}},
+        {INS_AND_ABSX, {INS_AND_ABSX, "AND"sv, AddressMode::ABSX}},
+        {INS_AND_ABSY, {INS_AND_ABSY, "AND"sv, AddressMode::ABSY}},
+        {INS_AND_INDX, {INS_AND_INDX, "AND"sv, AddressMode::INDX}},
+        {INS_AND_INDY, {INS_AND_INDY, "AND"sv, AddressMode::INDY}},
 
         //OR
-        {INS_ORA_IM, "ORA_IM"sv},
-        {INS_ORA_ZP, "ORA_ZP"sv},
-        {INS_ORA_ZPX, "ORA_ZPX"sv},
-        {INS_ORA_ABS, "ORA_ABS"sv},
-        {INS_ORA_ABSX, "ORA_ABSX"sv},
-        {INS_ORA_ABSY, "ORA_ABSY"sv},
-        {INS_ORA_INDX, "ORA_INDX"sv},
-        {INS_ORA_INDY, "ORA_INDY"sv},
+        {INS_ORA_IM, {INS_ORA_IM, "ORA"sv, AddressMode::Immediate}},
+        {INS_ORA_ZP, {INS_ORA_ZP, "ORA"sv, AddressMode::ZP}},
+        {INS_ORA_ZPX, {INS_ORA_ZPX, "ORA"sv, AddressMode::ZPX}},
+        {INS_ORA_ABS, {INS_ORA_ABS, "ORA"sv, AddressMode::ABS}},
+        {INS_ORA_ABSX, {INS_ORA_ABSX, "ORA"sv, AddressMode::ABSX}},
+        {INS_ORA_ABSY, {INS_ORA_ABSY, "ORA"sv, AddressMode::ABSY}},
+        {INS_ORA_INDX, {INS_ORA_INDX, "ORA"sv, AddressMode::INDX}},
+        {INS_ORA_INDY, {INS_ORA_INDY, "ORA"sv, AddressMode::INDY}},
 
         //EOR
-        {INS_EOR_IM, "EOR_IM"sv},
-        {INS_EOR_ZP, "EOR_ZP"sv},
-        {INS_EOR_ZPX, "EOR_ZPX"sv},
-        {INS_EOR_ABS, "EOR_ABS"sv},
-        {INS_EOR_ABSX, "EOR_ABSX"sv},
-        {INS_EOR_ABSY, "EOR_ABSY"sv},
-        {INS_EOR_INDX, "EOR_INDX"sv},
-        {INS_EOR_INDY, "EOR_INDY"sv},
+        {INS_EOR_IM, {INS_EOR_IM, "EOR"sv, AddressMode::Immediate}},
+        {INS_EOR_ZP, {INS_EOR_ZP, "EOR"sv, AddressMode::ZP}},
+        {INS_EOR_ZPX, {INS_EOR_ZPX, "EOR"sv, AddressMode::ZPX}},
+        {INS_EOR_ABS, {INS_EOR_ABS, "EOR"sv, AddressMode::ABS}},
+        {INS_EOR_ABSX, {INS_EOR_ABSX, "EOR"sv, AddressMode::ABSX}},
+        {INS_EOR_ABSY, {INS_EOR_ABSY, "EOR"sv, AddressMode::ABSY}},
+        {INS_EOR_INDX, {INS_EOR_INDX, "EOR"sv, AddressMode::INDX}},
+        {INS_EOR_INDY, {INS_EOR_INDY, "EOR"sv, AddressMode::INDY}},
 
         //BIT
-        {INS_BIT_ZP, "BIT_ZP"sv},
-        {INS_BIT_ABS, "BIT_ABS"sv},
+        {INS_BIT_ZP, {INS_BIT_ZP, "BIT"sv, AddressMode::ZP}},
+        {INS_BIT_ABS, {INS_BIT_ABS, "BIT"sv, AddressMode::ABS}},
 
         //Transfer Registers
-        {INS_TAX, "TAX"sv},
-        {INS_TAY, "TAY"sv},
-        {INS_TXA, "TXA"sv},
-        {INS_TYA, "TYA"sv},
+        {INS_TAX, {INS_TAX, "TAX"sv, AddressMode::Implied}},
+        {INS_TAY, {INS_TAY, "TAY"sv, AddressMode::Implied}},
+        {INS_TXA, {INS_TXA, "TXA"sv, AddressMode::Implied}},
+        {INS_TYA, {INS_TYA, "TYA"sv, AddressMode::Implied}},
 
         //Increments, Decrements
-        {INS_INX, "INX"sv},
-        {INS_INY, "INY"sv},
-        {INS_DEY, "DEY"sv},
-        {INS_DEX, "DEX"sv},
-        {INS_DEC_ZP, "DEC_ZP"sv},
-        {INS_DEC_ZPX, "DEC_ZPX"sv},
-        {INS_DEC_ABS, "DEC_ABS"sv},
-        {INS_DEC_ABSX, "DEC_ABSX"sv},
-        {INS_INC_ZP, "INC_ZP"sv},
-        {INS_INC_ZPX, "INC_ZPX"sv},
-        {INS_INC_ABS, "INC_ABS"sv},
-        {INS_INC_ABSX, "INC_ABSX"sv},
+        {INS_INX, {INS_INX, "INX"sv, AddressMode::Implied}},
+        {INS_INY, {INS_INY, "INY"sv, AddressMode::Implied}},
+        {INS_DEY, {INS_DEY, "DEY"sv, AddressMode::Implied}},
+        {INS_DEX, {INS_DEX, "DEX"sv, AddressMode::Implied}},
+        {INS_DEC_ZP, {INS_DEC_ZP, "DEC"sv, AddressMode::ZP}},
+        {INS_DEC_ZPX, {INS_DEC_ZPX, "DEC"sv, AddressMode::ZPX}},
+        {INS_DEC_ABS, {INS_DEC_ABS, "DEC"sv, AddressMode::ABS}},
+        {INS_DEC_ABSX, {INS_DEC_ABSX, "DEC"sv, AddressMode::ABSX}},
+        {INS_INC_ZP, {INS_INC_ZP, "INC"sv, AddressMode::ZP}},
+        {INS_INC_ZPX, {INS_INC_ZPX, "INC"sv, AddressMode::ZPX}},
+        {INS_INC_ABS, {INS_INC_ABS, "INC"sv, AddressMode::ABS}},
+        {INS_INC_ABSX, {INS_INC_ABSX, "INC"sv, AddressMode::ABSX}},
 
         //branches
-        {INS_BEQ, "BEQ"sv},
-        {INS_BNE, "BNE"sv},
-        {INS_BCS, "BCS"sv},
-        {INS_BCC, "BCC"sv},
-        {INS_BMI, "BMI"sv},
-        {INS_BPL, "BPL"sv},
-        {INS_BVC, "BVC"sv},
-        {INS_BVS, "BVS"sv},
+        {INS_BEQ, {INS_BEQ, "BEQ"sv, AddressMode::REL}},
+        {INS_BNE, {INS_BNE, "BNE"sv, AddressMode::REL}},
+        {INS_BCS, {INS_BCS, "BCS"sv, AddressMode::REL}},
+        {INS_BCC, {INS_BCC, "BCC"sv, AddressMode::REL}},
+        {INS_BMI, {INS_BMI, "BMI"sv, AddressMode::REL}},
+        {INS_BPL, {INS_BPL, "BPL"sv, AddressMode::REL}},
+        {INS_BVC, {INS_BVC, "BVC"sv, AddressMode::REL}},
+        {INS_BVS, {INS_BVS, "BVS"sv, AddressMode::REL}},
 
         //status flag changes
-        {INS_CLC, "CLC"sv},
-        {INS_SEC, "SEC"sv},
-        {INS_CLD, "CLD"sv},
-        {INS_SED, "SED"sv},
-        {INS_CLI, "CLI"sv},
-        {INS_SEI, "SEI"sv},
-        {INS_CLV, "CLV"sv},
+        {INS_CLC, {INS_CLC, "CLC"sv, AddressMode::Implied}},
+        {INS_SEC, {INS_SEC, "SEC"sv, AddressMode::Implied}},
+        {INS_CLD, {INS_CLD, "CLD"sv, AddressMode::Implied}},
+        {INS_SED, {INS_SED, "SED"sv, AddressMode::Implied}},
+        {INS_CLI, {INS_CLI, "CLI"sv, AddressMode::Implied}},
+        {INS_SEI, {INS_SEI, "SEI"sv, AddressMode::Implied}},
+        {INS_CLV, {INS_CLV, "CLV"sv, AddressMode::Implied}},
 
         //Arithmetic
-        {INS_ADC, "ADC"sv},
-        {INS_ADC_ZP, "ADC_ZP"sv},
-        {INS_ADC_ZPX, "ADC_ZPX"sv},
-        {INS_ADC_ABS, "ADC_ABS"sv},
-        {INS_ADC_ABSX, "ADC_ABSX"sv},
-        {INS_ADC_ABSY, "ADC_ABSY"sv},
-        {INS_ADC_INDX, "ADC_INDX"sv},
-        {INS_ADC_INDY, "ADC_INDY"sv},
+        {INS_ADC, {INS_ADC, "ADC"sv, AddressMode::Immediate}},
+        {INS_ADC_ZP, {INS_ADC_ZP, "ADC"sv, AddressMode::ZP}},
+        {INS_ADC_ZPX, {INS_ADC_ZPX, "ADC"sv, AddressMode::ZPX}},
+        {INS_ADC_ABS, {INS_ADC_ABS, "ADC"sv, AddressMode::ABS}},
+        {INS_ADC_ABSX, {INS_ADC_ABSX, "ADC"sv, AddressMode::ABSX}},
+        {INS_ADC_ABSY, {INS_ADC_ABSY, "ADC"sv, AddressMode::ABSY}},
+        {INS_ADC_INDX, {INS_ADC_INDX, "ADC"sv, AddressMode::INDX}},
+        {INS_ADC_INDY, {INS_ADC_INDY, "ADC"sv, AddressMode::INDY}},
 
-        {INS_SBC, "SBC"sv},
-        {INS_SBC_ABS, "SBC_ABS"sv},
-        {INS_SBC_ZP, "SBC_ZP"sv},
-        {INS_SBC_ZPX, "SBC_ZPX"sv},
-        {INS_SBC_ABSX, "SBC_ABSX"sv},
-        {INS_SBC_ABSY, "SBC_ABSY"sv},
-        {INS_SBC_INDX, "SBC_INDX"sv},
-        {INS_SBC_INDY, "SBC_INDY"sv},
+        {INS_SBC, {INS_SBC, "SBC"sv, AddressMode::Immediate}},
+        {INS_SBC_ABS, {INS_SBC_ABS, "SBC"sv, AddressMode::ABS}},
+        {INS_SBC_ZP, {INS_SBC_ZP, "SBC"sv, AddressMode::ZP}},
+        {INS_SBC_ZPX, {INS_SBC_ZPX, "SBC"sv, AddressMode::ZPX}},
+        {INS_SBC_ABSX, {INS_SBC_ABSX, "SBC"sv, AddressMode::ABSX}},
+        {INS_SBC_ABSY, {INS_SBC_ABSY, "SBC"sv, AddressMode::ABSY}},
+        {INS_SBC_INDX, {INS_SBC_INDX, "SBC"sv, AddressMode::INDX}},
+        {INS_SBC_INDY, {INS_SBC_INDY, "SBC"sv, AddressMode::INDY}},
 
         // Register Comparison
-        {INS_CMP, "CMP"sv},
-        {INS_CMP_ZP, "CMP_ZP"sv},
-        {INS_CMP_ZPX, "CMP_ZPX"sv},
-        {INS_CMP_ABS, "CMP_ABS"sv},
-        {INS_CMP_ABSX, "CMP_ABSX"sv},
-        {INS_CMP_ABSY, "CMP_ABSY"sv},
-        {INS_CMP_INDX, "CMP_INDX"sv},
-        {INS_CMP_INDY, "CMP_INDY"sv},
+        {INS_CMP, {INS_CMP, "CMP"sv, AddressMode::Immediate}},
+        {INS_CMP_ZP, {INS_CMP_ZP, "CMP"sv, AddressMode::ZP}},
+        {INS_CMP_ZPX, {INS_CMP_ZPX, "CMP"sv, AddressMode::ZPX}},
+        {INS_CMP_ABS, {INS_CMP_ABS, "CMP"sv, AddressMode::ABS}},
+        {INS_CMP_ABSX, {INS_CMP_ABSX, "CMP"sv, AddressMode::ABSX}},
+        {INS_CMP_ABSY, {INS_CMP_ABSY, "CMP"sv, AddressMode::ABSY}},
+        {INS_CMP_INDX, {INS_CMP_INDX, "CMP"sv, AddressMode::INDX}},
+        {INS_CMP_INDY, {INS_CMP_INDY, "CMP"sv, AddressMode::INDY}},
 
-        {INS_CPX, "CPX"sv},
-        {INS_CPY, "CPY"sv},
-        {INS_CPX_ZP, "CPX_ZP"sv},
-        {INS_CPY_ZP, "CPY_ZP"sv},
-        {INS_CPX_ABS, "CPX_ABS"sv},
-        {INS_CPY_ABS, "CPY_ABS"sv},
+        {INS_CPX, {INS_CPX, "CPX"sv, AddressMode::Immediate}},
+        {INS_CPY, {INS_CPY, "CPY"sv, AddressMode::Immediate}},
+        {INS_CPX_ZP, {INS_CPX_ZP, "CPX"sv, AddressMode::ZP}},
+        {INS_CPY_ZP, {INS_CPY_ZP, "CPY"sv, AddressMode::ZP}},
+        {INS_CPX_ABS, {INS_CPX_ABS, "CPX"sv, AddressMode::ABS}},
+        {INS_CPY_ABS, {INS_CPY_ABS, "CPY"sv, AddressMode::ABS}},
 
         // shifts
-        {INS_ASL, "ASL"sv},
-        {INS_ASL_ZP, "ASL_ZP"sv},
-        {INS_ASL_ZPX, "ASL_ZPX"sv},
-        {INS_ASL_ABS, "ASL_ABS"sv},
-        {INS_ASL_ABSX, "ASL_ABSX"sv},
+        {INS_ASL, {INS_ASL, "ASL"sv, AddressMode::Immediate}},
+        {INS_ASL_ZP, {INS_ASL_ZP, "ASL"sv, AddressMode::ZP}},
+        {INS_ASL_ZPX, {INS_ASL_ZPX, "ASL"sv, AddressMode::ZPX}},
+        {INS_ASL_ABS, {INS_ASL_ABS, "ASL"sv, AddressMode::ABS}},
+        {INS_ASL_ABSX, {INS_ASL_ABSX, "ASL"sv, AddressMode::ABSX}},
 
-        {INS_LSR, "LSR"sv},
-        {INS_LSR_ZP, "LSR_ZP"sv},
-        {INS_LSR_ZPX, "LSR_ZPX"sv},
-        {INS_LSR_ABS, "LSR_ABS"sv},
-        {INS_LSR_ABSX, "LSR_ABSX"sv},
+        {INS_LSR, {INS_LSR, "LSR"sv, AddressMode::Immediate}},
+        {INS_LSR_ZP, {INS_LSR_ZP, "LSR"sv, AddressMode::ZP}},
+        {INS_LSR_ZPX, {INS_LSR_ZPX, "LSR"sv, AddressMode::ZPX}},
+        {INS_LSR_ABS, {INS_LSR_ABS, "LSR"sv, AddressMode::ABS}},
+        {INS_LSR_ABSX, {INS_LSR_ABSX, "LSR"sv, AddressMode::ABSX}},
 
-        {INS_ROL, "ROL"sv},
-        {INS_ROL_ZP, "ROL_ZP"sv},
-        {INS_ROL_ZPX, "ROL_ZPX"sv},
-        {INS_ROL_ABS, "ROL_ABS"sv},
-        {INS_ROL_ABSX, "ROL_ABSX"sv},
+        {INS_ROL, {INS_ROL, "ROL"sv, AddressMode::Immediate}},
+        {INS_ROL_ZP, {INS_ROL_ZP, "ROL"sv, AddressMode::ZP}},
+        {INS_ROL_ZPX, {INS_ROL_ZPX, "ROL"sv, AddressMode::ZPX}},
+        {INS_ROL_ABS, {INS_ROL_ABS, "ROL"sv, AddressMode::ABS}},
+        {INS_ROL_ABSX, {INS_ROL_ABSX, "ROL"sv, AddressMode::ABSX}},
 
-        {INS_ROR, "ROR"sv},
-        {INS_ROR_ZP, "ROR_ZP"sv},
-        {INS_ROR_ZPX, "ROR_ZPX"sv},
-        {INS_ROR_ABS, "ROR_ABS"sv},
-        {INS_ROR_ABSX, "ROR_ABSX"sv},
+        {INS_ROR, {INS_ROR, "ROR"sv, AddressMode::Immediate}},
+        {INS_ROR_ZP, {INS_ROR_ZP, "ROR"sv, AddressMode::ZP}},
+        {INS_ROR_ZPX, {INS_ROR_ZPX, "ROR"sv, AddressMode::ZPX}},
+        {INS_ROR_ABS, {INS_ROR_ABS, "ROR"sv, AddressMode::ABS}},
+        {INS_ROR_ABSX, {INS_ROR_ABSX, "ROR"sv, AddressMode::ABSX}},
 
         //misc
-        {INS_NOP, "NOP"sv},
-        {INS_BRK, "BRK"sv},
-        {INS_RTI, "RTI"sv},
+        {INS_NOP, {INS_NOP, "NOP"sv, AddressMode::Implied}},
+        {INS_BRK, {INS_BRK, "BRK"sv, AddressMode::Immediate}},
+        {INS_RTI, {INS_RTI, "RTI"sv, AddressMode::Implied}},
     };
 }
 
