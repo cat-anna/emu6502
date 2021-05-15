@@ -55,7 +55,6 @@ struct ProgramCompiler {
             }
             auto token = *next_token;
             ++next_token;
-            // std::cout << "NEXT TOKEN: " << token << "\n";
             return token;
         };
 
@@ -82,7 +81,7 @@ struct ProgramCompiler {
             transform(tok.begin(), tok.end(), std::back_inserter(upper), ::toupper);
             auto op_handler = instruction_set.find(upper);
             if (op_handler == instruction_set.end()) {
-                throw std::runtime_error("Unknown token " + upper);
+                throw std::runtime_error("Unknown token '" + upper + "'");
             }
             ParseInstruction(program, get_next_token, op_handler->second);
         }
@@ -99,15 +98,21 @@ private:
             };
             program.labels[l.name] = std::make_shared<LabelInfo>(l);
         } else {
+            std::cout << "FOUND LABEL " << name << " at " << current_position << "\n";
             it->second->imported = false;
             if (it->second->offset.has_value()) {
                 throw std::runtime_error("Label " + std::string(name) + " is already defined");
             }
             it->second->offset = current_position;
-            auto pos = ToBytes(current_position);
             for (auto weak_rel : it->second->label_references) {
                 auto rel = weak_rel.lock();
-                program.sparse_binary_code.PutBytes(rel->position, pos, true);
+                if (rel->mode == RelocationMode::Absolute) {
+                    auto bytes = ToBytes(current_position);
+                    program.sparse_binary_code.PutBytes(rel->position, bytes, true);
+                } else {
+                    auto bytes = ToBytes(RelativeJumpOffset(rel->position, current_position));
+                    program.sparse_binary_code.PutBytes(rel->position, bytes, true);
+                }
             }
         }
     }
@@ -127,7 +132,6 @@ private:
     }
     void ParseOriginCommand(Program &program, const NextTokenFunc &get_next_token) {
         auto new_pos = ParseWord(get_next_token().value());
-        std::cout << fmt::format("ORG {:04x} -> {:04x}\n", current_position, new_pos);
         current_position = new_pos;
     }
 
@@ -136,8 +140,14 @@ private:
 
     void ParseInstruction(Program &program, const NextTokenFunc &get_next_token,
                           const InstructionParsingInfo &instruction) {
-        auto next_token = get_next_token();
-        auto argument = ParseInstructionArgument(next_token.value_or(""));
+        auto token = std::string(get_next_token().value_or(""));
+
+        if (auto next_token = get_next_token(); next_token.has_value() && !next_token->empty()) {
+            token += ",";
+            token += next_token.value();
+        }
+
+        auto argument = ParseInstructionArgument(std::string_view(token));
 
         std::vector<AddressMode> instruction_address_modes;
         for (auto &[f, s] : instruction.variants) {
@@ -146,31 +156,58 @@ private:
         std::sort(instruction_address_modes.begin(), instruction_address_modes.end());
         std::sort(argument.possible_address_modes.begin(), argument.possible_address_modes.end());
 
-        std::vector<AddressMode> address_modes;
+        std::set<AddressMode> address_modes;
 
         std::set_intersection(argument.possible_address_modes.begin(), argument.possible_address_modes.end(), //
                               instruction_address_modes.begin(), instruction_address_modes.end(),
-                              std::back_inserter(address_modes));
+                              std::inserter(address_modes, address_modes.begin()));
 
-        if (address_modes.size() != 1) {
-            throw std::runtime_error("Not impl");
-        }
+        AddressMode selected_mode = std::visit(
+            [&](auto &arg_value) -> AddressMode {
+                return SelectInstuctionVariant(program, address_modes, instruction, arg_value);
+            },
+            argument.argument_value);
 
         try {
-            auto &opcode = instruction.variants.at(address_modes[0]);
+            auto &opcode = instruction.variants.at(selected_mode);
             program.sparse_binary_code.PutByte(current_position++, opcode.opcode);
             std::visit([&](auto &arg_value) { ProcessInstructionArgument(program, opcode, arg_value); },
                        argument.argument_value);
         } catch (const std::exception &e) {
-            throw std::runtime_error("opcode does not support mode [TODO]");
+            throw std::runtime_error("opcode does not support mode [TODO] " + std::string(e.what()));
         }
+    }
+
+    AddressMode SelectInstuctionVariant(Program &program, const std::set<AddressMode> &modes,
+                                        const InstructionParsingInfo &instruction, std::nullptr_t) {
+        if (modes.size() != 1 || *modes.begin() != AddressMode::Implied) {
+            throw std::runtime_error("Failed to select implied variant");
+        }
+        return AddressMode::Implied;
+    }
+
+    AddressMode SelectInstuctionVariant(Program &program, std::set<AddressMode> modes,
+                                        const InstructionParsingInfo &instruction, std::string label) {
+        modes.erase(AddressMode::ZPX); // TODO: not yet supported for labels/aliases
+        modes.erase(AddressMode::ZPY);
+        modes.erase(AddressMode::ZP);
+        if (modes.size() != 1) {
+            throw std::runtime_error("Failed to select label variant");
+        }
+        return *modes.begin();
+    }
+
+    AddressMode SelectInstuctionVariant(Program &program, const std::set<AddressMode> &modes,
+                                        const InstructionParsingInfo &instruction, std::vector<uint8_t> data) {
+        if (modes.size() != 1) {
+            throw std::runtime_error("Failed to select data variant");
+        }
+        return *modes.begin();
     }
 
     void ProcessInstructionArgument(Program &program, const OpcodeInfo &opcode, std::string label) {
 
         auto relocation = std::make_shared<RelocationInfo>();
-        program.relocations.insert(relocation);
-
         relocation->position = current_position;
 
         auto existing_it = program.labels.find(label);
@@ -191,13 +228,15 @@ private:
         relocation->target_label = existing_it->second;
         auto label_addr = existing_it->second->offset.value_or(0);
         if (opcode.addres_mode == AddressMode::REL) {
-            int16_t rel = current_position - label_addr;
+            auto bytes = ToBytes(RelativeJumpOffset(current_position, label_addr));
             relocation->mode = RelocationMode::Relative;
-            ProcessInstructionArgument(program, opcode, ToBytes(static_cast<uint8_t>(rel)));
+            ProcessInstructionArgument(program, opcode, bytes);
         } else {
             relocation->mode = RelocationMode::Absolute;
-            ProcessInstructionArgument(program, opcode, ToBytes(existing_it->second->offset.value_or(0)));
+            ProcessInstructionArgument(program, opcode, ToBytes(label_addr));
         }
+
+        program.relocations.insert(relocation);
     }
 
     void ProcessInstructionArgument(Program &program, const OpcodeInfo &opcode, std::nullptr_t) {}

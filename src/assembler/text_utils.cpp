@@ -17,17 +17,19 @@ std::vector<std::string_view> Tokenize(std::string_view line) {
             continue;
         }
 
-        auto pos = line.find_first_of("\t\n ,;#");
+        auto pos = line.find_first_of("\t\n ;,");
         if (pos == std::string_view::npos) {
             pos = line.size();
         }
 
         auto token = line.substr(0, pos);
-        r.emplace_back(token);
+        if (!token.empty()) {
+            r.emplace_back(token);
+        }
 
         line.remove_prefix(pos);
         if (!line.empty()) {
-            if (line[0] == ';' || line[0] == '#') {
+            if (line[0] == ';') {
                 break;
             }
             line.remove_prefix(1);
@@ -129,6 +131,7 @@ InstructionArgument ParseInstructionArgument(std::string_view arg) {
                     throw std::runtime_error("Invalid literal value");
                 }
                 auto possible_address_modes = set;
+                possible_address_modes.erase(AM::REL);
                 if (data.size() == 1) {
                     possible_address_modes.erase(AM::ABSX);
                     possible_address_modes.erase(AM::ABSY);
@@ -136,7 +139,6 @@ InstructionArgument ParseInstructionArgument(std::string_view arg) {
                 } else {
                     possible_address_modes.erase(AM::ZPX);
                     possible_address_modes.erase(AM::ZPY);
-                    possible_address_modes.erase(AM::REL);
                     possible_address_modes.erase(AM::ZP);
                 }
                 if (possible_address_modes.empty()) {

@@ -5,6 +5,7 @@
 namespace emu6502::cpu::opcode {
 
 using namespace std::string_view_literals;
+using namespace std::string_literals;
 
 std::string to_string(AddressMode mode) {
     switch (mode) {
@@ -35,7 +36,7 @@ std::string to_string(AddressMode mode) {
     case AddressMode::ABS_IND:
         return "ABS_IND";
     }
-    throw std::runtime_error("Invalid address mode " + std::to_string((int)mode));
+    throw std::runtime_error("Invalid address mode " + std::to_string(static_cast<int>(mode)));
 }
 
 size_t ArgumentByteSize(AddressMode mode) {

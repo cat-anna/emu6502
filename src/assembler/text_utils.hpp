@@ -18,6 +18,9 @@ uint16_t ParseWord(std::string_view text, int base = 0);
 inline std::vector<uint8_t> ToBytes(uint8_t v) {
     return {v};
 }
+inline std::vector<uint8_t> ToBytes(int8_t v) {
+    return {static_cast<uint8_t>(v)};
+}
 
 inline std::vector<uint8_t> ToBytes(uint16_t v) {
     return {
@@ -29,7 +32,7 @@ inline std::vector<uint8_t> ToBytes(uint16_t v) {
 struct InstructionArgument {
     using AddressMode = emu6502::cpu::opcode::AddressMode;
     std::vector<AddressMode> possible_address_modes;
-    std::variant<nullptr_t, std::string, std::vector<uint8_t>> argument_value;
+    std::variant<std::nullptr_t, std::string, std::vector<uint8_t>> argument_value;
 
     bool operator==(const InstructionArgument &other) const {
         return possible_address_modes == other.possible_address_modes && argument_value == other.argument_value;

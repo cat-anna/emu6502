@@ -26,16 +26,19 @@ TEST_P(TokenizerTest, ) {
 }
 
 INSTANTIATE_TEST_SUITE_P(, TokenizerTest,
-                         ::testing::Values(TokenizerTestArg{" test test   test "s, {"test"sv, "test"sv, "test"sv}},
-                                           TokenizerTestArg{" test,test,test "s, {"test"sv, "test"sv, "test"sv}},
-                                           TokenizerTestArg{" test,test test "s, {"test"sv, "test"sv, "test"sv}},
-                                           TokenizerTestArg{" test\ttest\ttest "s, {"test"sv, "test"sv, "test"sv}},
-                                           TokenizerTestArg{" test:\ttest:\ttest"s, {"test:"sv, "test:"sv, "test"}},
-                                           TokenizerTestArg{".test.test:\ttest"s, {".test.test:"sv, "test"sv}},
-                                           TokenizerTestArg{"test;test"s, {"test"sv}},
-                                           TokenizerTestArg{"test#test"s, {"test"sv}},
-                                           TokenizerTestArg{"    \t\t\t \n\n\n   "s, {}},
-                                           TokenizerTestArg{"test#test;test"s, {"test"sv}}, TokenizerTestArg{""s, {}}));
+                         ::testing::ValuesIn({
+                             TokenizerTestArg{" test test   test  \n \n"s, {"test"sv, "test"sv, "test"sv}},
+                             TokenizerTestArg{"  test   #$FF  \n \n"s, {"test"sv, "#$FF"sv}}, //
+                             TokenizerTestArg{";  test     \n \n"s, {}},
+                             TokenizerTestArg{" test,test test "s, {"test"sv, "test"sv, "test"sv}},
+                             TokenizerTestArg{" test\ttest\ttest "s, {"test"sv, "test"sv, "test"sv}},
+                             TokenizerTestArg{" test:\ttest:\ttest"s, {"test:"sv, "test:"sv, "test"}},
+                             TokenizerTestArg{".test.test:\ttest"s, {".test.test:"sv, "test"sv}},
+                             TokenizerTestArg{"test;test"s, {"test"sv}}, //
+                             TokenizerTestArg{"test#test"s, {"test#test"sv}},
+                             TokenizerTestArg{"    \t\t\t \n\n\n   "s, {}},
+                             TokenizerTestArg{""s, {}},
+                         }));
 
 using u8v = std::vector<uint8_t>;
 using ArgumentParseTestArg = std::tuple<std::string, std::optional<InstructionArgument>>;
@@ -107,6 +110,7 @@ INSTANTIATE_TEST_SUITE_P(, ArgumentParseTest,
                              // | Relative            |          aaaa            |
                              ArgumentParseTestArg{"LABEL"s,
                                                   InstructionArgument{{AM::ABS, AM::ZP, AM::REL}, "LABEL"s}}, //
+                             ArgumentParseTestArg{"$12"s, InstructionArgument{{AM::ZP}, u8v{0x12}}},          //
 
                              // | Indexed Indirect    |          (aa,X)          |
                              ArgumentParseTestArg{"($FF,X)"s, InstructionArgument{{AM::INDX}, u8v{0xFF}}},  //

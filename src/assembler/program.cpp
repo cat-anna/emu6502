@@ -1,8 +1,21 @@
 #include "program.hpp"
 #include <algorithm>
 #include <fmt/format.h>
+#include <limits>
+#include <stdexcept>
 
 namespace emu6502::assembler {
+
+NearOffset_t RelativeJumpOffset(Address_t position, Address_t target) {
+    auto off = static_cast<int>(target) - static_cast<int>(position);
+    using Limit = std::numeric_limits<NearOffset_t>;
+    if (off > Limit::max() || off < Limit::min()) {
+        throw std::runtime_error("Jump is too far"); //TODO
+    }
+    return static_cast<NearOffset_t>(off);
+}
+
+//-----------------------------------------------------------------------------
 
 bool LabelInfo::operator==(const LabelInfo &other) const {
     if (name != other.name || imported != other.imported || offset.has_value() != other.offset.has_value()) {
@@ -62,11 +75,31 @@ bool RelocationInfo::operator==(const RelocationInfo &other) const {
     }
 }
 
+bool RelocationInfo::operator<(const RelocationInfo &other) const {
+    if (position < other.position) {
+        //  && mode < other.mode) {
+        return true;
+    }
+
+    return false;
+
+    // auto my_label = target_label.lock();
+    // auto oth_label = other.target_label.lock();
+    // if (static_cast<bool>(my_label) != static_cast<bool>(oth_label)) {
+    //     return false;
+    // }
+    // if (my_label) {
+    //     return my_label->name < oth_label->name;
+    // } else {
+    //     return true;
+    // }
+}
+
 std::string to_string(const RelocationInfo &relocation) {
     std::string r = "RelocationInfo:{";
     auto label = relocation.target_label.lock();
     std::string label_name = label ? label->name : std::string("-");
-    r += fmt::format("L:'{}',Pos:{},Mode:{}", label_name, relocation.position, relocation.mode);
+    r += fmt::format("L:'{}',Pos:{},Mode:{}", label_name, relocation.position, to_string(relocation.mode));
     r += "}";
     return r;
 }
@@ -122,14 +155,14 @@ std::string SparseBinaryCode::HexDump(const std::string &line_prefix) const {
     for (size_t pos = min; pos <= max; pos += 16) {
         std::string hexes;
         for (size_t off = 0; off < 16; ++off) {
-            auto it = sparse_map.find(pos + off);
+            auto it = sparse_map.find(static_cast<Address_t>(pos + off));
             if (it == sparse_map.end()) {
                 hexes += " --";
             } else {
                 hexes += fmt::format(" {:02x}", it->second);
             }
         }
-        r += fmt::format("{}{:04x} |{}", line_prefix, pos, hexes);
+        r += fmt::format("{}{:04x} |{}\n", line_prefix, pos, hexes);
     }
 
     return r;
@@ -166,7 +199,7 @@ bool Program::operator==(const Program &other) const {
     }
 
     if (!std::equal(relocations.begin(), relocations.end(), other.relocations.begin(), other.relocations.end(),
-                    [](auto &a, auto &b) { return *a == *b; })) {
+                    [](auto &a, auto &b) { return (*a) == (*b); })) {
         return false;
     }
 

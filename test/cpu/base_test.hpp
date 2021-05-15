@@ -95,11 +95,11 @@ public:
             << fmt::format("Expected:{:02x} Actual:{:02x}", expected_regs.program_counter, cpu.reg.program_counter);
     }
 
-    std::vector<uint8_t> MakeCode(uint8_t opcode, uint16_t arg) {
+    static std::vector<uint8_t> MakeCode(uint8_t opcode, uint16_t arg) {
         return {opcode, static_cast<uint8_t>(arg & 0xFF), static_cast<uint8_t>(arg >> 8)};
     }
-    std::vector<uint8_t> MakeCode(uint8_t opcode) { return {opcode}; }
-    std::vector<uint8_t> MakeCode(uint8_t opcode, uint8_t arg) { return {opcode, arg}; }
+    static std::vector<uint8_t> MakeCode(uint8_t opcode) { return {opcode}; }
+    static std::vector<uint8_t> MakeCode(uint8_t opcode, uint8_t arg) { return {opcode, arg}; }
 
     std::vector<uint8_t> MakeCode(uint8_t opcode, AddressMode mode) {
         WriteTestData(mode);
@@ -108,21 +108,22 @@ public:
         case AddressMode::IM:
             return MakeCode(opcode, target_byte);
         case AddressMode::ABS:
-            return MakeCode(opcode, test_address);
-        case AddressMode::ZP:
-            return MakeCode(opcode, zero_page_address);
-        case AddressMode::ZPX:
-            return MakeCode(opcode, zero_page_address);
         case AddressMode::ABSX:
-            return MakeCode(opcode, test_address);
         case AddressMode::ABSY:
             return MakeCode(opcode, test_address);
         case AddressMode::INDY:
-            return MakeCode(opcode, zero_page_address);
         case AddressMode::INDX:
+        case AddressMode::ZP:
+        case AddressMode::ZPX:
             return MakeCode(opcode, zero_page_address);
         case AddressMode::ACC:
             return MakeCode(opcode);
+
+        case AddressMode::Implied:
+        case AddressMode::ABS_IND:
+        case AddressMode::ZPY:
+        case AddressMode::REL:
+            break; // TODO
         }
         throw std::runtime_error("Invalid address mode");
     }
@@ -163,6 +164,12 @@ public:
             WriteMemory(zero_page_address, {indirect_address});
             target_address = static_cast<MemPtr>(indirect_address) + expected_regs.y;
             break;
+
+        case AddressMode::Implied:
+        case AddressMode::ABS_IND:
+        case AddressMode::ZPY:
+        case AddressMode::REL:
+            break; // TODO
         }
 
         WriteMemory(target_address, {target_byte});

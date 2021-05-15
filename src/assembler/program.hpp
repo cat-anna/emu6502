@@ -13,6 +13,22 @@ namespace emu6502::assembler {
 
 using Address_t = uint16_t;
 using Offset_t = int16_t;
+using NearOffset_t = int8_t;
+
+constexpr Address_t operator"" _addr(unsigned long long n) {
+    return static_cast<Address_t>(n);
+}
+constexpr Offset_t operator"" _off(unsigned long long n) {
+    return static_cast<Offset_t>(n);
+}
+constexpr uint8_t operator"" _u8(unsigned long long n) {
+    return static_cast<uint8_t>(n);
+}
+constexpr int8_t operator"" _s8(unsigned long long n) {
+    return static_cast<int8_t>(n);
+}
+
+NearOffset_t RelativeJumpOffset(Address_t position, Address_t target);
 
 struct RelocationInfo;
 
@@ -43,10 +59,17 @@ struct RelocationInfo {
     RelocationMode mode;
 
     bool operator==(const RelocationInfo &other) const;
+    bool operator<(const RelocationInfo &other) const;
 };
 
 std::string to_string(const RelocationInfo &relocation);
 std::string to_string(std::weak_ptr<RelocationInfo> relocation);
+
+struct RelocationInfoComp {
+    bool operator()(const std::shared_ptr<RelocationInfo> &lhs, const std::shared_ptr<RelocationInfo> &rhs) const {
+        return (*lhs) < (*rhs);
+    }
+};
 
 //-----------------------------------------------------------------------------
 
@@ -74,7 +97,7 @@ struct SparseBinaryCode {
 struct Program {
     SparseBinaryCode sparse_binary_code;
     std::unordered_map<std::string, std::shared_ptr<LabelInfo>> labels;
-    std::set<std::shared_ptr<RelocationInfo>> relocations;
+    std::set<std::shared_ptr<RelocationInfo>, RelocationInfoComp> relocations;
 
     bool operator==(const Program &other) const;
 };
