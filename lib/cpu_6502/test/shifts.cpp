@@ -34,6 +34,9 @@ public:
         cpu.reg.SetFlag(Flags::Carry, carry);
 
         auto [opcode, name, mode, len, cycles, func] = GetParam();
+        // expected_cycles = cycles;
+        expected_code_length = len;
+
         auto [result, new_carry] = func(target_byte, carry);
 
         expected_regs.SetFlag(Flags::Carry, new_carry);
@@ -43,7 +46,7 @@ public:
             expected_regs.a = result;
         }
 
-        BaseTest::Execute(MakeCode(opcode, mode), cycles);
+        BaseTest::Execute(MakeCode(opcode, mode));
         if (mode != AddressMode::ACC) {
             VerifyMemory(target_address, {result});
         }

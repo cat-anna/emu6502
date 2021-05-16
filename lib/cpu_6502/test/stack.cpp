@@ -22,6 +22,7 @@ public:
 
         expected_regs.stack_pointer = 0x80;
         cpu.reg = expected_regs;
+        expected_code_length = 1;
     }
 };
 
@@ -31,7 +32,8 @@ TEST_F(StackTest, PHA) {
     target_address = expected_regs.StackPointerMemoryAddress();
     expected_regs.stack_pointer--;
     expected_regs.a = cpu.reg.a = target_byte;
-    Execute(MakeCode(INS_PHA), 3);
+    expected_cycles = 3;
+    Execute(MakeCode(INS_PHA));
     VerifyMemory(target_address, {target_byte});
 }
 
@@ -44,7 +46,8 @@ TEST_F(StackTest, PLA) {
     expected_regs.SetFlag(Flags::Negative, (target_byte & 0x80) > 0);
     expected_regs.SetFlag(Flags::Zero, target_byte == 0);
     expected_regs.a = target_byte;
-    Execute(MakeCode(INS_PLA), 4);
+    expected_cycles = 4;
+    Execute(MakeCode(INS_PLA));
 }
 
 TEST_F(StackTest, PHP) {
@@ -53,7 +56,8 @@ TEST_F(StackTest, PHP) {
     target_address = expected_regs.StackPointerMemoryAddress();
     expected_regs.stack_pointer--;
     expected_regs.flags = cpu.reg.flags = target_byte;
-    Execute(MakeCode(INS_PHP), 3);
+    expected_cycles = 3;
+    Execute(MakeCode(INS_PHP));
     uint8_t expected = target_byte | static_cast<uint8_t>(Flags::Brk) | static_cast<uint8_t>(Flags::NotUsed);
     VerifyMemory(target_address, {expected});
 }
@@ -67,7 +71,8 @@ TEST_F(StackTest, PLP) {
     expected_regs.flags = target_byte & ~(static_cast<uint8_t>(Flags::Brk) | static_cast<uint8_t>(Flags::NotUsed));
     WriteMemory(target_address, {target_byte});
 
-    Execute(MakeCode(INS_PLP), 4);
+    expected_cycles = 4;
+    Execute(MakeCode(INS_PLP));
 }
 
 } // namespace emu::cpu6502

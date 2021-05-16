@@ -49,12 +49,10 @@ public:
     static constexpr int8_t kFarJump = 0x70;
     static constexpr int8_t kBackwardJump = static_cast<int8_t>(0xC5);
 
-    void SetUp() override { //
-        BaseTest::SetUp();
-    }
-
     void ExecuteBranchTest(int8_t jump_offset, uint64_t cycles, bool branch_successful) { //
         is_testing_jumps = branch_successful;
+        // expected_cycles = kBranchIntructionDuration + cycles;
+        expected_code_length = kBranchIntructionLength;
 
         auto [opcode, name, flag, state] = GetParam();
         if (!branch_successful) {
@@ -70,11 +68,7 @@ public:
 
         cpu.reg.flags = expected_regs.flags;
 
-        BaseTest::Execute(MakeCode(opcode, (uint8_t)jump_offset), kBranchIntructionDuration + cycles);
-    }
-
-    void TearDown() override { //
-        BaseTest::TearDown();
+        BaseTest::Execute(MakeCode(opcode, (uint8_t)jump_offset));
     }
 };
 
@@ -111,14 +105,14 @@ std::vector<BranchTestArg> GetBranchTestCases() {
     };
 }
 
-INSTANTIATE_TEST_SUITE_P(BXX, BranchTest, ::testing::ValuesIn(GetBranchTestCases()),
-                         [](const auto &info) -> std::string { return fmt::format("{}", std::get<1>(info.param)); });
+INSTANTIATE_TEST_SUITE_P(, BranchTest, ::testing::ValuesIn(GetBranchTestCases()), GenTestNameFunc());
 
 class JumpTest : public BaseTest {
 public:
     void SetUp() override { //
         BaseTest::SetUp();
         is_testing_jumps = true;
+        expected_code_length = 3;
     }
 };
 
@@ -138,7 +132,9 @@ TEST_F(JumpTest, JMP_ABS) {
     // MODE           SYNTAX       HEX LEN TIM
     // Absolute      JMP $5597     $4C  3   3
     expected_regs.program_counter = test_address;
-    Execute(MakeCode(INS_JMP_ABS, test_address), 3);
+    // expected_cycles = 3;
+    expected_code_length = 3;
+    Execute(MakeCode(INS_JMP_ABS, test_address));
 }
 
 TEST_F(JumpTest, JMP_IND) {
@@ -146,7 +142,9 @@ TEST_F(JumpTest, JMP_IND) {
     // Indirect      JMP ($5597)   $6C  3   5
     WriteMemory(test_address, {0x10, 0x20});
     expected_regs.program_counter = 0x2010;
-    Execute(MakeCode(INS_JMP_IND, test_address), 5);
+    // expected_cycles = 5;
+    expected_code_length = 3;
+    Execute(MakeCode(INS_JMP_IND, test_address));
 }
 
 TEST_F(JumpTest, JMP_IND_AcrossPage) {
@@ -157,7 +155,9 @@ TEST_F(JumpTest, JMP_IND_AcrossPage) {
     WriteMemory(0x30FF, {0x80});
     WriteMemory(0x3100, {0x50});
     expected_regs.program_counter = 0x4080;
-    Execute(MakeCode(INS_JMP_IND, test_address), 5);
+    // expected_cycles = 5;
+    expected_code_length = 3;
+    Execute(MakeCode(INS_JMP_IND, test_address));
 }
 
 // JSR (Jump to SubRoutine)
@@ -171,7 +171,9 @@ TEST_F(JumpTest, JSR) {
     // Absolute      JSR $5597     $20  3   6
     expected_regs.program_counter = test_address;
     expected_regs.stack_pointer -= 2;
-    Execute(MakeCode(INS_JSR, test_address), 6);
+    // expected_cycles = 6;
+    expected_code_length = 3;
+    Execute(MakeCode(INS_JSR, test_address));
     auto pc = kBaseCodeAddress + 2;
     VerifyMemory(expected_regs.StackPointerMemoryAddress() + 1, {(uint8_t)(pc & 0xFF), (uint8_t)(pc >> 8)});
 }
@@ -192,7 +194,9 @@ TEST_F(JumpTest, RTS) {
     WriteMemory(expected_regs.StackPointerMemoryAddress(), {(uint8_t)(pc & 0xFF), (uint8_t)(pc >> 8)});
     expected_regs.stack_pointer += 2;
     expected_regs.program_counter = test_address;
-    Execute(MakeCode(INS_RTS), 6);
+    // expected_cycles = 6;
+    expected_code_length = 1;
+    Execute(MakeCode(INS_RTS));
 }
 
 // RTI (ReTurn from Interrupt)
@@ -216,8 +220,9 @@ TEST_F(JumpTest, RTI) {
                 {(uint8_t)(pc & 0xFF), (uint8_t)(pc >> 8), expected_regs.flags});
     expected_regs.stack_pointer += 3;
     expected_regs.program_counter = test_address;
-
-    Execute(MakeCode(INS_RTI), 6);
+    // expected_cycles = 6;
+    expected_code_length = 1;
+    Execute(MakeCode(INS_RTI));
 }
 
 } // namespace emu::cpu6502

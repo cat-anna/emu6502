@@ -9,25 +9,13 @@ using namespace emu::cpu6502::opcode;
 class RegisterBaseTest : public BaseTest {
 public:
     void SetUp() override {
+        random_reg_values = true;
         BaseTest::SetUp();
-
-        expected_regs.a = RandomByte();
-        expected_regs.x = RandomByte();
-        expected_regs.y = RandomByte();
-        expected_regs.stack_pointer = RandomByte();
-        cpu.reg = expected_regs;
-    }
-
-    void Execute(const std::vector<uint8_t> &data, uint64_t cycles) override { //
-        BaseTest::Execute(data, cycles);
-    }
-
-    void TearDown() override { //
-        BaseTest::TearDown();
     }
 };
 
-class RegIncDecTest : public RegisterBaseTest {
+using RegIncDecTestArg = std::tuple<Opcode, const char *, Reg8Ptr, bool>;
+class RegIncDecTest : public RegisterBaseTest, public ::testing::WithParamInterface<RegIncDecTestArg> {
 public:
     // Affect Flags: N Z
     // These instructions are implied mode, have a length of one byte and require two machine cycles.
@@ -35,51 +23,41 @@ public:
     Reg8Ptr test_register;
     std::optional<uint8_t> result_byte;
 
-    void Execute(const std::vector<uint8_t> &data, uint64_t cycles) override {
+    void Execute(const std::vector<uint8_t> &data) override {
         expected_regs.SetFlag(Flags::Zero, result_byte.value() == 0);
         expected_regs.SetFlag(Flags::Negative, (result_byte.value() & 0x80) > 0);
-
-        RegisterBaseTest::Execute(data, cycles);
+        RegisterBaseTest::Execute(data);
     }
 };
 
-TEST_F(RegIncDecTest, INX) {
-    test_register = &Registers::x;
-    result_byte = expected_regs.x += 1;
-    Execute(MakeCode(INS_INX), 1);
+TEST_P(RegIncDecTest, ) {
+    auto [opcode, name, reg, inc] = GetParam();
+    test_register = reg;
+    expected_code_length = 1;
+    // expected_cycles = 2;
+    if (inc) {
+        result_byte = (expected_regs.*reg) += 1;
+    } else {
+        result_byte = (expected_regs.*reg) -= 1;
+    }
+    Execute(MakeCode(opcode));
 }
 
-TEST_F(RegIncDecTest, DEX) {
-    test_register = &Registers::x;
-    result_byte = expected_regs.x -= 1;
-    Execute(MakeCode(INS_DEX), 1);
+std::vector<RegIncDecTestArg> GetIncDecTestCases() {
+    return {
+        {INS_INX, "INX", &Registers::x, true},  //
+        {INS_DEX, "DEX", &Registers::x, false}, //
+        {INS_INY, "INY", &Registers::y, true},  //
+        {INS_DEY, "DEY", &Registers::y, false}, //
+        // {INS_INC_ACC, "INC_ACC", &Registers::a, true},  //
+        // {INS_DEC_ACC, "DEC_ACC", &Registers::a, false}, //
+    };
 }
 
-TEST_F(RegIncDecTest, INY) {
-    test_register = &Registers::y;
-    result_byte = expected_regs.y += 1;
-    Execute(MakeCode(INS_INY), 1);
-}
+INSTANTIATE_TEST_SUITE_P(, RegIncDecTest, ::testing::ValuesIn(GetIncDecTestCases()), GenTestNameFunc());
 
-TEST_F(RegIncDecTest, DEY) {
-    test_register = &Registers::y;
-    result_byte = expected_regs.y -= 1;
-    Execute(MakeCode(INS_DEY), 1);
-}
-
-// TEST_F(RegIncDecTest, INC_ACC) {
-//     test_register = &Registers::a;
-//     result_byte = expected_regs.a += 1;
-//     Execute(MakeCode(INS_INC_ACC), 1);
-// }
-
-// TEST_F(RegIncDecTest, DEC_ACC) {
-//     test_register = &Registers::a;
-//     result_byte = expected_regs.a -= 1;
-//     Execute(MakeCode(INS_DEC_ACC), 1);
-// }
-
-class RegisterTransferTest : public RegisterBaseTest {
+using RegTransferTestArg = std::tuple<Opcode, const char *, Reg8Ptr, Reg8Ptr>;
+class RegisterTransferTest : public RegisterBaseTest, public ::testing::WithParamInterface<RegTransferTestArg> {
 public:
     // Affect Flags: N Z
     // These instructions are implied mode, have a length of one byte and require two machine cycles.
@@ -87,55 +65,38 @@ public:
     Reg8Ptr source_reg;
     Reg8Ptr target_reg;
 
-    void Execute(const std::vector<uint8_t> &data, uint64_t cycles) override {
+    void Execute(const std::vector<uint8_t> &data) override {
         auto source_byte = expected_regs.*source_reg;
         if (target_reg != &Registers::stack_pointer) {
             expected_regs.SetFlag(Flags::Zero, source_byte == 0);
             expected_regs.SetFlag(Flags::Negative, (source_byte & 0x80) > 0);
         }
         expected_regs.*target_reg = source_byte;
-        RegisterBaseTest::Execute(data, cycles);
+        RegisterBaseTest::Execute(data);
     }
 };
 
-TEST_F(RegisterTransferTest, TAX) {
-    source_reg = &Registers::a;
-    target_reg = &Registers::x;
-    Execute(MakeCode(INS_TAX), 1);
+TEST_P(RegisterTransferTest, ) {
+    auto [opcode, name, src, dst] = GetParam();
+    source_reg = src;
+    target_reg = dst;
+    expected_code_length = 1;
+    // expected_cycles = 2;
+    Execute(MakeCode(opcode));
 }
 
-TEST_F(RegisterTransferTest, TAY) {
-    source_reg = &Registers::a;
-    target_reg = &Registers::y;
-    Execute(MakeCode(INS_TAY), 1);
+std::vector<RegTransferTestArg> GetTransferTestCases() {
+    return {
+        {INS_TAX, "TAX", &Registers::a, &Registers::x},             //
+        {INS_TAY, "TAY", &Registers::a, &Registers::y},             //
+        {INS_TXA, "TXA", &Registers::x, &Registers::a},             //
+        {INS_TYA, "TYA", &Registers::y, &Registers::a},             //
+        {INS_TXS, "TXS", &Registers::x, &Registers::stack_pointer}, //
+        {INS_TSX, "TSX", &Registers::stack_pointer, &Registers::x}, //
+    };
 }
 
-TEST_F(RegisterTransferTest, TXA) {
-    source_reg = &Registers::x;
-    target_reg = &Registers::a;
-    Execute(MakeCode(INS_TXA), 1);
-}
-
-TEST_F(RegisterTransferTest, TYA) {
-    source_reg = &Registers::y;
-    target_reg = &Registers::a;
-    Execute(MakeCode(INS_TYA), 1);
-}
-
-TEST_F(RegisterTransferTest, TXS) {
-    // MNEMONIC                        HEX TIM
-    // TXS (Transfer X to Stack ptr)   $9A  2
-    source_reg = &Registers::x;
-    target_reg = &Registers::stack_pointer;
-    Execute(MakeCode(INS_TXS), 2);
-}
-TEST_F(RegisterTransferTest, TSX) {
-    // MNEMONIC                        HEX TIM
-    // TSX (Transfer Stack ptr to X)   $BA  2
-    source_reg = &Registers::stack_pointer;
-    target_reg = &Registers::x;
-    Execute(MakeCode(INS_TSX), 2);
-}
+INSTANTIATE_TEST_SUITE_P(, RegisterTransferTest, ::testing::ValuesIn(GetTransferTestCases()), GenTestNameFunc());
 
 using FlagChangeTestArg = std::tuple<Opcode, std::string, Registers::Flags, bool>;
 
@@ -167,15 +128,17 @@ public:
 
     static constexpr uint8_t kInstructionCycles = 2;
 
-    void Execute() {
+    void ExecuteTest() {
         auto [opcode, name, flag, state] = GetParam();
         expected_regs.SetFlag(flag, state);
-        RegisterBaseTest::Execute(MakeCode(opcode), kInstructionCycles);
+        // expected_cycles = kInstructionCycles;
+        expected_code_length = 1;
+        RegisterBaseTest::Execute(MakeCode(opcode));
     }
 };
 
 TEST_P(FlagChangeTest, ) {
-    Execute();
+    ExecuteTest();
 }
 
 std::vector<FlagChangeTestArg> GetFlagChangeTestCases() {
@@ -191,13 +154,15 @@ std::vector<FlagChangeTestArg> GetFlagChangeTestCases() {
     };
 }
 
-INSTANTIATE_TEST_SUITE_P(FlagChange, FlagChangeTest, ::testing::ValuesIn(GetFlagChangeTestCases()),
+INSTANTIATE_TEST_SUITE_P(, FlagChangeTest, ::testing::ValuesIn(GetFlagChangeTestCases()),
                          [](const auto &info) -> std::string { return fmt::format("{}", std::get<1>(info.param)); });
 
 class MiscTest : public RegisterBaseTest {};
 
 TEST_F(MiscTest, NOP) {
-    Execute(MakeCode(INS_NOP), 2);
+    expected_code_length = 1;
+    expected_cycles = 2;
+    Execute(MakeCode(INS_NOP));
 }
 
 TEST_F(MiscTest, BRK) {
@@ -212,8 +177,10 @@ TEST_F(MiscTest, BRK) {
     // to replace a two-byte instruction for debugging and the subsequent RTI will be correct.
 
     expected_regs.SetFlag(Flags::Brk, true);
+    expected_code_length = 2;
+    expected_cycles = 7;
 
-    Execute(MakeCode(INS_BRK, (uint8_t)0), 7);
+    Execute(MakeCode(INS_BRK, (uint8_t)0));
 }
 
 } // namespace emu::cpu6502

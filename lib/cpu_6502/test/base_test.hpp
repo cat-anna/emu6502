@@ -5,6 +5,7 @@
 #include <emu_core/clock.hpp>
 #include <emu_core/memory.hpp>
 #include <gtest/gtest.h>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -36,12 +37,33 @@ public:
         cpu.memory = &memory;
         cpu.clock = &clock;
         memory.clock = &clock;
+    }
 
+    uint8_t zero_page_address{0};
+    uint8_t indirect_address{0};
+    uint8_t target_byte{0};
+    MemPtr test_address{0};
+    MemPtr target_address{0};
+
+    std::optional<uint64_t> expected_cycles;
+    std::optional<uint64_t> expected_code_length;
+
+    bool is_testing_jumps = false;
+    bool random_reg_values = false;
+
+    void SetUp() override {
         cpu.Reset();
-        expected_regs.a = 0x10;
-        expected_regs.x = 0x20;
-        expected_regs.y = 0x30;
-        expected_regs.stack_pointer = 0x40;
+        if (random_reg_values) {
+            expected_regs.a = RandomByte();
+            expected_regs.x = RandomByte();
+            expected_regs.y = RandomByte();
+            expected_regs.stack_pointer = RandomByte();
+        } else {
+            expected_regs.a = 0x10;
+            expected_regs.x = 0x20;
+            expected_regs.y = 0x30;
+            expected_regs.stack_pointer = 0x40;
+        }
         expected_regs.program_counter = kBaseCodeAddress;
         expected_regs.flags = RandomByte();
         cpu.reg = expected_regs;
@@ -52,38 +74,34 @@ public:
             target_byte = RandomByte();
             test_address = kBaseDataAddress | (RandomByte() & 0xF0);
             target_address = test_address;
-        } while (indirect_address + expected_regs.y != zero_page_address &&
-                 zero_page_address + expected_regs.x != indirect_address);
+        } while (indirect_address + expected_regs.y == zero_page_address ||
+                 zero_page_address + expected_regs.x == indirect_address);
+
+        EXPECT_TRUE(zero_page_address + expected_regs.x != indirect_address);
+        EXPECT_TRUE(indirect_address + expected_regs.y != zero_page_address);
     }
 
-    uint8_t zero_page_address{0};
-    uint8_t indirect_address{0};
-    uint8_t target_byte{0};
-    MemPtr test_address{0};
-    MemPtr target_address{0};
-
-    bool is_testing_jumps = false;
-    bool enable_cycles_verification = false;
-
-    void SetUp() override { //
-    }
-
-    virtual void Execute(const std::vector<uint8_t> &data, uint64_t cycles) {
+    virtual void Execute(const std::vector<uint8_t> &code) {
         if (!is_testing_jumps) {
-            expected_regs.program_counter = static_cast<uint16_t>(kBaseCodeAddress + data.size());
+            expected_regs.program_counter = static_cast<uint16_t>(kBaseCodeAddress + code.size());
         }
+
         std::cout << fmt::format(
             "SETUP target_byte=0x{:02x}; target_address={:04x} zero_page_address=0x{:02x}; indirect_address=0x{:02x}; "
             "test_address=0x{:04x};\n",
             target_byte, target_address, zero_page_address, indirect_address, test_address);
         std::cout << "CPU STATE 0: " << cpu.reg.Dump() << "\n";
-        WriteMemory(kBaseCodeAddress, data);
+
+        EXPECT_EQ(code.size(), expected_code_length.value_or(0));
+        WriteMemory(kBaseCodeAddress, code);
+
         cpu.ExecuteNextInstruction();
+
         std::cout << "CPU STATE 1: " << cpu.reg.Dump() << "\n";
         std::cout << "CYCLES:" << clock.CurrentCycle() << "\n";
 
-        if (enable_cycles_verification) {
-            EXPECT_EQ(clock.CurrentCycle(), cycles); //TODO
+        if (expected_cycles.has_value()) {
+            EXPECT_EQ(clock.CurrentCycle(), expected_cycles.value());
         }
     }
 
@@ -124,20 +142,36 @@ public:
         case AddressMode::INDX:
         case AddressMode::ZP:
         case AddressMode::ZPX:
+        case AddressMode::ZPY:
             return MakeCode(opcode, zero_page_address);
         case AddressMode::ACC:
             return MakeCode(opcode);
 
         case AddressMode::Implied:
         case AddressMode::ABS_IND:
-        case AddressMode::ZPY:
         case AddressMode::REL:
+            EXPECT_FALSE(true) << "Not implented: " << __FUNCTION__;
             break; // TODO
         }
         throw std::runtime_error("Invalid address mode");
     }
 
-    void WriteMemory(MemPtr addr, const std::vector<uint8_t> &data) { memory.Write(addr, data); }
+    template <typename iterable>
+    static std::string to_hex_array(const iterable &container) {
+        std::string hex_table;
+        for (auto v : container) {
+            if (!hex_table.empty()) {
+                hex_table += ",";
+            }
+            hex_table += fmt::format("0x{:02x}", v);
+        }
+        return hex_table;
+    }
+
+    void WriteMemory(MemPtr addr, const std::vector<uint8_t> &data) {
+        std::cout << fmt::format("MEM WRITE: {:04x} -> {}\n", addr, to_hex_array(data));
+        memory.Write(addr, data);
+    }
     void VerifyMemory(MemPtr addr, const std::vector<uint8_t> &data) {
         auto content = memory.ReadRange(addr, data.size());
         EXPECT_EQ(data, content) << fmt::format("Base address: {:04x}", addr);
@@ -159,6 +193,9 @@ public:
         case AddressMode::ZPX:
             target_address = zero_page_address + expected_regs.x;
             break;
+        case AddressMode::ZPY:
+            target_address = zero_page_address + expected_regs.y;
+            break;
         case AddressMode::ABSX:
             target_address = test_address + expected_regs.x;
             break;
@@ -176,8 +213,8 @@ public:
 
         case AddressMode::Implied:
         case AddressMode::ABS_IND:
-        case AddressMode::ZPY:
         case AddressMode::REL:
+            EXPECT_FALSE(true) << "Not implented: " << __FUNCTION__;
             break; // TODO
         }
 
@@ -190,7 +227,39 @@ inline auto GenTestNameFunc(std::string caption = "") {
         caption += "_";
     }
     return [caption = std::move(caption)](const auto &info) -> std::string {
-        return fmt::format("{}{}", caption, to_string(std::get<1>(info.param)));
+        const auto &param = info.param;
+        std::string name;
+
+        using tuple_type = std::decay_t<decltype(param)>;
+        using arg1 = std::tuple_element_t<1, tuple_type>;
+        using arg2 = std::tuple_element_t<2, tuple_type>;
+
+        if constexpr (std::is_same_v<arg1, AddressMode>) {
+            if (!name.empty()) {
+                name += "_";
+            }
+            name += to_string(std::get<1>(param));
+        }
+        if constexpr (std::is_same_v<arg1, const char *> || //
+                      std::is_same_v<arg1, std::string> ||  //
+                      std::is_same_v<arg1, std::string_view>) {
+            if (!name.empty()) {
+                name += "_";
+            }
+            name += std::get<1>(param);
+        }
+
+        if constexpr (std::is_same_v<arg2, AddressMode>) {
+            if (!name.empty()) {
+                name += "_";
+            }
+            name += to_string(std::get<2>(param));
+        }
+        // name = fmt::format("{}_{}", std::get<1>(param), to_string(std::get<2>(param)));
+        // } else {
+        // name = to_string(std::get<1>(param));
+
+        return caption + name;
     };
 }
 

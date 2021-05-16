@@ -22,8 +22,8 @@ InstructionHandlerArray GenInstructionHandlerArray(InstructionSet instruction_se
     r[INS_LDA_ABSY] = &Register8Load<&Registers::a, kFetchABSY>;
     r[INS_LDA_IM] = &Register8Load<&Registers::a, kFetchIM>;
     r[INS_LDA_ZP] = &Register8Load<&Registers::a, kFetchZP>;
-    r[INS_LDA_INDX] = &Register8Load<&Registers::a, kFetchINDX>;
     r[INS_LDA_ZPX] = &Register8Load<&Registers::a, kFetchZPX>;
+    r[INS_LDA_INDX] = &Register8Load<&Registers::a, kFetchINDX>;
     r[INS_LDA_INDY] = &Register8Load<&Registers::a, kFetchINDY>;
     // r[INS_LDA_INDZP] = &Register8Load<&Registers::a, &Cpu6502::GetZeroPageIndirectAddress>;
 
