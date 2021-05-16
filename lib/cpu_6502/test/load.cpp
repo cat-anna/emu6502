@@ -19,7 +19,7 @@ public:
         auto [opcode, name, mode, len, cycles, reg] = GetParam();
 
         expected_code_length = len;
-        // expected_cycles = cycles;
+        expected_cycles = cycles;
 
         expected_regs.*reg = target_byte;
         expected_regs.SetFlag(Flags::Zero, target_byte == 0);

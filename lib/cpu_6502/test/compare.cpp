@@ -25,7 +25,7 @@ public:
 
     void Execute(const std::vector<uint8_t> &data) override {
         auto [opcode, name, mode, len, cycles, test_register] = GetParam();
-        // expected_cycles = cycles;
+        expected_cycles = cycles;
         expected_code_length = len;
 
         auto v = expected_regs.*test_register;

@@ -18,8 +18,8 @@ InstructionHandlerArray GenInstructionHandlerArray(InstructionSet instruction_se
 
     //LDA
     r[INS_LDA_ABS] = &Register8Load<&Registers::a, kFetchABS>;
-    r[INS_LDA_ABSX] = &Register8Load<&Registers::a, kFetchABSX>;
-    r[INS_LDA_ABSY] = &Register8Load<&Registers::a, kFetchABSY>;
+    r[INS_LDA_ABSX] = &Register8Load<&Registers::a, kFetchFastABSX>;
+    r[INS_LDA_ABSY] = &Register8Load<&Registers::a, kFetchFastABSY>;
     r[INS_LDA_IM] = &Register8Load<&Registers::a, kFetchIM>;
     r[INS_LDA_ZP] = &Register8Load<&Registers::a, kFetchZP>;
     r[INS_LDA_ZPX] = &Register8Load<&Registers::a, kFetchZPX>;
@@ -29,17 +29,18 @@ InstructionHandlerArray GenInstructionHandlerArray(InstructionSet instruction_se
 
     //LDX
     r[INS_LDX_ABS] = &Register8Load<&Registers::x, kFetchABS>;
-    r[INS_LDX_ABSY] = &Register8Load<&Registers::x, kFetchABSY>;
+    r[INS_LDX_ABSY] = &Register8Load<&Registers::x, kFetchFastABSY>;
     r[INS_LDX_IM] = &Register8Load<&Registers::x, kFetchIM>;
     r[INS_LDX_ZP] = &Register8Load<&Registers::x, kFetchZP>;
     r[INS_LDX_ZPY] = &Register8Load<&Registers::x, kFetchZPY>;
 
     //LDY
     r[INS_LDY_ABS] = &Register8Load<&Registers::y, kFetchABS>;
-    r[INS_LDY_ABSX] = &Register8Load<&Registers::y, kFetchABSX>;
+    r[INS_LDY_ABSX] = &Register8Load<&Registers::y, kFetchFastABSX>;
     r[INS_LDY_IM] = &Register8Load<&Registers::y, kFetchIM>;
     r[INS_LDY_ZP] = &Register8Load<&Registers::y, kFetchZP>;
     r[INS_LDY_ZPX] = &Register8Load<&Registers::y, kFetchZPX>;
+
     //STA
     r[INS_STA_ZP] = &Register8Store<&Registers::a, kAddressZP>;
     r[INS_STA_ZPX] = &Register8Store<&Registers::a, kAddressZPX>;
@@ -47,7 +48,7 @@ InstructionHandlerArray GenInstructionHandlerArray(InstructionSet instruction_se
     r[INS_STA_ABSX] = &Register8Store<&Registers::a, kAddressABSX>;
     r[INS_STA_ABSY] = &Register8Store<&Registers::a, kAddressABSY>;
     r[INS_STA_INDX] = &Register8Store<&Registers::a, kAddressINDX>;
-    r[INS_STA_INDY] = &Register8Store<&Registers::a, kAddressINDY>;
+    r[INS_STA_INDY] = &Register8Store<&Registers::a, kAddressSlowINDY>;
     // r[INS_STA_INDZP] = &Register8Store<&Registers::a, &Cpu6502::kAddressGetZeroPageIndirectAddress>;
 
     //STX
@@ -91,16 +92,16 @@ InstructionHandlerArray GenInstructionHandlerArray(InstructionSet instruction_se
     r[INS_ADC_ABS] = &ArithmeticOperation<kFetchABS, false>;
     r[INS_ADC_ZP] = &ArithmeticOperation<kFetchZP, false>;
     r[INS_ADC_ZPX] = &ArithmeticOperation<kFetchZPX, false>;
-    r[INS_ADC_ABSX] = &ArithmeticOperation<kFetchABSX, false>;
-    r[INS_ADC_ABSY] = &ArithmeticOperation<kFetchABSY, false>;
+    r[INS_ADC_ABSX] = &ArithmeticOperation<kFetchFastABSX, false>;
+    r[INS_ADC_ABSY] = &ArithmeticOperation<kFetchFastABSY, false>;
     r[INS_ADC_INDX] = &ArithmeticOperation<kFetchINDX, false>;
     r[INS_ADC_INDY] = &ArithmeticOperation<kFetchINDY, false>;
     r[INS_SBC] = &ArithmeticOperation<kFetchIM, true>;
     r[INS_SBC_ABS] = &ArithmeticOperation<kFetchABS, true>;
     r[INS_SBC_ZP] = &ArithmeticOperation<kFetchZP, true>;
     r[INS_SBC_ZPX] = &ArithmeticOperation<kFetchZPX, true>;
-    r[INS_SBC_ABSX] = &ArithmeticOperation<kFetchABSX, true>;
-    r[INS_SBC_ABSY] = &ArithmeticOperation<kFetchABSY, true>;
+    r[INS_SBC_ABSX] = &ArithmeticOperation<kFetchFastABSX, true>;
+    r[INS_SBC_ABSY] = &ArithmeticOperation<kFetchFastABSY, true>;
     r[INS_SBC_INDX] = &ArithmeticOperation<kFetchINDX, true>;
     r[INS_SBC_INDY] = &ArithmeticOperation<kFetchINDY, true>;
 
@@ -109,8 +110,8 @@ InstructionHandlerArray GenInstructionHandlerArray(InstructionSet instruction_se
     r[INS_CMP_ZP] = &Register8Compare<&Registers::a, kFetchZP>;
     r[INS_CMP_ZPX] = &Register8Compare<&Registers::a, kFetchZPX>;
     r[INS_CMP_ABS] = &Register8Compare<&Registers::a, kFetchABS>;
-    r[INS_CMP_ABSX] = &Register8Compare<&Registers::a, kFetchABSX>;
-    r[INS_CMP_ABSY] = &Register8Compare<&Registers::a, kFetchABSY>;
+    r[INS_CMP_ABSX] = &Register8Compare<&Registers::a, kFetchFastABSX>;
+    r[INS_CMP_ABSY] = &Register8Compare<&Registers::a, kFetchFastABSY>;
     r[INS_CMP_INDY] = &Register8Compare<&Registers::a, kFetchINDY>;
     r[INS_CMP_INDX] = &Register8Compare<&Registers::a, kFetchINDX>;
     r[INS_CPX] = &Register8Compare<&Registers::x, kFetchIM>;
@@ -143,24 +144,24 @@ InstructionHandlerArray GenInstructionHandlerArray(InstructionSet instruction_se
     r[INS_AND_ZP] = &LogicalOperation<&Operation::AND, kFetchZP>;
     r[INS_AND_ZPX] = &LogicalOperation<&Operation::AND, kFetchZPX>;
     r[INS_AND_ABS] = &LogicalOperation<&Operation::AND, kFetchABS>;
-    r[INS_AND_ABSX] = &LogicalOperation<&Operation::AND, kFetchABSX>;
-    r[INS_AND_ABSY] = &LogicalOperation<&Operation::AND, kFetchABSY>;
+    r[INS_AND_ABSX] = &LogicalOperation<&Operation::AND, kFetchFastABSX>;
+    r[INS_AND_ABSY] = &LogicalOperation<&Operation::AND, kFetchFastABSY>;
     r[INS_AND_INDX] = &LogicalOperation<&Operation::AND, kFetchINDX>;
     r[INS_AND_INDY] = &LogicalOperation<&Operation::AND, kFetchINDY>;
     r[INS_ORA_IM] = &LogicalOperation<&Operation::ORA, kFetchIM>;
     r[INS_ORA_ZP] = &LogicalOperation<&Operation::ORA, kFetchZP>;
     r[INS_ORA_ZPX] = &LogicalOperation<&Operation::ORA, kFetchZPX>;
     r[INS_ORA_ABS] = &LogicalOperation<&Operation::ORA, kFetchABS>;
-    r[INS_ORA_ABSX] = &LogicalOperation<&Operation::ORA, kFetchABSX>;
-    r[INS_ORA_ABSY] = &LogicalOperation<&Operation::ORA, kFetchABSY>;
+    r[INS_ORA_ABSX] = &LogicalOperation<&Operation::ORA, kFetchFastABSX>;
+    r[INS_ORA_ABSY] = &LogicalOperation<&Operation::ORA, kFetchFastABSY>;
     r[INS_ORA_INDX] = &LogicalOperation<&Operation::ORA, kFetchINDX>;
     r[INS_ORA_INDY] = &LogicalOperation<&Operation::ORA, kFetchINDY>;
     r[INS_EOR_IM] = &LogicalOperation<&Operation::XOR, kFetchIM>;
     r[INS_EOR_ZP] = &LogicalOperation<&Operation::XOR, kFetchZP>;
     r[INS_EOR_ZPX] = &LogicalOperation<&Operation::XOR, kFetchZPX>;
     r[INS_EOR_ABS] = &LogicalOperation<&Operation::XOR, kFetchABS>;
-    r[INS_EOR_ABSX] = &LogicalOperation<&Operation::XOR, kFetchABSX>;
-    r[INS_EOR_ABSY] = &LogicalOperation<&Operation::XOR, kFetchABSY>;
+    r[INS_EOR_ABSX] = &LogicalOperation<&Operation::XOR, kFetchFastABSX>;
+    r[INS_EOR_ABSY] = &LogicalOperation<&Operation::XOR, kFetchFastABSY>;
     r[INS_EOR_INDX] = &LogicalOperation<&Operation::XOR, kFetchINDX>;
     r[INS_EOR_INDY] = &LogicalOperation<&Operation::XOR, kFetchINDY>;
 

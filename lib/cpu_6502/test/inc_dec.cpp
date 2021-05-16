@@ -22,7 +22,7 @@ public:
         BaseTest::SetUp();
 
         auto [opcode, name, mode, len, cycles, func] = GetParam();
-        // expected_cycles = cycles;
+        expected_cycles = cycles;
         expected_code_length = len;
         result_byte = func(target_byte);
 
@@ -49,19 +49,19 @@ std::vector<IncDecTestArg> GetIncDecTestCases() {
         // Zero Page     INC $44       $E6  2   5
         {INS_INC_ZP, "INC", AddressMode::ZP, 2_u8, 5_u8, INC},
         // Zero Page,X   INC $44,X     $F6  2   6
-        {INS_INC_ZPX, "INC", AddressMode::ZPX, 2_u8, 5_u8, INC},
+        {INS_INC_ZPX, "INC", AddressMode::ZPX, 2_u8, 6_u8, INC},
         // Absolute      INC $4400     $EE  3   6
-        {INS_INC_ABS, "INC", AddressMode::ABS, 3_u8, 5_u8, INC},
+        {INS_INC_ABS, "INC", AddressMode::ABS, 3_u8, 6_u8, INC},
         // Absolute,X    INC $4400,X   $FE  3   7
         {INS_INC_ABSX, "INC", AddressMode::ABSX, 3_u8, 7_u8, INC},
         // Zero Page     DEC $44       $C6  2   5
-        {INS_DEC_ZP, "DEC", AddressMode::ZP, 2, 5, DEC},
+        {INS_DEC_ZP, "DEC", AddressMode::ZP, 2_u8, 5_u8, DEC},
         // Zero Page,X   DEC $44,X     $D6  2   6
-        {INS_DEC_ZPX, "DEC", AddressMode::ZPX, 2, 6, DEC},
+        {INS_DEC_ZPX, "DEC", AddressMode::ZPX, 2_u8, 6_u8, DEC},
         // Absolute      DEC $4400     $CE  3   6
-        {INS_DEC_ABS, "DEC", AddressMode::ABS, 3, 6, DEC},
+        {INS_DEC_ABS, "DEC", AddressMode::ABS, 3_u8, 6_u8, DEC},
         // Absolute,X    DEC $4400,X   $DE  3   7
-        {INS_DEC_ABSX, "DEC", AddressMode::ABSX, 3, 7, DEC},
+        {INS_DEC_ABSX, "DEC", AddressMode::ABSX, 3_u8, 7_u8, DEC},
     };
 }
 

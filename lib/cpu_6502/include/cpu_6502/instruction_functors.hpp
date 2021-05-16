@@ -15,6 +15,16 @@ using Reg8Ptr = Reg8(Registers::*);
 
 //-----------------------------------------------------------------------------
 
+template <typename OffType>
+bool IsAcrossPage(MemPtr base, OffType inc) {
+    auto page0 = (base >> 8) & 0xFF;
+    auto r = base + inc;
+    auto page1 = ((r >> 8) & 0xFF);
+    return page0 != page1;
+}
+
+//-----------------------------------------------------------------------------
+
 void NOP(Cpu6502 *cpu) {
     cpu->clock->WaitForNextCycle();
 }
@@ -41,6 +51,7 @@ void Register8Transfer(Cpu6502 *cpu) {
         cpu->reg.SetNegativeZeroFlag(value);
     }
     cpu->reg.*target = value;
+    cpu->clock->WaitForNextCycle();
 }
 
 template <Reg8Ptr source, int8_t direction>
@@ -53,6 +64,7 @@ void Register8Increment(Cpu6502 *cpu) {
     }
     cpu->reg.SetNegativeZeroFlag(value);
     cpu->reg.*source = value;
+    cpu->clock->WaitForNextCycle();
 }
 
 //-----------------------------------------------------------------------------
@@ -67,6 +79,7 @@ void MemoryIncrement(Cpu6502 *cpu) {
         --value;
     }
     cpu->reg.SetNegativeZeroFlag(value);
+    cpu->clock->WaitForNextCycle();
     cpu->memory->Store(addr, value);
 }
 
@@ -78,16 +91,6 @@ void Register8Compare(Cpu6502 *cpu) {
     auto operand = read_func(cpu);
     cpu->reg.SetNegativeZeroFlag(src - operand);
     cpu->reg.SetFlag(Flags::Carry, src >= operand);
-}
-
-//-----------------------------------------------------------------------------
-
-template <Registers::Flags flag, bool state>
-void Branch(Cpu6502 *cpu) {
-    auto offset_address = static_cast<int8_t>(FetchNextByte(cpu));
-    if (cpu->reg.TestFlag(flag) == state) {
-        cpu->reg.program_counter += offset_address;
-    }
 }
 
 //-----------------------------------------------------------------------------
@@ -189,15 +192,19 @@ void SetFlag(Cpu6502 *cpu) {
 
 //-----------------------------------------------------------------------------
 
-void StackPushByte(Cpu6502 *cpu, uint8_t v) {
+void StackPushByte(Cpu6502 *cpu, uint8_t v, bool reuse_cycle = false) {
     cpu->memory->Store(cpu->reg.StackPointerMemoryAddress(), v);
-    cpu->clock->WaitForNextCycle();
+    if (!reuse_cycle) {
+        cpu->clock->WaitForNextCycle();
+    }
     cpu->reg.stack_pointer--;
 }
 
-uint8_t StackPullByte(Cpu6502 *cpu) {
+uint8_t StackPullByte(Cpu6502 *cpu, bool reuse_cycle = false) {
     auto operand = cpu->memory->Load(cpu->reg.StackPointerMemoryAddress());
-    cpu->clock->WaitForNextCycle();
+    if (!reuse_cycle) {
+        cpu->clock->WaitForNextCycle();
+    }
     cpu->reg.stack_pointer++;
     return operand;
 }
@@ -234,15 +241,25 @@ void PullFlags(Cpu6502 *cpu) {
 
 //-----------------------------------------------------------------------------
 
+template <Registers::Flags flag, bool state>
+void Branch(Cpu6502 *cpu) {
+    auto offset_address = static_cast<int8_t>(FetchNextByte(cpu));
+    if (cpu->reg.TestFlag(flag) == state) {
+        cpu->clock->WaitForNextCycle();
+        if (IsAcrossPage(cpu->reg.program_counter, offset_address)) {
+            cpu->clock->WaitForNextCycle();
+        }
+        cpu->reg.program_counter += offset_address;
+    }
+}
+
 void JumpABS(Cpu6502 *cpu) {
     auto addr = GetAbsoluteAddress(cpu);
-    cpu->clock->WaitForNextCycle();
     cpu->reg.program_counter = addr;
 }
 
 void JumpIND(Cpu6502 *cpu) {
     auto addr = GetAbsoluteAddress(cpu);
-    cpu->clock->WaitForNextCycle();
     MemPtr fetched_address = cpu->memory->Load(addr);
     addr = (addr & 0xFF00) | ((addr + 1) & 0xFF);
     fetched_address |= cpu->memory->Load(addr) << 8;
@@ -253,7 +270,7 @@ void JSR(Cpu6502 *cpu) { //
     auto addr = GetAbsoluteAddress(cpu);
     cpu->reg.program_counter -= 1;
     StackPushByte(cpu, cpu->reg.program_counter >> 8);
-    StackPushByte(cpu, cpu->reg.program_counter & 0xff);
+    StackPushByte(cpu, cpu->reg.program_counter & 0xff, true);
     cpu->reg.program_counter = addr;
 }
 
@@ -261,15 +278,12 @@ void RTS(Cpu6502 *cpu) { //
     uint16_t low = StackPullByte(cpu);
     uint16_t hi = StackPullByte(cpu);
     cpu->clock->WaitForNextCycle();
-    cpu->clock->WaitForNextCycle();
     cpu->reg.program_counter = (hi << 8 | low) + 1;
 }
 
 void RTI(Cpu6502 *cpu) {
     uint16_t low = StackPullByte(cpu);
-    uint16_t hi = StackPullByte(cpu);
-    cpu->clock->WaitForNextCycle();
-    cpu->clock->WaitForNextCycle();
+    uint16_t hi = StackPullByte(cpu, true);
     cpu->reg.program_counter = (hi << 8 | low);
     cpu->reg.flags = StackPullByte(cpu);
 }
@@ -294,8 +308,12 @@ constexpr auto kFetchZP = &FetchMemory<kAddressZP>;
 constexpr auto kFetchZPX = &FetchMemory<kAddressZPX>;
 constexpr auto kFetchZPY = &FetchMemory<kAddressZPY>;
 constexpr auto kFetchABS = &FetchMemory<kAddressABS>;
+
 constexpr auto kFetchABSX = &FetchMemory<kAddressABSX>;
 constexpr auto kFetchABSY = &FetchMemory<kAddressABSY>;
+constexpr auto kFetchFastABSX = &FetchMemory<kAddressFastABSX>;
+constexpr auto kFetchFastABSY = &FetchMemory<kAddressFastABSY>;
+
 constexpr auto kFetchINDX = &FetchMemory<kAddressINDX>;
 constexpr auto kFetchINDY = &FetchMemory<kAddressINDY>;
 

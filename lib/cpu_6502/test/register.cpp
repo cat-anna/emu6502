@@ -34,7 +34,7 @@ TEST_P(RegIncDecTest, ) {
     auto [opcode, name, reg, inc] = GetParam();
     test_register = reg;
     expected_code_length = 1;
-    // expected_cycles = 2;
+    expected_cycles = 2;
     if (inc) {
         result_byte = (expected_regs.*reg) += 1;
     } else {
@@ -81,7 +81,7 @@ TEST_P(RegisterTransferTest, ) {
     source_reg = src;
     target_reg = dst;
     expected_code_length = 1;
-    // expected_cycles = 2;
+    expected_cycles = 2;
     Execute(MakeCode(opcode));
 }
 
@@ -131,7 +131,7 @@ public:
     void ExecuteTest() {
         auto [opcode, name, flag, state] = GetParam();
         expected_regs.SetFlag(flag, state);
-        // expected_cycles = kInstructionCycles;
+        expected_cycles = kInstructionCycles;
         expected_code_length = 1;
         RegisterBaseTest::Execute(MakeCode(opcode));
     }

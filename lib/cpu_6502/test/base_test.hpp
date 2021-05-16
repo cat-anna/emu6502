@@ -83,7 +83,7 @@ public:
 
     virtual void Execute(const std::vector<uint8_t> &code) {
         if (!is_testing_jumps) {
-            expected_regs.program_counter = static_cast<uint16_t>(kBaseCodeAddress + code.size());
+            expected_regs.program_counter += static_cast<MemPtr>(code.size());
         }
 
         std::cout << fmt::format(
@@ -93,7 +93,7 @@ public:
         std::cout << "CPU STATE 0: " << cpu.reg.Dump() << "\n";
 
         EXPECT_EQ(code.size(), expected_code_length.value_or(0));
-        WriteMemory(kBaseCodeAddress, code);
+        WriteMemory(cpu.reg.program_counter, code);
 
         cpu.ExecuteNextInstruction();
 
@@ -157,7 +157,7 @@ public:
     }
 
     template <typename iterable>
-    static std::string to_hex_array(const iterable &container) {
+    static std::string ToHexArray(const iterable &container) {
         std::string hex_table;
         for (auto v : container) {
             if (!hex_table.empty()) {
@@ -169,7 +169,7 @@ public:
     }
 
     void WriteMemory(MemPtr addr, const std::vector<uint8_t> &data) {
-        std::cout << fmt::format("MEM WRITE: {:04x} -> {}\n", addr, to_hex_array(data));
+        std::cout << fmt::format("MEM WRITE: {:04x} -> {}\n", addr, ToHexArray(data));
         memory.Write(addr, data);
     }
     void VerifyMemory(MemPtr addr, const std::vector<uint8_t> &data) {
@@ -255,9 +255,6 @@ inline auto GenTestNameFunc(std::string caption = "") {
             }
             name += to_string(std::get<2>(param));
         }
-        // name = fmt::format("{}_{}", std::get<1>(param), to_string(std::get<2>(param)));
-        // } else {
-        // name = to_string(std::get<1>(param));
 
         return caption + name;
     };

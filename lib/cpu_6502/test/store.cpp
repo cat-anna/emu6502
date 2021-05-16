@@ -14,7 +14,7 @@ public:
         auto [opcode, name, mode, len, cycles, reg] = GetParam();
 
         expected_code_length = len;
-        // expected_cycles = cycles;
+        expected_cycles = cycles;
 
         (cpu.reg.*reg) = (expected_regs.*reg) = target_byte;
     }

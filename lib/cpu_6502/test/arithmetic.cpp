@@ -28,7 +28,7 @@ public:
 
         auto [opcode, name, mode, len, cycles, op] = GetParam();
         result = op(cpu.reg.a, target_byte, cpu.reg.CarryValue());
-        // expected_cycles = cycles;
+        expected_cycles = cycles;
         expected_code_length = len;
     }
 

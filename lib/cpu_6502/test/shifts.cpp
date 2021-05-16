@@ -34,7 +34,7 @@ public:
         cpu.reg.SetFlag(Flags::Carry, carry);
 
         auto [opcode, name, mode, len, cycles, func] = GetParam();
-        // expected_cycles = cycles;
+        expected_cycles = cycles;
         expected_code_length = len;
 
         auto [result, new_carry] = func(target_byte, carry);

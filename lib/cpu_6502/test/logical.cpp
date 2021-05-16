@@ -25,7 +25,7 @@ public:
     void Execute(const std::vector<uint8_t> &data) override {
         auto [opcode, name, mode, len, cycles, func] = GetParam();
         expected_code_length = len;
-        // expected_cycles = cycles;
+        expected_cycles = cycles;
 
         uint8_t result = func(expected_regs.a, target_byte);
 
@@ -119,7 +119,7 @@ public:
     void Execute(const std::vector<uint8_t> &data) {
         auto [opcode, name, mode, len, cycles, func] = GetParam();
         expected_code_length = len;
-        // expected_cycles = cycles;
+        expected_cycles = cycles;
         uint8_t result = func(expected_regs.a, target_byte);
 
         expected_regs.SetFlag(Flags::Zero, result == 0);
