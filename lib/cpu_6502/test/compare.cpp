@@ -2,9 +2,11 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-using namespace emu::cpu::opcode;
+namespace emu::cpu6502 {
 
-using CompareTestArg = std::tuple<Opcode, AddressMode, uint8_t, uint8_t, emu::cpu::Cpu6502::Reg8Ptr>;
+using namespace emu::cpu6502::opcode;
+
+using CompareTestArg = std::tuple<Opcode, AddressMode, uint8_t, uint8_t, emu::cpu6502::Reg8Ptr>;
 
 class CompareTest : public BaseTest, public ::testing::WithParamInterface<CompareTestArg> {
 public:
@@ -52,66 +54,65 @@ TEST_P(CompareTest, ) {
 }
 
 std::vector<CompareTestArg> GetCMPTestCases() {
-    using Registers = emu::cpu::Cpu6502::Registers;
     // + add 1 cycle if page boundary crossed
     return {
         // MODE           SYNTAX       HEX LEN TIM
         // Immediate     CMP #$44      $C9  2   2
-        {INS_CMP, AddressMode::IM, 2, 2, &Registers::a},
+        {INS_CMP, AddressMode::IM, 2_u8, 2_u8, &Registers::a},
 
         // Zero Page     CMP $44       $C5  2   3
-        {INS_CMP_ZP, AddressMode::ZP, 2, 3, &Registers::a},
+        {INS_CMP_ZP, AddressMode::ZP, 2_u8, 3_u8, &Registers::a},
 
         // Zero Page,X   CMP $44,X     $D5  2   4
-        {INS_CMP_ZPX, AddressMode::ZPX, 2, 4, &Registers::a},
+        {INS_CMP_ZPX, AddressMode::ZPX, 2_u8, 4_u8, &Registers::a},
 
         // Absolute      CMP $4400     $CD  3   4
-        {INS_CMP_ABS, AddressMode::ABS, 3, 4, &Registers::a},
+        {INS_CMP_ABS, AddressMode::ABS, 3_u8, 4_u8, &Registers::a},
 
         // Absolute,X    CMP $4400,X   $DD  3   4+
-        {INS_CMP_ABSX, AddressMode::ABSX, 3, 4, &Registers::a},
+        {INS_CMP_ABSX, AddressMode::ABSX, 3_u8, 4_u8, &Registers::a},
 
         // Absolute,Y    CMP $4400,Y   $D9  3   4+
-        {INS_CMP_ABSY, AddressMode::ABSY, 3, 4, &Registers::a},
+        {INS_CMP_ABSY, AddressMode::ABSY, 3_u8, 4_u8, &Registers::a},
 
         // Indirect,X    CMP ($44,X)   $C1  2   6
-        {INS_CMP_INDX, AddressMode::INDX, 2, 6, &Registers::a},
+        {INS_CMP_INDX, AddressMode::INDX, 2_u8, 6_u8, &Registers::a},
 
         // Indirect,Y    CMP ($44),Y   $D1  2   5+
-        {INS_CMP_INDY, AddressMode::INDY, 2, 5, &Registers::a},
+        {INS_CMP_INDY, AddressMode::INDY, 2_u8, 5_u8, &Registers::a},
     };
 }
 
 std::vector<CompareTestArg> GetCPXTestCases() {
-    using Registers = emu::cpu::Cpu6502::Registers;
     return {
         // MODE           SYNTAX       HEX LEN TIM
         // Immediate     CPX #$44      $E0  2   2
-        {INS_CPX, AddressMode::IM, 2, 2, &Registers::x},
+        {INS_CPX, AddressMode::IM, 2_u8, 2_u8, &Registers::x},
 
         // Zero Page     CPX $44       $E4  2   3
-        {INS_CPX_ZP, AddressMode::ZP, 2, 3, &Registers::x},
+        {INS_CPX_ZP, AddressMode::ZP, 2_u8, 3_u8, &Registers::x},
 
         // Absolute      CPX $4400     $EC  3   4
-        {INS_CPX_ABS, AddressMode::ABS, 3, 4, &Registers::x},
+        {INS_CPX_ABS, AddressMode::ABS, 3_u8, 4_u8, &Registers::x},
     };
 }
 
 std::vector<CompareTestArg> GetCPYTestCases() {
-    using Registers = emu::cpu::Cpu6502::Registers;
     return {
         // MODE           SYNTAX       HEX LEN TIM
         // Immediate     CPY #$44      $C0  2   2
-        {INS_CPY, AddressMode::IM, 2, 2, &Registers::y},
+        {INS_CPY, AddressMode::IM, 2_u8, 2_u8, &Registers::y},
 
         // Zero Page     CPY $44       $C4  2   3
-        {INS_CPY_ZP, AddressMode::ZP, 2, 3, &Registers::y},
+        {INS_CPY_ZP, AddressMode::ZP, 2_u8, 3_u8, &Registers::y},
 
         // Absolute      CPY $4400     $CC  3   4
-        {INS_CPY_ABS, AddressMode::ABS, 3, 4, &Registers::y},
+        {INS_CPY_ABS, AddressMode::ABS, 3_u8, 4_u8, &Registers::y},
     };
 }
 
 INSTANTIATE_TEST_SUITE_P(CMP, CompareTest, ::testing::ValuesIn(GetCMPTestCases()), GenTestNameFunc("CMP"));
 INSTANTIATE_TEST_SUITE_P(CPX, CompareTest, ::testing::ValuesIn(GetCPXTestCases()), GenTestNameFunc("CPX"));
 INSTANTIATE_TEST_SUITE_P(CPY, CompareTest, ::testing::ValuesIn(GetCPYTestCases()), GenTestNameFunc("CPY"));
+
+} // namespace emu::cpu6502

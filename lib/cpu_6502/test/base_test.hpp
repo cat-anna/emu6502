@@ -1,12 +1,17 @@
 #pragma once
 
-#include <cpu/cpu.hpp>
-#include <cpu/opcode.hpp>
+#include <cpu_6502/cpu6502.hpp>
+#include <cpu_6502/opcode.hpp>
 #include <emu_core/clock.hpp>
 #include <emu_core/memory.hpp>
 #include <gtest/gtest.h>
 #include <string>
 #include <vector>
+
+namespace emu::cpu6502 {
+
+using Reg8Ptr = Reg8(Registers::*);
+using Flags = Registers::Flags;
 
 constexpr uint8_t operator"" _u8(unsigned long long n) {
     return static_cast<uint8_t>(n);
@@ -14,13 +19,13 @@ constexpr uint8_t operator"" _u8(unsigned long long n) {
 
 class BaseTest : public testing::Test {
 public:
-    using AddressMode = emu::cpu::opcode::AddressMode;
+    using AddressMode = emu::cpu6502::AddressMode;
     using MemPtr = emu::MemPtr;
-    using Registers = emu::cpu::Cpu6502::Registers;
+    using Registers = emu::cpu6502::Registers;
     using Flags = Registers::Flags;
 
     emu::Memory memory;
-    emu::cpu::Cpu6502 cpu;
+    Cpu6502 cpu;
     emu::Clock clock;
     Registers expected_regs;
 
@@ -65,7 +70,7 @@ public:
 
     virtual void Execute(const std::vector<uint8_t> &data, uint64_t cycles) {
         if (!is_testing_jumps) {
-            expected_regs.program_counter = kBaseCodeAddress + data.size();
+            expected_regs.program_counter = static_cast<uint16_t>(kBaseCodeAddress + data.size());
         }
         std::cout << fmt::format(
             "SETUP target_byte=0x{:02x}; target_address={:04x} zero_page_address=0x{:02x}; indirect_address=0x{:02x}; "
@@ -188,3 +193,5 @@ inline auto GenTestNameFunc(std::string caption = "") {
         return fmt::format("{}{}", caption, to_string(std::get<1>(info.param)));
     };
 }
+
+} // namespace emu::cpu6502

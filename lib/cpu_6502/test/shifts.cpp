@@ -3,8 +3,10 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-using namespace emu::cpu::opcode;
-using Registers = emu::cpu::Cpu6502::Registers;
+namespace emu::cpu6502 {
+
+using namespace emu::cpu6502::opcode;
+using Registers = emu::cpu6502::Registers;
 
 using OpFunctor = std::function<std::tuple<uint8_t, bool>(uint8_t, bool)>;
 using LogicalTestArg = std::tuple<Opcode, const char *, AddressMode, uint8_t, uint8_t, OpFunctor>;
@@ -59,26 +61,26 @@ TEST_P(ShiftTest, WithoutCarry) {
 std::vector<LogicalTestArg> GetTestCases() {
     // ROR shifts all bits right one position. The Carry is shifted into bit 7 and the
     // original bit 0 is shifted into the Carry.
-    auto ROR = [](uint8_t v, bool carry) {
-        auto new_v = (v >> 1) | (carry ? 0x80 : 0);
+    auto ROR = [](uint8_t v, bool carry) -> std::tuple<uint8_t, bool> {
+        uint8_t new_v = (v >> 1) | (carry ? 0x80 : 0);
         return std::make_tuple(new_v, (v & 0x01) != 0);
     };
     // ROL shifts all bits left one position. The Carry is shifted into bit 0 and the
     // original bit 7 is shifted into the Carry.
-    auto ROL = [](uint8_t v, bool carry) {
-        auto new_v = (v << 1) | (carry ? 0x01 : 0);
+    auto ROL = [](uint8_t v, bool carry) -> std::tuple<uint8_t, bool> {
+        uint8_t new_v = (v << 1) | (carry ? 0x01 : 0);
         return std::make_tuple(new_v, (v & 0x80) != 0);
     };
     // LSR shifts all bits right one position. 0 is shifted into bit 7 and the
     // original bit 0 is shifted into the Carry.
-    auto LSR = [](uint8_t v, bool carry) {
-        auto new_v = (v >> 1);
+    auto LSR = [](uint8_t v, bool carry) -> std::tuple<uint8_t, bool> {
+        uint8_t new_v = (v >> 1);
         return std::make_tuple(new_v, (v & 0x01) != 0);
     };
     // ASL shifts all bits left one position. 0 is shifted into bit 0 and the
     // original bit 7 is shifted into the Carry.
-    auto ASL = [](uint8_t v, bool carry) {
-        auto new_v = (v << 1);
+    auto ASL = [](uint8_t v, bool carry) -> std::tuple<uint8_t, bool> {
+        uint8_t new_v = (v << 1);
         return std::make_tuple(new_v, (v & 0x80) != 0);
     };
     return {
@@ -129,3 +131,5 @@ std::vector<LogicalTestArg> GetTestCases() {
 INSTANTIATE_TEST_SUITE_P(, ShiftTest, ::testing::ValuesIn(GetTestCases()), [](const auto &info) {
     return fmt::format("{}_{}", std::get<1>(info.param), to_string(std::get<2>(info.param)));
 });
+
+} // namespace emu::cpu6502

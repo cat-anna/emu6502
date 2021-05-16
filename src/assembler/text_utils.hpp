@@ -30,7 +30,7 @@ inline std::vector<uint8_t> ToBytes(uint16_t v) {
 }
 
 struct InstructionArgument {
-    using AddressMode = emu::cpu::opcode::AddressMode;
+    using AddressMode = emu::cpu6502::opcode::AddressMode;
     std::vector<AddressMode> possible_address_modes;
     std::variant<std::nullptr_t, std::string, std::vector<uint8_t>> argument_value;
 
@@ -41,7 +41,7 @@ struct InstructionArgument {
     std::string to_string() const {
         std::string r = "InstructionArgument{{";
         for (auto i : possible_address_modes) {
-            r += emu::cpu::opcode::to_string(i);
+            r += emu::cpu6502::opcode::to_string(i);
             r += ",";
         }
         r += "}, ";

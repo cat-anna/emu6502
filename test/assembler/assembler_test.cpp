@@ -6,7 +6,7 @@
 #include <tuple>
 #include <vector>
 
-using namespace emu::cpu::opcode;
+using namespace emu::cpu6502::opcode;
 using namespace emu;
 using namespace emu::assembler;
 using namespace std::string_literals;

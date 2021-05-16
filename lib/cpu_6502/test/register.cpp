@@ -2,7 +2,9 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-using namespace emu::cpu::opcode;
+namespace emu::cpu6502 {
+
+using namespace emu::cpu6502::opcode;
 
 class RegisterBaseTest : public BaseTest {
 public:
@@ -29,9 +31,6 @@ class RegIncDecTest : public RegisterBaseTest {
 public:
     // Affect Flags: N Z
     // These instructions are implied mode, have a length of one byte and require two machine cycles.
-
-    using Reg8 = emu::cpu::Reg8;
-    using Reg8Ptr = Reg8(Registers::*);
 
     Reg8Ptr test_register;
     std::optional<uint8_t> result_byte;
@@ -84,9 +83,6 @@ class RegisterTransferTest : public RegisterBaseTest {
 public:
     // Affect Flags: N Z
     // These instructions are implied mode, have a length of one byte and require two machine cycles.
-
-    using Reg8 = emu::cpu::Reg8;
-    using Reg8Ptr = Reg8(Registers::*);
 
     Reg8Ptr source_reg;
     Reg8Ptr target_reg;
@@ -141,7 +137,7 @@ TEST_F(RegisterTransferTest, TSX) {
     Execute(MakeCode(INS_TSX), 2);
 }
 
-using FlagChangeTestArg = std::tuple<Opcode, std::string, emu::cpu::Cpu6502::Registers::Flags, bool>;
+using FlagChangeTestArg = std::tuple<Opcode, std::string, Registers::Flags, bool>;
 
 class FlagChangeTest : public RegisterBaseTest, public ::testing::WithParamInterface<FlagChangeTestArg> {
 public:
@@ -183,7 +179,7 @@ TEST_P(FlagChangeTest, ) {
 }
 
 std::vector<FlagChangeTestArg> GetFlagChangeTestCases() {
-    using Flags = emu::cpu::Cpu6502::Registers::Flags;
+    using Flags = Registers::Flags;
     return {
         {INS_CLC, "CLC", Flags::Carry, false},       //
         {INS_SEC, "SEC", Flags::Carry, true},        //
@@ -215,5 +211,9 @@ TEST_F(MiscTest, BRK) {
     // Therefore an RTI will go to the address of the BRK +2 so that BRK may be used
     // to replace a two-byte instruction for debugging and the subsequent RTI will be correct.
 
+    expected_regs.SetFlag(Flags::Brk, true);
+
     Execute(MakeCode(INS_BRK, (uint8_t)0), 7);
 }
+
+} // namespace emu::cpu6502

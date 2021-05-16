@@ -2,7 +2,9 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-using namespace emu::cpu::opcode;
+namespace emu::cpu6502 {
+
+using namespace emu::cpu6502::opcode;
 
 using ArithmeticTestArg = std::tuple<Opcode, AddressMode, uint8_t, uint8_t>;
 
@@ -74,28 +76,28 @@ std::vector<ArithmeticTestArg> GetADCTestCases() {
     return {
         // MODE           SYNTAX       HEX LEN TIM
         // Immediate     ADC #$44      $69  2   2
-        {INS_ADC, AddressMode::IM, 2, 2},
+        {INS_ADC, AddressMode::IM, 2_u8, 2_u8},
 
         // Absolute      ADC $4400     $6D  3   4
-        {INS_ADC_ABS, AddressMode::ABS, 3, 4},
+        {INS_ADC_ABS, AddressMode::ABS, 3_u8, 4_u8},
 
         // Zero Page     ADC $44       $65  2   3
-        {INS_ADC_ZP, AddressMode::ZP, 2, 3},
+        {INS_ADC_ZP, AddressMode::ZP, 2_u8, 3_u8},
 
         // Zero Page,X   ADC $44,X     $75  2   4
-        {INS_ADC_ZPX, AddressMode::ZPX, 2, 4},
+        {INS_ADC_ZPX, AddressMode::ZPX, 2_u8, 4_u8},
 
         // Absolute,X    ADC $4400,X   $7D  3   4+
-        {INS_ADC_ABSX, AddressMode::ABSX, 3, 4},
+        {INS_ADC_ABSX, AddressMode::ABSX, 3_u8, 4_u8},
 
         // Absolute,Y    ADC $4400,Y   $79  3   4+
-        {INS_ADC_ABSY, AddressMode::ABSY, 3, 4},
+        {INS_ADC_ABSY, AddressMode::ABSY, 3_u8, 4_u8},
 
         // Indirect,X    ADC ($44,X)   $61  2   6
-        {INS_ADC_INDX, AddressMode::INDX, 2, 6},
+        {INS_ADC_INDX, AddressMode::INDX, 2_u8, 6_u8},
 
         // Indirect,Y    ADC ($44),Y   $71  2   5+
-        {INS_ADC_INDY, AddressMode::INDY, 2, 5},
+        {INS_ADC_INDY, AddressMode::INDY, 2_u8, 5_u8},
     };
 }
 
@@ -130,30 +132,32 @@ std::vector<ArithmeticTestArg> GetSBCTestCases() {
     return {
         // MODE           SYNTAX       HEX LEN TIM
         // Immediate     SBC #$44      $E9  2   2
-        {INS_SBC, AddressMode::IM, 2, 2},
+        {INS_SBC, AddressMode::IM, 2_u8, 2_u8},
 
         // Absolute      SBC $4400     $ED  3   4
-        {INS_SBC_ABS, AddressMode::ABS, 3, 4},
+        {INS_SBC_ABS, AddressMode::ABS, 3_u8, 4_u8},
 
         // Zero Page     SBC $44       $E5  2   3
-        {INS_SBC_ZP, AddressMode::ZP, 2, 3},
+        {INS_SBC_ZP, AddressMode::ZP, 2_u8, 3_u8},
 
         // Zero Page,X   SBC $44,X     $F5  2   4
-        {INS_SBC_ZPX, AddressMode::ZPX, 2, 4},
+        {INS_SBC_ZPX, AddressMode::ZPX, 2_u8, 4_u8},
 
         // Absolute,X    SBC $4400,X   $FD  3   4+
-        {INS_SBC_ABSX, AddressMode::ABSX, 3, 4},
+        {INS_SBC_ABSX, AddressMode::ABSX, 3_u8, 4_u8},
 
         // Absolute,Y    SBC $4400,Y   $F9  3   4+
-        {INS_SBC_ABSY, AddressMode::ABSY, 3, 4},
+        {INS_SBC_ABSY, AddressMode::ABSY, 3_u8, 4_u8},
 
         // Indirect,X    SBC ($44,X)   $E1  2   6
-        {INS_SBC_INDX, AddressMode::INDX, 2, 6},
+        {INS_SBC_INDX, AddressMode::INDX, 2_u8, 6_u8},
 
         // Indirect,Y    SBC ($44),Y   $F1  2   5+
-        {INS_SBC_INDY, AddressMode::INDY, 2, 5},
+        {INS_SBC_INDY, AddressMode::INDY, 2_u8, 5_u8},
     };
 }
 
 INSTANTIATE_TEST_SUITE_P(ADC, ADC, ::testing::ValuesIn(GetADCTestCases()), GenTestNameFunc("ADC"));
 INSTANTIATE_TEST_SUITE_P(SBC, SBC, ::testing::ValuesIn(GetSBCTestCases()), GenTestNameFunc("SBC"));
+
+} // namespace emu::cpu6502

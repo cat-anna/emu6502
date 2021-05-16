@@ -1,41 +1,11 @@
 #pragma once
 
+#include "instruction_set.hpp"
 #include <cstdint>
 #include <string_view>
 #include <unordered_map>
 
-namespace emu::cpu::opcode {
-
-using Opcode = uint8_t;
-
-enum class AddressMode {
-    Immediate,
-    Implied,
-    ABS,
-    ZP,
-    ZPX,
-    ZPY,
-    ABSX,
-    ABSY,
-    INDX,
-    INDY,
-    ACC,
-    REL,
-    ABS_IND,
-
-    IM = Immediate,
-};
-
-std::string to_string(AddressMode mode);
-size_t ArgumentByteSize(AddressMode mode);
-
-struct OpcodeInfo {
-    Opcode opcode;
-    std::string_view mnemonic;
-    AddressMode addres_mode;
-};
-
-std::unordered_map<Opcode, OpcodeInfo> Get6502InstructionSet();
+namespace emu::cpu6502::opcode {
 
 // constexpr Opcode INS_STA_INDZP = 0x92;
 // constexpr Opcode INS_LDA_INDZP = 0xB2;
@@ -235,4 +205,4 @@ constexpr Opcode INS_NOP = 0xEA;
 constexpr Opcode INS_BRK = 0x00;
 constexpr Opcode INS_RTI = 0x4;
 
-} // namespace emu::cpu::opcode
+} // namespace emu::cpu6502::opcode

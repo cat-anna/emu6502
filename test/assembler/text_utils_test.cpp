@@ -65,7 +65,7 @@ TEST_P(ArgumentParseTest, ) {
     }
 }
 
-using AM = emu::cpu::opcode::AddressMode;
+using AM = emu::cpu6502::opcode::AddressMode;
 INSTANTIATE_TEST_SUITE_P(, ArgumentParseTest,
                          ::testing::ValuesIn({
                              // +---------------------+--------------------------+

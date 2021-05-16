@@ -15,7 +15,7 @@
 
 namespace emu::assembler {
 
-namespace opcode = emu::cpu::opcode;
+namespace opcode = emu::cpu6502::opcode;
 
 struct InstructionParsingInfo {
     std::unordered_map<opcode::AddressMode, opcode::OpcodeInfo> variants;
@@ -135,8 +135,8 @@ private:
         current_position = new_pos;
     }
 
-    using OpcodeInfo = emu::cpu::opcode::OpcodeInfo;
-    using AddressMode = emu::cpu::opcode::AddressMode;
+    using OpcodeInfo = emu::cpu6502::opcode::OpcodeInfo;
+    using AddressMode = emu::cpu6502::opcode::AddressMode;
 
     void ParseInstruction(Program &program, const NextTokenFunc &get_next_token,
                           const InstructionParsingInfo &instruction) {

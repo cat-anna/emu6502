@@ -3,11 +3,10 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-using namespace emu::cpu::opcode;
-using Registers = emu::cpu::Cpu6502::Registers;
+namespace emu::cpu6502 {
+
+using namespace emu::cpu6502::opcode;
 using Flags = Registers::Flags;
-using Reg8 = emu::cpu::Reg8;
-using Reg8Ptr = Reg8(Registers::*);
 
 using StackTestArg = std::tuple<Opcode, const char *, uint8_t, Reg8Ptr>;
 
@@ -70,3 +69,5 @@ TEST_F(StackTest, PLP) {
 
     Execute(MakeCode(INS_PLP), 4);
 }
+
+} // namespace emu::cpu6502

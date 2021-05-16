@@ -2,7 +2,9 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-using namespace emu::cpu::opcode;
+namespace emu::cpu6502 {
+
+using namespace emu::cpu6502::opcode;
 
 class LoadBaseTest : public BaseTest {
 public:
@@ -184,3 +186,4 @@ TEST_F(LDY, LDY_ABSX) {
     source_address = test_address + expected_regs.x;
     Execute(MakeCode(INS_LDY_ABSX, test_address), 4);
 }
+} // namespace emu::cpu6502

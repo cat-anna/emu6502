@@ -2,7 +2,9 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-using namespace emu::cpu::opcode;
+namespace emu::cpu6502 {
+
+using namespace emu::cpu6502::opcode;
 
 class StoreBaseTest : public BaseTest {
 public:
@@ -144,3 +146,5 @@ TEST_F(STY, STY_ABS) {
     target_address = test_address;
     Execute(MakeCode(INS_STY_ABS, test_address), 4);
 }
+
+} // namespace emu::cpu6502

@@ -1,7 +1,3 @@
-add_custom_target(build_all_libs)
-add_custom_target(build_all_test)
-add_custom_target(execute_all_test)
-
 function(define_static_lib target_name)
 
   file(GLOB_RECURSE SRC src/*.cpp src/*.hpp include/*.hpp)
@@ -36,17 +32,17 @@ function(define_static_lib_with_ut target_name)
 
   file(GLOB_RECURSE gtest_src test/*)
   if(gtest_src)
-    set(ut_gtest_target ut_gtest_${target_name})
-    define_ut_target(${target_name} ${ut_gtest_target} "${gtest_src}")
-    target_link_libraries(${ut_gtest_target} PUBLIC gtest_main)
-    target_compile_definitions(${ut_gtest_target} PRIVATE -DWANTS_GTEST_MOCKS)
+    set(ut_target ${target_name}_ut)
+    define_ut_target(${target_name} ${ut_target} "${gtest_src}")
+    target_link_libraries(${ut_target} PUBLIC GTest::gmock GTest::gtest) # gtest_main
+    target_compile_definitions(${ut_target} PRIVATE -DWANTS_GTEST_MOCKS)
   endif()
 
   set(TARGET
       ${target_name}
       PARENT_SCOPE)
-  set(TARGET_UT_GTEST
-      ${ut_gtest_target}
+  set(TARGET_UT
+      ${ut_target}
       PARENT_SCOPE)
 endfunction()
 

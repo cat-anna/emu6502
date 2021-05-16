@@ -2,7 +2,9 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-using namespace emu::cpu::opcode;
+namespace emu::cpu6502 {
+
+using namespace emu::cpu6502::opcode;
 
 class IncDecBaseTest : public BaseTest {
 public:
@@ -101,3 +103,5 @@ TEST_F(DEC, DEC_ABSX) {
     operation_address = test_address + expected_regs.x;
     Execute(MakeCode(INS_DEC_ABSX, test_address), 7);
 }
+
+} // namespace emu::cpu6502

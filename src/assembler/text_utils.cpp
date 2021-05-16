@@ -56,7 +56,7 @@ uint16_t ParseWord(std::string_view text, int base) {
 }
 
 InstructionArgument ParseInstructionArgument(std::string_view arg) {
-    using AddressMode = emu::cpu::opcode::AddressMode;
+    using AddressMode = emu::cpu6502::opcode::AddressMode;
     // +---------------------+--------------------------+
     // |      mode           |     assembler format     |
     // +=====================+==========================+
@@ -145,7 +145,7 @@ InstructionArgument ParseInstructionArgument(std::string_view arg) {
                     throw std::runtime_error("Impossible literal size");
                 }
                 for (auto i : possible_address_modes) {
-                    if (emu::cpu::opcode::ArgumentByteSize(i) != data.size()) {
+                    if (emu::cpu6502::opcode::ArgumentByteSize(i) != data.size()) {
                         throw std::runtime_error("Invalid literal size");
                     }
                 }

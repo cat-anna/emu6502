@@ -1,10 +1,11 @@
 #include "base_test.hpp"
 #include <gtest/gtest.h>
 #include <optional>
+namespace emu::cpu6502 {
 
-using namespace emu::cpu::opcode;
+using namespace emu::cpu6502::opcode;
 
-using BranchTestArg = std::tuple<Opcode, std::string, emu::cpu::Cpu6502::Registers::Flags, bool>;
+using BranchTestArg = std::tuple<Opcode, std::string, Registers::Flags, bool>;
 
 class BranchTest : public BaseTest, public ::testing::WithParamInterface<BranchTestArg> {
 public:
@@ -46,7 +47,7 @@ public:
 
     static constexpr int8_t kNearJump = 0x10;
     static constexpr int8_t kFarJump = 0x70;
-    static constexpr int8_t kBackwardJump = 0xC5;
+    static constexpr int8_t kBackwardJump = static_cast<int8_t>(0xC5);
 
     void SetUp() override { //
         BaseTest::SetUp();
@@ -98,7 +99,6 @@ TEST_P(BranchTest, Backward) {
 }
 
 std::vector<BranchTestArg> GetBranchTestCases() {
-    using Flags = emu::cpu::Cpu6502::Registers::Flags;
     return {
         {INS_BCC, "BCC", Flags::Carry, false},    //
         {INS_BCS, "BCS", Flags::Carry, true},     //
@@ -219,3 +219,5 @@ TEST_F(JumpTest, RTI) {
 
     Execute(MakeCode(INS_RTI), 6);
 }
+
+} // namespace emu::cpu6502
