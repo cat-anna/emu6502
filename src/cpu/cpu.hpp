@@ -1,13 +1,15 @@
 #pragma once
 
-#include "clock.hpp"
-#include "memory.hpp"
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cstdint>
+#include <emu_core/clock.hpp>
+#include <emu_core/memory.hpp>
 #include <stdexcept>
 
-namespace emu6502::cpu {
+
+namespace emu::cpu {
 
 using Reg8 = uint8_t;
 using Reg16 = uint16_t;
@@ -85,6 +87,8 @@ struct Cpu6502 {
 
     Cpu6502();
 
+    void Execute();
+    void ExecuteWithTimeout(std::chrono::microseconds timeout);
     void ExecuteUntil(uint64_t cycle);
     void ExecuteNextInstruction();
 
@@ -398,6 +402,7 @@ private:
     void BRK() {
         clock->WaitForNextCycle();
         ++reg.program_counter;
+        throw std::runtime_error("CPU halted");
     }
 };
 
@@ -405,4 +410,4 @@ constexpr MemPtr kIrqVector = 0xFFFE;
 constexpr MemPtr kResBVector = 0xFFFC;
 constexpr MemPtr kNmibVector = 0xFFFA;
 
-} // namespace emu6502::cpu
+} // namespace emu::cpu

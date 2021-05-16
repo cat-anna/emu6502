@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-using namespace emu6502::cpu::opcode;
+using namespace emu::cpu::opcode;
 
 class RegisterBaseTest : public BaseTest {
 public:
@@ -30,7 +30,7 @@ public:
     // Affect Flags: N Z
     // These instructions are implied mode, have a length of one byte and require two machine cycles.
 
-    using Reg8 = emu6502::cpu::Reg8;
+    using Reg8 = emu::cpu::Reg8;
     using Reg8Ptr = Reg8(Registers::*);
 
     Reg8Ptr test_register;
@@ -85,7 +85,7 @@ public:
     // Affect Flags: N Z
     // These instructions are implied mode, have a length of one byte and require two machine cycles.
 
-    using Reg8 = emu6502::cpu::Reg8;
+    using Reg8 = emu::cpu::Reg8;
     using Reg8Ptr = Reg8(Registers::*);
 
     Reg8Ptr source_reg;
@@ -141,7 +141,7 @@ TEST_F(RegisterTransferTest, TSX) {
     Execute(MakeCode(INS_TSX), 2);
 }
 
-using FlagChangeTestArg = std::tuple<Opcode, std::string, emu6502::cpu::Cpu6502::Registers::Flags, bool>;
+using FlagChangeTestArg = std::tuple<Opcode, std::string, emu::cpu::Cpu6502::Registers::Flags, bool>;
 
 class FlagChangeTest : public RegisterBaseTest, public ::testing::WithParamInterface<FlagChangeTestArg> {
 public:
@@ -183,7 +183,7 @@ TEST_P(FlagChangeTest, ) {
 }
 
 std::vector<FlagChangeTestArg> GetFlagChangeTestCases() {
-    using Flags = emu6502::cpu::Cpu6502::Registers::Flags;
+    using Flags = emu::cpu::Cpu6502::Registers::Flags;
     return {
         {INS_CLC, "CLC", Flags::Carry, false},       //
         {INS_SEC, "SEC", Flags::Carry, true},        //

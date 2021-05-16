@@ -2,7 +2,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace emu6502::cpu::opcode {
+namespace emu::cpu::opcode {
 
 using namespace std::string_view_literals;
 using namespace std::string_literals;
@@ -255,4 +255,4 @@ std::unordered_map<Opcode, OpcodeInfo> Get6502InstructionSet() {
     };
 }
 
-} // namespace emu6502::cpu::opcode
+} // namespace emu::cpu::opcode

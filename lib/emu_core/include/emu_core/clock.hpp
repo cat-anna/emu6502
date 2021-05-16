@@ -4,7 +4,7 @@
 #include <fmt/format.h>
 #include <iostream>
 
-namespace emu6502::cpu {
+namespace emu {
 
 struct Clock {
 
@@ -21,4 +21,4 @@ private:
     Clock_t current_cycle = 0;
 };
 
-} // namespace emu6502::cpu
+} // namespace emu

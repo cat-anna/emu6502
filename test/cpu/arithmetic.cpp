@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-using namespace emu6502::cpu::opcode;
+using namespace emu::cpu::opcode;
 
 using ArithmeticTestArg = std::tuple<Opcode, AddressMode, uint8_t, uint8_t>;
 

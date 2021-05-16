@@ -4,7 +4,7 @@
 
 using namespace std::string_view_literals;
 using namespace std::string_literals;
-using namespace emu6502::assembler;
+using namespace emu::assembler;
 
 using TokenizerTestArg = std::tuple<std::string, std::vector<std::string_view>>;
 class TokenizerTest : public testing::Test, public ::testing::WithParamInterface<TokenizerTestArg> {
@@ -65,9 +65,9 @@ TEST_P(ArgumentParseTest, ) {
     }
 }
 
-using AM = emu6502::cpu::opcode::AddressMode;
+using AM = emu::cpu::opcode::AddressMode;
 INSTANTIATE_TEST_SUITE_P(, ArgumentParseTest,
-                         ::testing::Values(
+                         ::testing::ValuesIn({
                              // +---------------------+--------------------------+
                              // |      mode           |     assembler format     |
                              // +=====================+==========================+
@@ -123,5 +123,5 @@ INSTANTIATE_TEST_SUITE_P(, ArgumentParseTest,
                              // | Implied             |                          |
                              ArgumentParseTestArg{""s, InstructionArgument{{AM::Implied}, nullptr}}, //
                              // | Accumulator         |          A               |
-                             ArgumentParseTestArg{"A"s, InstructionArgument{{AM::ACC}, nullptr}} //
-                             ));
+                             ArgumentParseTestArg{"A"s, InstructionArgument{{AM::ACC}, nullptr}}, //
+                         }));

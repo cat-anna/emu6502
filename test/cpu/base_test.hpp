@@ -1,23 +1,27 @@
 #pragma once
 
-#include <cpu/clock.hpp>
 #include <cpu/cpu.hpp>
-#include <cpu/memory.hpp>
 #include <cpu/opcode.hpp>
+#include <emu_core/clock.hpp>
+#include <emu_core/memory.hpp>
 #include <gtest/gtest.h>
 #include <string>
 #include <vector>
 
+constexpr uint8_t operator"" _u8(unsigned long long n) {
+    return static_cast<uint8_t>(n);
+}
+
 class BaseTest : public testing::Test {
 public:
-    using AddressMode = emu6502::cpu::opcode::AddressMode;
-    using MemPtr = emu6502::cpu::MemPtr;
-    using Registers = emu6502::cpu::Cpu6502::Registers;
+    using AddressMode = emu::cpu::opcode::AddressMode;
+    using MemPtr = emu::MemPtr;
+    using Registers = emu::cpu::Cpu6502::Registers;
     using Flags = Registers::Flags;
 
-    emu6502::cpu::Memory memory;
-    emu6502::cpu::Cpu6502 cpu;
-    emu6502::cpu::Clock clock;
+    emu::Memory memory;
+    emu::cpu::Cpu6502 cpu;
+    emu::Clock clock;
     Registers expected_regs;
 
     static constexpr MemPtr kBaseCodeAddress = 0x1770;

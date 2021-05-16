@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-using namespace emu6502::cpu::opcode;
+using namespace emu::cpu::opcode;
 
 class LoadBaseTest : public BaseTest {
 public:
@@ -16,7 +16,7 @@ public:
         expected_regs.SetFlag(Flags::Negative, (target_byte & 0x80) > 0);
     }
 
-     void Execute(const std::vector<uint8_t> &data, uint64_t cycles) override {
+    void Execute(const std::vector<uint8_t> &data, uint64_t cycles) override {
         if (source_address.has_value()) {
             WriteMemory(source_address.value(), {target_byte});
         }

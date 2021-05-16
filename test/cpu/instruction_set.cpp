@@ -3,11 +3,11 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-using namespace emu6502::cpu::opcode;
+using namespace emu::cpu::opcode;
 
 class InstructionSet : public ::testing::Test {
 public:
-    using Cpu6502 = emu6502::cpu::Cpu6502;
+    using Cpu6502 = emu::cpu::Cpu6502;
 };
 
 TEST_F(InstructionSet, VerifySupportedInstructions) {

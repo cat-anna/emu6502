@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace emu6502::assembler {
+namespace emu {
 
 using Address_t = uint16_t;
 using Offset_t = int16_t;
@@ -104,4 +104,4 @@ struct Program {
 
 std::string to_string(const Program &program);
 
-} // namespace emu6502::assembler
+} // namespace emu

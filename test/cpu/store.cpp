@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-using namespace emu6502::cpu::opcode;
+using namespace emu::cpu::opcode;
 
 class StoreBaseTest : public BaseTest {
 public:

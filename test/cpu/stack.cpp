@@ -3,10 +3,10 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-using namespace emu6502::cpu::opcode;
-using Registers = emu6502::cpu::Cpu6502::Registers;
+using namespace emu::cpu::opcode;
+using Registers = emu::cpu::Cpu6502::Registers;
 using Flags = Registers::Flags;
-using Reg8 = emu6502::cpu::Reg8;
+using Reg8 = emu::cpu::Reg8;
 using Reg8Ptr = Reg8(Registers::*);
 
 using StackTestArg = std::tuple<Opcode, const char *, uint8_t, Reg8Ptr>;

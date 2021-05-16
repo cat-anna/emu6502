@@ -1,13 +1,14 @@
-#include "assembler/program.hpp"
 #include <assembler/assember.hpp>
 #include <cpu/opcode.hpp>
+#include <emu_core/program.hpp>
 #include <gtest/gtest.h>
 #include <string_view>
 #include <tuple>
 #include <vector>
 
-using namespace emu6502::cpu::opcode;
-using namespace emu6502::assembler;
+using namespace emu::cpu::opcode;
+using namespace emu;
+using namespace emu::assembler;
 using namespace std::string_literals;
 
 using AssemblerTestArg = std::tuple<std::string, std::string, std::optional<Program>>;
@@ -134,7 +135,7 @@ AssemblerTestArg GetBranchTest() {
     auto L1 = std::make_shared<LabelInfo>(LabelInfo{"L1", 1_addr, false});
     auto L2 = std::make_shared<LabelInfo>(LabelInfo{"L2", 6_addr, false});
     Program expected = {
-        .sparse_binary_code = SparseBinaryCode({INS_NOP, INS_BEQ, 0x04_u8, INS_NOP, INS_BPL, 0xfc_u8, INS_NOP}),
+        .sparse_binary_code = SparseBinaryCode({INS_NOP, INS_BEQ, 0x03_u8, INS_NOP, INS_BPL, 0xfb_u8, INS_NOP}),
         .labels = {{"L1", L1}, {"L2", L2}},
         .relocations =
             {
@@ -236,8 +237,8 @@ std::vector<AssemblerTestArg> GenTestCases() {
 
         // | Relative            |          aaaa            |
         // {"value", AddressMode::REL, "$1234"s, {0x34, 0x12}, {}},
-        {"label_before", AddressMode::REL, "LABEL_BEFORE"s, {0xee}, "LABEL_BEFORE"s},
-        {"label_after", AddressMode::REL, "LABEL_AFTER"s, {0x0e}, "LABEL_AFTER"s},
+        {"label_before", AddressMode::REL, "LABEL_BEFORE"s, {0xed}, "LABEL_BEFORE"s},
+        {"label_after", AddressMode::REL, "LABEL_AFTER"s, {0x0d}, "LABEL_AFTER"s},
 
         // | Indirect Absolute   |          (aaaa)          |
         {"value", AddressMode::ABS_IND, "($1234)"s, {0x34, 0x12}, {}},
@@ -278,7 +279,6 @@ std::vector<AssemblerTestArg> GenTestCases() {
         {"value", AddressMode::INDY, "($12),Y"s, {0x12}, {}},
         // {"value", AddressMode::INDY, "(CONST_BEFORE),Y"s, {}, {}},
         // {"value", AddressMode::INDY,  "(CONST_AFTER),Y"s, {}, {}},
-
     };
 
     const std::unordered_map<AddressMode, std::set<AddressMode>> kSkipScenarios = {
@@ -302,7 +302,7 @@ std::vector<AssemblerTestArg> GenTestCases() {
                 name.pop_back();
             }
 
-            std::string code = fmt::format(R"==(
+            auto code_format = R"==(
 ; CONST_BEFORE=$55 # TODO
 
 .org 0x0000
@@ -320,9 +320,8 @@ LABEL_AFTER:
     NOP
 
 ; CONST_AFTER=$AA # TODO
-)==",
-                                           instruction.first, variant.test_string);
-
+)=="s;
+            std::string code = fmt::format(code_format, instruction.first, variant.test_string);
             bool skip = false;
             if (auto skip_it = kSkipScenarios.find(variant.mode); skip_it != kSkipScenarios.end()) {
                 for (auto item : skip_it->second) {
@@ -348,12 +347,7 @@ LABEL_AFTER:
 
                 expected = Program{
                     .sparse_binary_code = bin_code,
-                    .labels =
-                        {
-                            {"LABEL_BEFORE", LABEL_BEFORE},
-                            {"LABEL", LABEL},
-                            {"LABEL_AFTER", LABEL_AFTER},
-                        },
+                    .labels = {{"LABEL_BEFORE", LABEL_BEFORE}, {"LABEL", LABEL}, {"LABEL_AFTER", LABEL_AFTER}},
                     .relocations = {},
                 };
                 if (!variant.relocation.empty()) {

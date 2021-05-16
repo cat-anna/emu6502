@@ -2,9 +2,9 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-using namespace emu6502::cpu::opcode;
+using namespace emu::cpu::opcode;
 
-using BranchTestArg = std::tuple<Opcode, std::string, emu6502::cpu::Cpu6502::Registers::Flags, bool>;
+using BranchTestArg = std::tuple<Opcode, std::string, emu::cpu::Cpu6502::Registers::Flags, bool>;
 
 class BranchTest : public BaseTest, public ::testing::WithParamInterface<BranchTestArg> {
 public:
@@ -98,7 +98,7 @@ TEST_P(BranchTest, Backward) {
 }
 
 std::vector<BranchTestArg> GetBranchTestCases() {
-    using Flags = emu6502::cpu::Cpu6502::Registers::Flags;
+    using Flags = emu::cpu::Cpu6502::Registers::Flags;
     return {
         {INS_BCC, "BCC", Flags::Carry, false},    //
         {INS_BCS, "BCS", Flags::Carry, true},     //

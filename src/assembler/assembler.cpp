@@ -4,7 +4,7 @@
 #include <sstream>
 #include <string_view>
 
-namespace emu6502::assembler {
+namespace emu::assembler {
 
 namespace {} // namespace
 
@@ -37,4 +37,4 @@ std::unique_ptr<Program> CompileStream(std::istream &input) {
     return program;
 }
 
-} // namespace emu6502::assembler
+} // namespace emu::assembler

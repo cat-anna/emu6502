@@ -8,7 +8,7 @@
 #include <iostream>
 #include <vector>
 
-namespace emu6502::cpu {
+namespace emu {
 
 using MemPtr = uint16_t;
 
@@ -37,10 +37,15 @@ struct Memory {
     }
 
     std::vector<uint8_t> ReadRange(MemPtr addr, size_t len) {
-        std::vector<uint8_t> r;
-        std::copy(mem.begin() + addr, mem.begin() + addr + len, std::back_inserter(r));
-        return r;
+        return std::vector<uint8_t>{mem.begin() + addr, mem.begin() + addr + len};
+    }
+
+    template <typename SparseIterable>
+    void WriteSparse(const SparseIterable &data) {
+        for (auto [addr, v] : data) {
+            mem[addr] = v;
+        }
     }
 };
 
-} // namespace emu6502::cpu
+} // namespace emu

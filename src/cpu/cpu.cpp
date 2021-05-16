@@ -2,7 +2,7 @@
 #include "opcode.hpp"
 #include <fmt/format.h>
 
-namespace emu6502::cpu {
+namespace emu::cpu {
 
 namespace {
 
@@ -253,6 +253,19 @@ Cpu6502::InstructionHandlerArray Cpu6502::InitInstructionHandlerArray() {
 Cpu6502::Cpu6502() : instruction_handlers(InitInstructionHandlerArray()) {
 }
 
+void Cpu6502::Execute() {
+    for (;;) {
+        ExecuteNextInstruction();
+    }
+}
+
+void Cpu6502::ExecuteWithTimeout(std::chrono::microseconds timeout) {
+    auto deadline = std::chrono::steady_clock::now() + timeout;
+    while (deadline > std::chrono::steady_clock::now()) {
+        ExecuteNextInstruction();
+    }
+}
+
 void Cpu6502::ExecuteUntil(uint64_t cycle) {
     while (clock->CurrentCycle() < cycle) {
         ExecuteNextInstruction();
@@ -269,4 +282,4 @@ void Cpu6502::ExecuteNextInstruction() {
     (this->*handler)();
 }
 
-} // namespace emu6502::cpu
+} // namespace emu::cpu

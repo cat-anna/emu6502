@@ -5,4 +5,4 @@ add_library(${TARGET} STATIC ${SRC})
 
 target_include_directories(${TARGET} PUBLIC ..)
 
-target_link_libraries(${TARGET} PUBLIC fmt::fmt)
+target_link_libraries(${TARGET} PUBLIC fmt::fmt emu_core emu_cpu)

@@ -13,9 +13,9 @@
 #include <variant>
 #include <vector>
 
-namespace emu6502::assembler {
+namespace emu::assembler {
 
-namespace opcode = emu6502::cpu::opcode;
+namespace opcode = emu::cpu::opcode;
 
 struct InstructionParsingInfo {
     std::unordered_map<opcode::AddressMode, opcode::OpcodeInfo> variants;
@@ -110,7 +110,7 @@ private:
                     auto bytes = ToBytes(current_position);
                     program.sparse_binary_code.PutBytes(rel->position, bytes, true);
                 } else {
-                    auto bytes = ToBytes(RelativeJumpOffset(rel->position, current_position));
+                    auto bytes = ToBytes(RelativeJumpOffset(rel->position + 1, current_position));
                     program.sparse_binary_code.PutBytes(rel->position, bytes, true);
                 }
             }
@@ -135,8 +135,8 @@ private:
         current_position = new_pos;
     }
 
-    using OpcodeInfo = emu6502::cpu::opcode::OpcodeInfo;
-    using AddressMode = emu6502::cpu::opcode::AddressMode;
+    using OpcodeInfo = emu::cpu::opcode::OpcodeInfo;
+    using AddressMode = emu::cpu::opcode::AddressMode;
 
     void ParseInstruction(Program &program, const NextTokenFunc &get_next_token,
                           const InstructionParsingInfo &instruction) {
@@ -226,9 +226,9 @@ private:
         }
 
         relocation->target_label = existing_it->second;
-        auto label_addr = existing_it->second->offset.value_or(0);
+        auto label_addr = existing_it->second->offset.value_or(current_position);
         if (opcode.addres_mode == AddressMode::REL) {
-            auto bytes = ToBytes(RelativeJumpOffset(current_position, label_addr));
+            auto bytes = ToBytes(RelativeJumpOffset(current_position + 1, label_addr));
             relocation->mode = RelocationMode::Relative;
             ProcessInstructionArgument(program, opcode, bytes);
         } else {
@@ -246,4 +246,4 @@ private:
     }
 };
 
-} // namespace emu6502::assembler
+} // namespace emu::assembler

@@ -1,10 +1,10 @@
-#include "program.hpp"
+#include "emu_core/program.hpp"
 #include <algorithm>
 #include <fmt/format.h>
 #include <limits>
 #include <stdexcept>
 
-namespace emu6502::assembler {
+namespace emu {
 
 NearOffset_t RelativeJumpOffset(Address_t position, Address_t target) {
     auto off = static_cast<int>(target) - static_cast<int>(position);
@@ -31,8 +31,8 @@ bool LabelInfo::operator==(const LabelInfo &other) const {
 
 std::string to_string(const LabelInfo &label) {
     std::string r = "LabelInfo:{";
-    std::string str_off = label.offset.has_value() ? std::to_string(label.offset.value()) : std::string("--");
-    r += fmt::format("N:'{}',Off:{},imported:{}", label.name, str_off, label.imported);
+    std::string str_off = label.offset.has_value() ? fmt::format("{:04x}", label.offset.value()) : std::string("----");
+    r += fmt::format("offset:{},imported:{},name:'{}'", str_off, label.imported, label.name);
     r += "}";
     return r;
 }
@@ -98,8 +98,8 @@ bool RelocationInfo::operator<(const RelocationInfo &other) const {
 std::string to_string(const RelocationInfo &relocation) {
     std::string r = "RelocationInfo:{";
     auto label = relocation.target_label.lock();
-    std::string label_name = label ? label->name : std::string("-");
-    r += fmt::format("L:'{}',Pos:{},Mode:{}", label_name, relocation.position, to_string(relocation.mode));
+    std::string label_name = label ? fmt::format("'{}'", label->name) : std::string("-");
+    r += fmt::format("position:{:04x},mode:{},label:{}", relocation.position, to_string(relocation.mode), label_name);
     r += "}";
     return r;
 }
@@ -154,15 +154,19 @@ std::string SparseBinaryCode::HexDump(const std::string &line_prefix) const {
     std::string r;
     for (size_t pos = min; pos <= max; pos += 16) {
         std::string hexes;
+        bool any_byte = false;
         for (size_t off = 0; off < 16; ++off) {
             auto it = sparse_map.find(static_cast<Address_t>(pos + off));
             if (it == sparse_map.end()) {
                 hexes += " --";
             } else {
+                any_byte = true;
                 hexes += fmt::format(" {:02x}", it->second);
             }
         }
-        r += fmt::format("{}{:04x} |{}\n", line_prefix, pos, hexes);
+        if (any_byte) {
+            r += fmt::format("{}{:04x} |{}\n", line_prefix, pos, hexes);
+        }
     }
 
     return r;
@@ -206,4 +210,4 @@ bool Program::operator==(const Program &other) const {
     return true;
 }
 
-} // namespace emu6502::assembler
+} // namespace emu

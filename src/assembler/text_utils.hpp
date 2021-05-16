@@ -9,7 +9,7 @@
 #include <variant>
 #include <vector>
 
-namespace emu6502::assembler {
+namespace emu::assembler {
 
 std::vector<std::string_view> Tokenize(std::string_view line);
 uint8_t ParseByte(std::string_view text, int base = 0);
@@ -30,7 +30,7 @@ inline std::vector<uint8_t> ToBytes(uint16_t v) {
 }
 
 struct InstructionArgument {
-    using AddressMode = emu6502::cpu::opcode::AddressMode;
+    using AddressMode = emu::cpu::opcode::AddressMode;
     std::vector<AddressMode> possible_address_modes;
     std::variant<std::nullptr_t, std::string, std::vector<uint8_t>> argument_value;
 
@@ -41,7 +41,7 @@ struct InstructionArgument {
     std::string to_string() const {
         std::string r = "InstructionArgument{{";
         for (auto i : possible_address_modes) {
-            r += emu6502::cpu::opcode::to_string(i);
+            r += emu::cpu::opcode::to_string(i);
             r += ",";
         }
         r += "}, ";
@@ -72,4 +72,4 @@ struct InstructionArgument {
 
 InstructionArgument ParseInstructionArgument(std::string_view arg);
 
-} // namespace emu6502::assembler
+} // namespace emu::assembler

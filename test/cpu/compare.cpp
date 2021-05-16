@@ -2,9 +2,9 @@
 #include <gtest/gtest.h>
 #include <optional>
 
-using namespace emu6502::cpu::opcode;
+using namespace emu::cpu::opcode;
 
-using CompareTestArg = std::tuple<Opcode, AddressMode, uint8_t, uint8_t, emu6502::cpu::Cpu6502::Reg8Ptr>;
+using CompareTestArg = std::tuple<Opcode, AddressMode, uint8_t, uint8_t, emu::cpu::Cpu6502::Reg8Ptr>;
 
 class CompareTest : public BaseTest, public ::testing::WithParamInterface<CompareTestArg> {
 public:
@@ -52,7 +52,7 @@ TEST_P(CompareTest, ) {
 }
 
 std::vector<CompareTestArg> GetCMPTestCases() {
-    using Registers = emu6502::cpu::Cpu6502::Registers;
+    using Registers = emu::cpu::Cpu6502::Registers;
     // + add 1 cycle if page boundary crossed
     return {
         // MODE           SYNTAX       HEX LEN TIM
@@ -83,7 +83,7 @@ std::vector<CompareTestArg> GetCMPTestCases() {
 }
 
 std::vector<CompareTestArg> GetCPXTestCases() {
-    using Registers = emu6502::cpu::Cpu6502::Registers;
+    using Registers = emu::cpu::Cpu6502::Registers;
     return {
         // MODE           SYNTAX       HEX LEN TIM
         // Immediate     CPX #$44      $E0  2   2
@@ -98,7 +98,7 @@ std::vector<CompareTestArg> GetCPXTestCases() {
 }
 
 std::vector<CompareTestArg> GetCPYTestCases() {
-    using Registers = emu6502::cpu::Cpu6502::Registers;
+    using Registers = emu::cpu::Cpu6502::Registers;
     return {
         // MODE           SYNTAX       HEX LEN TIM
         // Immediate     CPY #$44      $C0  2   2

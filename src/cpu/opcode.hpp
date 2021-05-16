@@ -4,7 +4,7 @@
 #include <string_view>
 #include <unordered_map>
 
-namespace emu6502::cpu::opcode {
+namespace emu::cpu::opcode {
 
 using Opcode = uint8_t;
 
@@ -235,4 +235,4 @@ constexpr Opcode INS_NOP = 0xEA;
 constexpr Opcode INS_BRK = 0x00;
 constexpr Opcode INS_RTI = 0x4;
 
-} // namespace emu6502::cpu::opcode
+} // namespace emu::cpu::opcode
