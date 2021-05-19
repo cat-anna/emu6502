@@ -1,6 +1,8 @@
-#include <assembler/assember.hpp>
-#include <cpu/opcode.hpp>
+#include "assembler_6502/compiler.hpp"
+#include "cpu_6502/instruction_set.hpp"
+#include "cpu_6502/opcode.hpp"
 #include <emu_core/program.hpp>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <string_view>
 #include <tuple>
@@ -8,20 +10,23 @@
 
 using namespace emu::cpu6502::opcode;
 using namespace emu;
-using namespace emu::assembler;
+using namespace emu::assembler6502;
 using namespace std::string_literals;
 
 using AssemblerTestArg = std::tuple<std::string, std::string, std::optional<Program>>;
-class BaseTest : public testing::TestWithParam<AssemblerTestArg> {
+class CompilerTest : public testing::TestWithParam<AssemblerTestArg> {
 public:
 };
 
-TEST_P(BaseTest, ) {
+using AddressMode = cpu6502::AddressMode;
+using OpcodeInfo = cpu6502::OpcodeInfo;
+
+TEST_P(CompilerTest, ) {
     auto &[name, code, expected] = GetParam();
     std::cout << "------------CODE----------------------\n" << code << "\n";
 
     if (expected.has_value()) {
-        auto result = CompileString(code);
+        auto result = Compiler6502::CompileString(code);
         std::cout << "-----------RESULT---------------------\n"
                   << to_string(*result) << "\n"
                   << "----------EXPECTED--------------------\n"
@@ -33,7 +38,7 @@ TEST_P(BaseTest, ) {
         EXPECT_THROW(
             {
                 try {
-                    auto r = CompileString(code);
+                    auto r = Compiler6502::CompileString(code);
                     std::cout << "-----------RESULT---------------------\n" << to_string(*r) << "\n";
                 } catch (const std::exception &e) {
                     std::cout << "EXCEPTION: " << e.what() << "\n";
@@ -104,7 +109,7 @@ AssemblerTestArg GetOriginCommandTest() {
         .relocations = {},
     };
     auto code = R"==(
-.org 0x10
+.org 0x0010
 .word 0x1122
 .org 0x12
 .word 0x2233
@@ -112,24 +117,24 @@ AssemblerTestArg GetOriginCommandTest() {
 .byte 0xAA
 .byte 55
 )=="s;
-    return {"org_command", code, expected};
+    return {"origin", code, expected};
 }
 
-AssemblerTestArg GetPageAlignCommandTest() {
-    Program expected = {
-        .sparse_binary_code = SparseBinaryCode({{0_addr, 1_u8}, {0x100_addr, 2_u8}, {0x200_addr, 3_u8}}),
-        .labels = {},
-        .relocations = {},
-    };
-    auto code = R"==(
-.byte 1
-.page_align
-.byte 2
-.page_align
-.byte 3
-)=="s;
-    return {"page_align", code, expected};
-}
+// AssemblerTestArg GetPageAlignCommandTest() {
+//     Program expected = {
+//         .sparse_binary_code = SparseBinaryCode({{0_addr, 1_u8}, {0x100_addr, 2_u8}, {0x200_addr, 3_u8}}),
+//         .labels = {},
+//         .relocations = {},
+//     };
+//     auto code = R"==(
+// .byte 1
+// .page_align
+// .byte 2
+// .page_align
+// .byte 3
+// )=="s;
+//     return {"page_align", code, expected};
+// }
 
 AssemblerTestArg GetBranchTest() {
     auto L1 = std::make_shared<LabelInfo>(LabelInfo{"L1", 1_addr, false});
@@ -185,7 +190,7 @@ LDX $ff,Y
     return {"zp", code, expected};
 }
 
-INSTANTIATE_TEST_SUITE_P(positive, BaseTest,
+INSTANTIATE_TEST_SUITE_P(positive, CompilerTest,
                          ::testing::ValuesIn({
                              GetAbsoluteAddressingTest(),
                              GetImpliedTest(),
@@ -198,7 +203,7 @@ INSTANTIATE_TEST_SUITE_P(positive, BaseTest,
                          }),
                          [](auto &info) { return std::get<0>(info.param); });
 
-INSTANTIATE_TEST_SUITE_P(negative, BaseTest,
+INSTANTIATE_TEST_SUITE_P(negative, CompilerTest,
                          ::testing::ValuesIn({
                              AssemblerTestArg{"duplicated_label", "\nLABEL:\n.byte 0x00\nLABEL:", std::nullopt},
                              AssemblerTestArg{"invalid_abs_ind_mode", "INC ($1234)", std::nullopt},
@@ -207,7 +212,7 @@ INSTANTIATE_TEST_SUITE_P(negative, BaseTest,
 
 std::vector<AssemblerTestArg> GenTestCases() {
     std::unordered_map<std::string_view, std::unordered_map<AddressMode, OpcodeInfo>> instruction_set;
-    for (auto &[opcode, info] : Get6502InstructionSet()) {
+    for (auto &[opcode, info] : cpu6502::Get6502InstructionSet()) {
         instruction_set[info.mnemonic][info.addres_mode] = info;
     }
 
@@ -303,23 +308,23 @@ std::vector<AssemblerTestArg> GenTestCases() {
             }
 
             auto code_format = R"==(
-; CONST_BEFORE=$55 # TODO
+    ; CONST_BEFORE=$55 # TODO
 
-.org 0x0000
-LABEL_BEFORE:
-    NOP
+    .org 0x0000
+    LABEL_BEFORE:
+        NOP
 
-.org 0x0010
-LABEL:
-    NOP
-    {} {}
-    NOP
+    .org 0x0010
+    LABEL:
+        NOP
+        {} {}
+        NOP
 
-.org 0x0020
-LABEL_AFTER:
-    NOP
+    .org 0x0020
+    LABEL_AFTER:
+        NOP
 
-; CONST_AFTER=$AA # TODO
+    ; CONST_AFTER=$AA # TODO
 )=="s;
             std::string code = fmt::format(code_format, instruction.first, variant.test_string);
             bool skip = false;
@@ -342,7 +347,7 @@ LABEL_AFTER:
                 bin_code.PutBytes(0x0000, {INS_NOP});
                 bin_code.PutBytes(0x0010, {INS_NOP, opcode->second.opcode});
                 bin_code.PutBytes(0x0012, variant.test_data);
-                bin_code.PutBytes(0x0012 + variant.test_data.size(), {INS_NOP});
+                bin_code.PutBytes(static_cast<Address_t>(0x0012 + variant.test_data.size()), {INS_NOP});
                 bin_code.PutBytes(0x0020, {INS_NOP});
 
                 expected = Program{
@@ -366,9 +371,8 @@ LABEL_AFTER:
             test_cases.emplace_back(name, code, expected);
         }
     };
-
     return test_cases;
 }
 
-INSTANTIATE_TEST_SUITE_P(generated, BaseTest, ::testing::ValuesIn(GenTestCases()),
+INSTANTIATE_TEST_SUITE_P(generated, CompilerTest, ::testing::ValuesIn(GenTestCases()),
                          [](auto &info) { return std::get<0>(info.param); });

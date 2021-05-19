@@ -1,44 +1,10 @@
-#include <assembler/text_utils.hpp>
+#include "instruction_argument.hpp"
 #include <gtest/gtest.h>
 #include <optional>
 
 using namespace std::string_view_literals;
 using namespace std::string_literals;
-using namespace emu::assembler;
-
-using TokenizerTestArg = std::tuple<std::string, std::vector<std::string_view>>;
-class TokenizerTest : public testing::Test, public ::testing::WithParamInterface<TokenizerTestArg> {
-public:
-};
-
-TEST_P(TokenizerTest, ) {
-    auto &[input, output] = GetParam();
-    auto r = Tokenize(std::string_view(input));
-
-    std::cout << "T:'" << input << "'\n";
-    for (auto &item : output) {
-        std::cout << "O:'" << item << "'\n";
-    }
-    for (auto &item : r) {
-        std::cout << "R:'" << item << "'\n";
-    }
-    EXPECT_EQ(output, r);
-}
-
-INSTANTIATE_TEST_SUITE_P(, TokenizerTest,
-                         ::testing::ValuesIn({
-                             TokenizerTestArg{" test test   test  \n \n"s, {"test"sv, "test"sv, "test"sv}},
-                             TokenizerTestArg{"  test   #$FF  \n \n"s, {"test"sv, "#$FF"sv}}, //
-                             TokenizerTestArg{";  test     \n \n"s, {}},
-                             TokenizerTestArg{" test,test test "s, {"test"sv, "test"sv, "test"sv}},
-                             TokenizerTestArg{" test\ttest\ttest "s, {"test"sv, "test"sv, "test"sv}},
-                             TokenizerTestArg{" test:\ttest:\ttest"s, {"test:"sv, "test:"sv, "test"}},
-                             TokenizerTestArg{".test.test:\ttest"s, {".test.test:"sv, "test"sv}},
-                             TokenizerTestArg{"test;test"s, {"test"sv}}, //
-                             TokenizerTestArg{"test#test"s, {"test#test"sv}},
-                             TokenizerTestArg{"    \t\t\t \n\n\n   "s, {}},
-                             TokenizerTestArg{""s, {}},
-                         }));
+using namespace emu::assembler6502;
 
 using u8v = std::vector<uint8_t>;
 using ArgumentParseTestArg = std::tuple<std::string, std::optional<InstructionArgument>>;
@@ -51,21 +17,21 @@ TEST_P(ArgumentParseTest, ) {
 
     if (output.has_value()) {
         InstructionArgument r;
-        std::cout << "E: " << output.value().to_string() << "\n";
+        std::cout << "E: " << to_string(output.value()) << "\n";
         EXPECT_NO_THROW(r = ParseInstructionArgument(std::string_view(input)));
-        std::cout << "R: " << r.to_string() << "\n";
+        std::cout << "R: " << to_string(r) << "\n";
         EXPECT_EQ(output, r);
     } else {
         EXPECT_THROW(
             {
                 auto r = ParseInstructionArgument(std::string_view(input));
-                std::cout << "R: " << r.to_string() << "\n";
+                std::cout << "R: " << to_string(r) << "\n";
             },
             std::runtime_error);
     }
 }
 
-using AM = emu::cpu6502::opcode::AddressMode;
+using AM = emu::cpu6502::AddressMode;
 INSTANTIATE_TEST_SUITE_P(, ArgumentParseTest,
                          ::testing::ValuesIn({
                              // +---------------------+--------------------------+

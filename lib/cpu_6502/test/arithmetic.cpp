@@ -3,6 +3,7 @@
 #include <optional>
 
 namespace emu::cpu6502 {
+namespace {
 
 using namespace emu::cpu6502::opcode;
 
@@ -109,4 +110,5 @@ std::vector<ArithmeticTestArg> GetTestCases() {
 
 INSTANTIATE_TEST_SUITE_P(, ArithmeticTest, ::testing::ValuesIn(GetTestCases()), GenTestNameFunc());
 
+}
 } // namespace emu::cpu6502

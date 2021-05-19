@@ -264,6 +264,8 @@ const InstructionHandlerArray &Cpu6502::GetInstructionHandlerArray(InstructionSe
         static const InstructionHandlerArray array = GenInstructionHandlerArray(instruction_set);
         return array;
     }
+    case InstructionSet::Unknown:
+        break;
     }
     throw std::runtime_error(fmt::format("Invalid instruction set: {}", static_cast<int>(instruction_set)));
 }

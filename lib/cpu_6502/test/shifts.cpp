@@ -4,6 +4,7 @@
 #include <optional>
 
 namespace emu::cpu6502 {
+namespace {
 
 using namespace emu::cpu6502::opcode;
 using Registers = emu::cpu6502::Registers;
@@ -30,7 +31,7 @@ public:
         cpu.reg = expected_regs;
     }
 
-    void Execute(bool carry) {
+    void ExecuteTest(bool carry) {
         cpu.reg.SetFlag(Flags::Carry, carry);
 
         auto [opcode, name, mode, len, cycles, func] = GetParam();
@@ -54,11 +55,11 @@ public:
 };
 
 TEST_P(ShiftTest, WithCarry) {
-    Execute(true);
+    ExecuteTest(true);
 }
 
 TEST_P(ShiftTest, WithoutCarry) {
-    Execute(false);
+    ExecuteTest(false);
 }
 
 std::vector<LogicalTestArg> GetTestCases() {
@@ -135,4 +136,5 @@ INSTANTIATE_TEST_SUITE_P(, ShiftTest, ::testing::ValuesIn(GetTestCases()), [](co
     return fmt::format("{}_{}", std::get<1>(info.param), to_string(std::get<2>(info.param)));
 });
 
+} // namespace
 } // namespace emu::cpu6502

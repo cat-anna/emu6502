@@ -351,6 +351,8 @@ const OpcodeInstructionMap &GetInstructionSet(InstructionSet instruction_set) {
     switch (instruction_set) {
     case InstructionSet::NMOS6502:
         return Get6502InstructionSet();
+    case InstructionSet::Unknown:
+    break;
     }
     throw std::runtime_error(fmt::format("Invalid instruction set: {}", static_cast<int>(instruction_set)));
 }

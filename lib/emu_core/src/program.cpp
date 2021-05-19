@@ -152,10 +152,10 @@ std::string SparseBinaryCode::HexDump(const std::string &line_prefix) const {
     size_t max = raw_max | 0x000F;
 
     std::string r;
-    for (size_t pos = min; pos <= max; pos += 16) {
+    for (size_t pos = min; pos < max; pos += 0x10) {
         std::string hexes;
         bool any_byte = false;
-        for (size_t off = 0; off < 16; ++off) {
+        for (size_t off = 0; off <= 0xF; ++off) {
             auto it = sparse_map.find(static_cast<Address_t>(pos + off));
             if (it == sparse_map.end()) {
                 hexes += " --";

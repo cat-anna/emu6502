@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 namespace emu::cpu6502 {
+namespace {
 
 using namespace emu::cpu6502::opcode;
 
@@ -67,4 +68,5 @@ std::vector<IncDecTestArg> GetIncDecTestCases() {
 
 INSTANTIATE_TEST_SUITE_P(, IncDecTest, ::testing::ValuesIn(GetIncDecTestCases()), GenTestNameFunc());
 
+} // namespace
 } // namespace emu::cpu6502

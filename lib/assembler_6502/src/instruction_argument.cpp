@@ -1,4 +1,5 @@
-#include "text_utils.hpp"
+#include "instruction_argument.hpp"
+#include "byte_utils.hpp"
 #include <charconv>
 #include <cinttypes>
 #include <fmt/format.h>
@@ -6,57 +7,41 @@
 #include <regex>
 #include <stdexcept>
 
-namespace emu::assembler {
+namespace emu::assembler6502 {
 
-std::vector<std::string_view> Tokenize(std::string_view line) {
-    std::vector<std::string_view> r;
+std::string to_string(const InstructionArgument &ia) {
+    std::string r = "InstructionArgument{{";
+    for (auto i : ia.possible_address_modes) {
+        r += to_string(i);
+        r += ",";
+    }
+    r += "}, ";
 
-    while (!line.empty()) {
-        if (isspace(line[0])) {
-            line.remove_prefix(1);
-            continue;
+    switch (ia.argument_value.index()) {
+    case 0:
+        r += "NULL";
+        break;
+    case 1:
+        r += "'" + std::get<1>(ia.argument_value) + "'";
+        break;
+    case 2:
+        r += "{";
+        for (auto i : std::get<2>(ia.argument_value)) {
+            r += fmt::format("{:02x},", i);
         }
+        r += "}";
+        break;
 
-        auto pos = line.find_first_of("\t\n ;,");
-        if (pos == std::string_view::npos) {
-            pos = line.size();
-        }
-
-        auto token = line.substr(0, pos);
-        if (!token.empty()) {
-            r.emplace_back(token);
-        }
-
-        line.remove_prefix(pos);
-        if (!line.empty()) {
-            if (line[0] == ';') {
-                break;
-            }
-            line.remove_prefix(1);
-        }
+    default:
+        r += "?";
     }
 
+    r += "}";
     return r;
 }
 
-uint8_t ParseByte(std::string_view text, int base) {
-    auto raw = std::stol(text.data(), 0, base);
-    if (raw > std::numeric_limits<uint8_t>::max() || raw < std::numeric_limits<uint8_t>::min()) {
-        throw std::runtime_error(fmt::format("Cannot parse {} into byte", text));
-    }
-    return static_cast<uint8_t>(raw);
-}
-
-uint16_t ParseWord(std::string_view text, int base) {
-    auto raw = std::stol(text.data(), 0, base);
-    if (raw > std::numeric_limits<uint16_t>::max() || raw < std::numeric_limits<uint16_t>::min()) {
-        throw std::runtime_error(fmt::format("Cannot parse {} into byte", text));
-    }
-    return static_cast<uint16_t>(raw);
-}
-
 InstructionArgument ParseInstructionArgument(std::string_view arg) {
-    using AddressMode = emu::cpu6502::opcode::AddressMode;
+    using AddressMode = emu::cpu6502::AddressMode;
     // +---------------------+--------------------------+
     // |      mode           |     assembler format     |
     // +=====================+==========================+
@@ -145,7 +130,7 @@ InstructionArgument ParseInstructionArgument(std::string_view arg) {
                     throw std::runtime_error("Impossible literal size");
                 }
                 for (auto i : possible_address_modes) {
-                    if (emu::cpu6502::opcode::ArgumentByteSize(i) != data.size()) {
+                    if (emu::cpu6502::ArgumentByteSize(i) != data.size()) {
                         throw std::runtime_error("Invalid literal size");
                     }
                 }
@@ -166,4 +151,4 @@ InstructionArgument ParseInstructionArgument(std::string_view arg) {
     throw std::runtime_error("not implemted");
 }
 
-} // namespace emu::assembler
+} // namespace emu::assembler6502

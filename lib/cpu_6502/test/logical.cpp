@@ -4,6 +4,7 @@
 #include <optional>
 
 namespace emu::cpu6502 {
+namespace {
 
 using namespace emu::cpu6502::opcode;
 
@@ -116,7 +117,7 @@ public:
         BaseTest::SetUp();
     }
 
-    void Execute(const std::vector<uint8_t> &data) {
+    void Execute(const std::vector<uint8_t> &data) override {
         auto [opcode, name, mode, len, cycles, func] = GetParam();
         expected_code_length = len;
         expected_cycles = cycles;
@@ -149,4 +150,5 @@ std::vector<LogicalTestArg> GetBITTestCases() {
 
 INSTANTIATE_TEST_SUITE_P(, BitTest, ::testing::ValuesIn(GetBITTestCases()), GenTestNameFunc());
 
+} // namespace
 } // namespace emu::cpu6502

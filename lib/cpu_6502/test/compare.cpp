@@ -3,6 +3,7 @@
 #include <optional>
 
 namespace emu::cpu6502 {
+namespace {
 
 using namespace emu::cpu6502::opcode;
 
@@ -82,4 +83,5 @@ std::vector<CompareTestArg> GetTestCases() {
 
 INSTANTIATE_TEST_SUITE_P(, CompareTest, ::testing::ValuesIn(GetTestCases()), GenTestNameFunc());
 
+} // namespace
 } // namespace emu::cpu6502
