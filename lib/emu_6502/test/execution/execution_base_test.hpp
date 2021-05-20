@@ -5,6 +5,7 @@
 #include <emu_core/base16.hpp>
 #include <emu_core/clock.hpp>
 #include <emu_core/memory.hpp>
+#include <emu_core/memory_sparse.hpp>
 #include <emu_core/program.hpp>
 #include <gtest/gtest.h>
 
@@ -12,16 +13,15 @@ namespace emu::emu6502::test {
 
 class ExecutionTest : public ::testing::Test {
 public:
-    emu::Memory memory;
+    Clock clock;
+    SparseMemory16 memory{&clock, true, true};
     cpu::Cpu cpu{InstructionSet::NMOS6502Emu};
-    emu::Clock clock;
 
     std::vector<uint8_t> test_data;
 
     ExecutionTest() {
         cpu.memory = &memory;
         cpu.clock = &clock;
-        memory.clock = &clock;
     }
 
     void PrepareRandomTestData(size_t len = 128) {

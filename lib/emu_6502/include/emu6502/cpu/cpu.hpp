@@ -1,6 +1,7 @@
 #pragma once
 
 #include "emu6502/instruction_set.hpp"
+#include <array>
 #include <chrono>
 #include <cstdint>
 #include <emu_core/clock.hpp>
@@ -13,7 +14,6 @@ using Reg8 = uint8_t;
 using Reg16 = uint16_t;
 using MemPtr = uint16_t;
 
-constexpr MemPtr kStackBase = 0x0100;
 constexpr Reg8 kNegativeBit = 0x80;
 
 struct Cpu;
@@ -72,7 +72,7 @@ struct Registers {
 struct Cpu {
     Registers reg;
     Clock *clock;
-    Memory *memory;
+    Memory16 *memory;
     const InstructionHandlerArray *instruction_handlers;
 
     Cpu(InstructionSet instruction_set = InstructionSet::NMOS6502);

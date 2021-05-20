@@ -28,6 +28,7 @@ TEST_F(StackTest, PHA) {
     // MNEMONIC                        HEX TIM
     // PHA (PusH Accumulator)          $48  3
     target_address = expected_regs.StackPointerMemoryAddress();
+    memory.WriteRange(target_address, {0});
     expected_regs.stack_pointer--;
     expected_regs.a = cpu.reg.a = target_byte;
     expected_cycles = 3;
@@ -52,6 +53,7 @@ TEST_F(StackTest, PHP) {
     // MNEMONIC                        HEX TIM
     // PHP (PusH Processor status)     $08  3
     target_address = expected_regs.StackPointerMemoryAddress();
+    memory.WriteRange(target_address, {0});
     expected_regs.stack_pointer--;
     expected_regs.flags = cpu.reg.flags = target_byte;
     expected_cycles = 3;

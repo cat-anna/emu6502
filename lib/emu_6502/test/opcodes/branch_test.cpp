@@ -174,6 +174,7 @@ TEST_F(JumpTest, JSR) {
     expected_regs.stack_pointer -= 2;
     expected_cycles = 6;
     expected_code_length = 3;
+    memory.WriteRange(expected_regs.StackPointerMemoryAddress() + 1, {0, 0});
     Execute(MakeCode(INS_JSR, test_address));
     auto pc = kBaseCodeAddress + 2;
     VerifyMemory(expected_regs.StackPointerMemoryAddress() + 1, {(uint8_t)(pc & 0xFF), (uint8_t)(pc >> 8)});

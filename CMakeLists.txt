@@ -55,6 +55,10 @@ macro(add_all_subdirecties)
   endforeach()
 endmacro()
 
+add_custom_target(build_all_libs)
+add_custom_target(build_all_test)
+add_custom_target(execute_all_test)
+
 # set(CMAKE_CXX_CLANG_TIDY clang-tidy-11 -header-filter=.*
 # -checks=*,-fuchsia*,-llvm*,-diagnostic-missing-field-initializers,-modernize-use-trailing-return-type,-google-readability-todo,-misc-unused-parameters,-misc-non-private-member-variables-in-classes,-readability-qualified-auto,-hicpp-signed-bitwise,-cppcoreguidelines-avoid-magic-numbers,-readability-magic-numbers,-google-readability-avoid-underscore-in-googletest-name,-cppcoreguidelines-avoid-non-const-global-variables,-google-runtime-references,-cert-err58-cpp,-cppcoreguidelines-owning-memory)
 
@@ -70,7 +74,4 @@ find_package(GTest CONFIG REQUIRED)
 # find_package(xxhash CONFIG REQUIRED) find_library(ZLIB_LIBRARY zlib) link_libraries(${ZLIB_LIBRARY})
 
 add_subdirectory(lib)
-add_subdirectory(src)
-add_subdirectory(test/cpu)
-add_subdirectory(test/assembler)
-add_subdirectory(tools)
+# add_subdirectory(src) add_subdirectory(test/cpu) add_subdirectory(test/assembler)

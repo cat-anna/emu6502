@@ -4,6 +4,7 @@
 #include <emu_core/base16.hpp>
 #include <emu_core/clock.hpp>
 #include <emu_core/memory.hpp>
+#include <emu_core/memory_sparse.hpp>
 #include <gtest/gtest.h>
 #include <optional>
 
@@ -12,19 +13,18 @@ namespace {
 
 class ResetTest : public ::testing::Test {
 public:
-    emu::Memory memory;
+    Clock clock;
+    SparseMemory16 memory{&clock, true, true};
     cpu::Cpu cpu{InstructionSet::NMOS6502Emu};
-    emu::Clock clock;
 
     ResetTest() {
         cpu.memory = &memory;
         cpu.clock = &clock;
-        memory.clock = &clock;
     }
 };
 
 TEST_F(ResetTest, Reset) {
-    memory.Write(kResetVector, {0x55, 0xaa});
+    memory.WriteRange(kResetVector, {0x55, 0xaa});
     cpu.Reset();
     EXPECT_EQ(cpu.reg.program_counter, 0xaa55);
 }

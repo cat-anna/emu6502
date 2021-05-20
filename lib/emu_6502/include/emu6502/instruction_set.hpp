@@ -52,8 +52,12 @@ const OpcodeInstructionMap &Get6502InstructionSet();
 const OpcodeInstructionMap &Get6502EmuInstructionSet();
 const OpcodeInstructionMap &GetInstructionSet(InstructionSet instruction_set);
 
+using MemPtr = Memory16::Address_t;
+
 constexpr MemPtr kIrqVector = 0xFFFE;
 constexpr MemPtr kResetVector = 0xFFFC;
 constexpr MemPtr kNmibVector = 0xFFFA;
+
+constexpr MemPtr kStackBase = 0x0100;
 
 } // namespace emu::emu6502

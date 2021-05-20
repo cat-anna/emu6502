@@ -1,4 +1,5 @@
 #include "emu_core/program.hpp"
+#include "emu_core/base16.hpp"
 #include <algorithm>
 #include <fmt/format.h>
 #include <limits>
@@ -142,34 +143,8 @@ bool SparseBinaryCode::operator==(const SparseBinaryCode &other) const {
     return sparse_map == other.sparse_map;
 }
 
-std::string SparseBinaryCode::HexDump(const std::string &line_prefix) const {
-    if (sparse_map.empty()) {
-        return "";
-    }
-
-    auto [raw_min, raw_max] = CodeRange();
-    size_t min = raw_min & 0xFFF0;
-    size_t max = raw_max | 0x000F;
-
-    std::string r;
-    for (size_t pos = min; pos < max; pos += 0x10) {
-        std::string hexes;
-        bool any_byte = false;
-        for (size_t off = 0; off <= 0xF; ++off) {
-            auto it = sparse_map.find(static_cast<Address_t>(pos + off));
-            if (it == sparse_map.end()) {
-                hexes += " --";
-            } else {
-                any_byte = true;
-                hexes += fmt::format(" {:02x}", it->second);
-            }
-        }
-        if (any_byte) {
-            r += fmt::format("{}{:04x} |{}\n", line_prefix, pos, hexes);
-        }
-    }
-
-    return r;
+std::string SparseBinaryCode::HexDump(std::string_view line_prefix) const {
+    return SparseHexDump(sparse_map, line_prefix);
 }
 
 //-----------------------------------------------------------------------------

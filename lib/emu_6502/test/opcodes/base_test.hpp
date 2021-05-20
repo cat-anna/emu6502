@@ -5,6 +5,7 @@
 #include <emu_core/base16.hpp>
 #include <emu_core/clock.hpp>
 #include <emu_core/memory.hpp>
+#include <emu_core/memory_sparse.hpp>
 #include <gtest/gtest.h>
 #include <optional>
 #include <string>
@@ -24,18 +25,16 @@ constexpr uint8_t operator"" _u8(unsigned long long n) {
 
 class BaseTest : public testing::Test {
 public:
-    using MemPtr = emu::MemPtr;
     using Flags = Registers::Flags;
 
-    emu::Memory memory;
+    Clock clock;
+    SparseMemory16 memory{&clock, true, true};
+
     Cpu cpu;
-    emu::Clock clock;
     Registers expected_regs;
 
     static constexpr MemPtr kBaseCodeAddress = 0x1770;
     static constexpr MemPtr kBaseDataAddress = 0xE000;
-
-    BaseTest() {}
 
     uint8_t zero_page_address{0};
     uint8_t indirect_address{0};
@@ -54,7 +53,6 @@ public:
         cpu = Cpu{instruction_set};
         cpu.memory = &memory;
         cpu.clock = &clock;
-        memory.clock = &clock;
         cpu.reg.Reset();
 
         if (random_reg_values) {
@@ -173,7 +171,7 @@ public:
 
     void WriteMemory(MemPtr addr, const std::vector<uint8_t> &data) {
         std::cout << fmt::format("MEM WRITE: {:04x} -> {}\n", addr, ToHex(data));
-        memory.Write(addr, data);
+        memory.WriteRange(addr, data);
     }
     void VerifyMemory(MemPtr addr, const std::vector<uint8_t> &data) {
         auto content = memory.ReadRange(addr, data.size());
