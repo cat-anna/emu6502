@@ -281,15 +281,20 @@ const InstructionHandlerArray &Cpu::GetInstructionHandlerArray(InstructionSet in
 
 void Cpu::Reset() {
     reg.Reset();
+    reg.program_counter = kResetVector;
+    auto handler = (*instruction_handlers)[opcode::INS_JMP_ABS];
+    handler(this);
 }
 
 void Cpu::Execute() {
+    Reset();
     for (;;) {
         ExecuteNextInstruction();
     }
 }
 
 void Cpu::ExecuteWithTimeout(std::chrono::microseconds timeout) {
+    Reset();
     auto deadline = std::chrono::steady_clock::now() + timeout;
     while (deadline > std::chrono::steady_clock::now()) {
         ExecuteNextInstruction();
@@ -297,6 +302,7 @@ void Cpu::ExecuteWithTimeout(std::chrono::microseconds timeout) {
 }
 
 void Cpu::ExecuteUntil(uint64_t cycle) {
+    Reset();
     while (clock->CurrentCycle() < cycle) {
         ExecuteNextInstruction();
     }

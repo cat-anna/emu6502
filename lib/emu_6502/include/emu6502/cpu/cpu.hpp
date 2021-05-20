@@ -13,10 +13,6 @@ using Reg8 = uint8_t;
 using Reg16 = uint16_t;
 using MemPtr = uint16_t;
 
-constexpr MemPtr kIrqVector = 0xFFFE;
-constexpr MemPtr kResBVector = 0xFFFC;
-constexpr MemPtr kNmibVector = 0xFFFA;
-
 constexpr MemPtr kStackBase = 0x0100;
 constexpr Reg8 kNegativeBit = 0x80;
 

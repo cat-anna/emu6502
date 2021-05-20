@@ -297,8 +297,10 @@ void BRK(Cpu *cpu) {
     for (int i = 0; i < 6; ++i) {
         cpu->clock->WaitForNextCycle();
     }
+
     ++cpu->reg.program_counter;
     cpu->reg.SetFlag(Flags::Brk, true);
+    //TODO: do correct implementation
 }
 
 //-----------------------------------------------------------------------------

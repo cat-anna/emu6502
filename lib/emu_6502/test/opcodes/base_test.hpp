@@ -55,7 +55,7 @@ public:
         cpu.memory = &memory;
         cpu.clock = &clock;
         memory.clock = &clock;
-        cpu.Reset();
+        cpu.reg.Reset();
 
         if (random_reg_values) {
             expected_regs.a = RandomByte();

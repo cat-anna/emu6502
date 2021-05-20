@@ -37,15 +37,11 @@ public:
         std::cout << "-----------PROGRAM---------------------\n" << to_string(*program) << "\n";
         memory.WriteSparse(program->sparse_binary_code.sparse_map);
         std::cout << "-----------ENTRY---------------------\n";
-        auto entry_label = program->labels["TEST_ENTRY"];
-        auto entry = entry_label->offset.value();
-        std::cout << fmt::format("ENTRY AT {:04x}", entry) << "\n";
-        cpu.reg.program_counter = entry;
         try {
             std::cout << "-----------EXECUTION---------------------\n";
             cpu.ExecuteWithTimeout(timeout);
             throw std::runtime_error("Exception was expected");
-        } catch (const cpu::ExecutionHalted &e) {
+        } catch (const cpu::ExecutionHalted &) {
             std::cout << "-----------HALTED---------------------\n";
             // std::cout << e.what() << "\n";
         }

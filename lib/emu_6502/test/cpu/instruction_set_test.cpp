@@ -1,5 +1,9 @@
-#include "base_test.hpp"
 #include <algorithm>
+#include <emu6502/cpu/cpu.hpp>
+#include <emu6502/cpu/opcode.hpp>
+#include <emu_core/base16.hpp>
+#include <emu_core/clock.hpp>
+#include <emu_core/memory.hpp>
 #include <gtest/gtest.h>
 #include <optional>
 
@@ -9,7 +13,7 @@ namespace {
 class InstructionSetTest : public ::testing::Test {
 public:
     void CheckInstructionSet(InstructionSet is) {
-        auto &implemented_instructions = Cpu::GetInstructionHandlerArray(is);
+        auto &implemented_instructions = cpu::Cpu::GetInstructionHandlerArray(is);
         auto instructions_map = GetInstructionSet(is);
 
         std::cout << fmt::format("Expected instruction count: {}\n", instructions_map.size());

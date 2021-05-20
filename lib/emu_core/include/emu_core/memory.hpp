@@ -17,7 +17,7 @@ struct Memory {
 
     std::array<uint8_t, 1024 * 64> mem;
 
-    Memory() { mem.fill(0x55); }
+    Memory() { mem.fill(0); }
 
     uint8_t Load(MemPtr address) {
         clock->WaitForNextCycle();

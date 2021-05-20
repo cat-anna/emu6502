@@ -30,10 +30,6 @@ struct CompilationContext {
 
     static const std::unordered_map<std::string, CommandParsingInfo> kCommandParseInfo;
 
-    void ParseByteCommand(LineTokenizer &tokenizer);
-    void ParseWordCommand(LineTokenizer &tokenizer);
-    void ParseOriginCommand(LineTokenizer &tokenizer);
-
     void AddLabel(const std::string &name);
 
     void ParseInstruction(LineTokenizer &tokenizer, const InstructionParsingInfo &instruction);
@@ -67,6 +63,13 @@ private:
     void ProcessInstructionArgument(const OpcodeInfo &opcode, std::string label);
     void ProcessInstructionArgument(const OpcodeInfo &opcode, std::nullptr_t);
     void ProcessInstructionArgument(const OpcodeInfo &opcode, std::vector<uint8_t> data);
+
+    void ParseByteCommand(LineTokenizer &tokenizer);
+    void ParseWordCommand(LineTokenizer &tokenizer);
+    void ParseOriginCommand(LineTokenizer &tokenizer);
+    void ParseResetCommand(LineTokenizer &tokenizer);
+
+    void PutLabelReference(bool relative, const std::string &label, Address_t position);
 };
 
 } // namespace emu::emu6502::assembler

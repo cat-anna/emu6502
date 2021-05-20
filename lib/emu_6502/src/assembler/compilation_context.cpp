@@ -8,6 +8,7 @@ const std::unordered_map<std::string, CommandParsingInfo> CompilationContext::kC
     {"byte", {&CompilationContext::ParseByteCommand}},
     {"word", {&CompilationContext::ParseWordCommand}},
     {"org", {&CompilationContext::ParseOriginCommand}},
+    {"isr_reset", {&CompilationContext::ParseResetCommand}},
 };
 
 void CompilationContext::ParseByteCommand(LineTokenizer &tokenizer) {
@@ -31,6 +32,11 @@ void CompilationContext::ParseOriginCommand(LineTokenizer &tokenizer) {
     auto new_pos = ParseWord(tok.value);
     Log("Setting position {:04x} -> {:04x}", current_position, new_pos);
     current_position = new_pos;
+}
+
+void CompilationContext::ParseResetCommand(LineTokenizer &tokenizer) {
+    auto tok = tokenizer.NextToken();
+    PutLabelReference(false, tok.String(), kResetVector);
 }
 
 void CompilationContext::AddLabel(const std::string &name) {
@@ -134,36 +140,13 @@ AddressMode CompilationContext::SelectInstuctionVariant(const std::set<AddressMo
 }
 
 void CompilationContext::ProcessInstructionArgument(const OpcodeInfo &opcode, std::string label) {
-    auto relocation = std::make_shared<RelocationInfo>();
-    relocation->position = current_position;
-
-    auto existing_it = program.labels.find(label);
-    if (existing_it == program.labels.end()) {
-        std::cout << "ADDING LABEL FORWARD REF " << label << " at " << current_position << "\n";
-        auto l = LabelInfo{
-            .name = label,
-            .imported = true,
-            .label_references = {relocation},
-        };
-        program.labels[l.name] = std::make_shared<LabelInfo>(l);
-        existing_it = program.labels.find(label);
+    bool relative = opcode.addres_mode == AddressMode::REL;
+    PutLabelReference(relative, label, current_position);
+    if (relative) {
+        ++current_position;
     } else {
-        std::cout << "ADDING LABEL REF " << label << " at " << current_position << "\n";
-        existing_it->second->label_references.emplace_back(relocation);
+        current_position += 2;
     }
-
-    relocation->target_label = existing_it->second;
-    auto label_addr = existing_it->second->offset.value_or(current_position);
-    if (opcode.addres_mode == AddressMode::REL) {
-        auto bytes = ToBytes(RelativeJumpOffset(current_position + 1, label_addr));
-        relocation->mode = RelocationMode::Relative;
-        ProcessInstructionArgument(opcode, bytes);
-    } else {
-        relocation->mode = RelocationMode::Absolute;
-        ProcessInstructionArgument(opcode, ToBytes(label_addr));
-    }
-
-    program.relocations.insert(relocation);
 }
 
 void CompilationContext::ProcessInstructionArgument(const OpcodeInfo &opcode, std::nullptr_t) {
@@ -172,6 +155,40 @@ void CompilationContext::ProcessInstructionArgument(const OpcodeInfo &opcode, st
 void CompilationContext::ProcessInstructionArgument(const OpcodeInfo &opcode, std::vector<uint8_t> data) {
     program.sparse_binary_code.PutBytes(current_position, data);
     current_position += static_cast<Address_t>(data.size());
+}
+
+void CompilationContext::PutLabelReference(bool relative, const std::string &label, Address_t position) {
+    auto relocation = std::make_shared<RelocationInfo>();
+    relocation->position = position;
+
+    auto existing_it = program.labels.find(label);
+    if (existing_it == program.labels.end()) {
+        std::cout << "ADDING LABEL FORWARD REF " << label << " at " << position << "\n";
+        auto l = LabelInfo{
+            .name = label,
+            .imported = true,
+            .label_references = {relocation},
+        };
+        program.labels[l.name] = std::make_shared<LabelInfo>(l);
+        existing_it = program.labels.find(label);
+    } else {
+        std::cout << "ADDING LABEL REF " << label << " at " << position << "\n";
+        existing_it->second->label_references.emplace_back(relocation);
+    }
+
+    relocation->target_label = existing_it->second;
+    auto label_addr = existing_it->second->offset.value_or(position);
+    if (relative) {
+        auto bytes = ToBytes(RelativeJumpOffset(position + 1, label_addr));
+        relocation->mode = RelocationMode::Relative;
+        program.sparse_binary_code.PutBytes(position, bytes);
+    } else {
+        relocation->mode = RelocationMode::Absolute;
+        auto bytes = ToBytes(label_addr);
+        program.sparse_binary_code.PutBytes(position, bytes);
+    }
+
+    program.relocations.insert(relocation);
 }
 
 } // namespace emu::emu6502::assembler

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <emu_core/memory.hpp>
 #include <string_view>
 #include <unordered_map>
 
@@ -50,5 +51,9 @@ using OpcodeInstructionMap = std::unordered_map<Opcode, OpcodeInfo>;
 const OpcodeInstructionMap &Get6502InstructionSet();
 const OpcodeInstructionMap &Get6502EmuInstructionSet();
 const OpcodeInstructionMap &GetInstructionSet(InstructionSet instruction_set);
+
+constexpr MemPtr kIrqVector = 0xFFFE;
+constexpr MemPtr kResetVector = 0xFFFC;
+constexpr MemPtr kNmibVector = 0xFFFA;
 
 } // namespace emu::emu6502

@@ -206,6 +206,8 @@ constexpr Opcode INS_BRK = 0x00;
 constexpr Opcode INS_RTI = 0x4;
 
 //Emu
-constexpr Opcode INS_HLT = 0xCf;
+constexpr Opcode INS_HLT = 0xFA;
+
+//http://wiki.nesdev.com/w/index.php/Programming_with_unofficial_opcodes
 
 } // namespace emu::emu6502::cpu::opcode

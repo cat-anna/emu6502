@@ -1,4 +1,4 @@
-#include "ct_base.hpp"
+#include "execution_base_test.hpp"
 
 namespace emu::emu6502::test {
 namespace {
@@ -32,6 +32,7 @@ uint8_t crc8(const iterable &container) {
 
 TEST_F(ExecutionTest, crc8) {
     auto code = R"==(
+.isr_reset TEST_ENTRY
 .org 0x2000
 TEST_ENTRY:
     NOP
