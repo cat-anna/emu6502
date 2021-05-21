@@ -27,7 +27,7 @@ class BaseTest : public testing::Test {
 public:
     using Flags = Registers::Flags;
 
-    Clock clock;
+    ClockSimple clock;
     SparseMemory16 memory{&clock, true, true};
 
     Cpu cpu;
@@ -47,14 +47,10 @@ public:
 
     bool is_testing_jumps = false;
     bool random_reg_values = false;
-    InstructionSet instruction_set = InstructionSet::Default;
+
+    BaseTest(InstructionSet instruction_set = InstructionSet::Default) : cpu{&clock, &memory, instruction_set} {}
 
     void SetUp() override {
-        cpu = Cpu{instruction_set};
-        cpu.memory = &memory;
-        cpu.clock = &clock;
-        cpu.reg.Reset();
-
         if (random_reg_values) {
             expected_regs.a = RandomByte();
             expected_regs.x = RandomByte();

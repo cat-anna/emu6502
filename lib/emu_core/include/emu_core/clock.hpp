@@ -1,21 +1,19 @@
 #pragma once
 
 #include <cstdint>
-#include <fmt/format.h>
-#include <iostream>
 
 namespace emu {
 
 struct Clock {
+    virtual ~Clock() = default;
+    virtual void WaitForNextCycle() = 0;
+};
 
+struct ClockSimple : public Clock {
     using Clock_t = uint64_t;
 
+    void WaitForNextCycle() override { ++current_cycle; }
     Clock_t CurrentCycle() const { return current_cycle; }
-
-    void WaitForNextCycle() {
-        // std::cout << fmt::format("TICK {}\n", current_cycle);
-        ++current_cycle; //TODO
-    }
 
 private:
     Clock_t current_cycle = 0;

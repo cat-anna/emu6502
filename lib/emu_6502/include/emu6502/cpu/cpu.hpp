@@ -71,20 +71,24 @@ struct Registers {
 
 struct Cpu {
     Registers reg;
-    Clock *clock;
-    Memory16 *memory;
+    Memory16 *const memory;
     const InstructionHandlerArray *instruction_handlers;
 
-    Cpu(InstructionSet instruction_set = InstructionSet::NMOS6502);
+    Cpu(Clock *clock, Memory16 *memory, InstructionSet instruction_set = InstructionSet::NMOS6502);
 
     static const InstructionHandlerArray &GetInstructionHandlerArray(InstructionSet instruction_set);
 
     void Execute();
-    void ExecuteWithTimeout(std::chrono::microseconds timeout);
-    void ExecuteUntil(uint64_t cycle);
+    void ExecuteFor(std::chrono::nanoseconds timeout);
+    void ExecuteUntil(std::chrono::steady_clock::time_point deadline);
     void ExecuteNextInstruction();
 
     void Reset();
+
+    void WaitForNextCycle() const;
+
+private:
+    Clock *const clock;
 };
 
 } // namespace emu::emu6502::cpu

@@ -13,14 +13,11 @@ namespace {
 
 class ResetTest : public ::testing::Test {
 public:
-    Clock clock;
+    ClockSimple clock;
     SparseMemory16 memory{&clock, true, true};
-    cpu::Cpu cpu{InstructionSet::NMOS6502Emu};
+    cpu::Cpu cpu{&clock, &memory, InstructionSet::NMOS6502Emu};
 
-    ResetTest() {
-        cpu.memory = &memory;
-        cpu.clock = &clock;
-    }
+    ResetTest() {}
 };
 
 TEST_F(ResetTest, Reset) {

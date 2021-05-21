@@ -13,16 +13,13 @@ namespace emu::emu6502::test {
 
 class ExecutionTest : public ::testing::Test {
 public:
-    Clock clock;
+    ClockSimple clock;
     SparseMemory16 memory{&clock, true, true};
-    cpu::Cpu cpu{InstructionSet::NMOS6502Emu};
+    cpu::Cpu cpu{&clock, &memory, InstructionSet::NMOS6502Emu};
 
     std::vector<uint8_t> test_data;
 
-    ExecutionTest() {
-        cpu.memory = &memory;
-        cpu.clock = &clock;
-    }
+    ExecutionTest() {}
 
     void PrepareRandomTestData(size_t len = 128) {
         test_data.resize(len);
@@ -36,15 +33,19 @@ public:
         auto program = emu::emu6502::assembler::Compiler6502::CompileString(code, InstructionSet::NMOS6502Emu);
         std::cout << "-----------PROGRAM---------------------\n" << to_string(*program) << "\n";
         memory.WriteSparse(program->sparse_binary_code.sparse_map);
-        std::cout << "-----------ENTRY---------------------\n";
+        std::cout << "-----------EXECUTION---------------------\n";
+        auto start = std::chrono::steady_clock::now();
         try {
-            std::cout << "-----------EXECUTION---------------------\n";
-            cpu.ExecuteWithTimeout(timeout);
+            cpu.ExecuteFor(timeout);
             throw std::runtime_error("Exception was expected");
         } catch (const cpu::ExecutionHalted &) {
             std::cout << "-----------HALTED---------------------\n";
             // std::cout << e.what() << "\n";
         }
+        auto end = std::chrono::steady_clock::now();
+        auto delta = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        std::cout << fmt::format("Took {} microseconds\n", delta.count());
+
         std::cout << "-----------RESULT---------------------\n";
         std::cout << "Cycles: " << clock.CurrentCycle() << "\n";
         return program;

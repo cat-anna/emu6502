@@ -7,6 +7,8 @@ namespace {
 
 class RegisterBaseTest : public BaseTest {
 public:
+    RegisterBaseTest(InstructionSet instruction_set = InstructionSet::Default) : BaseTest(instruction_set) {}
+
     void SetUp() override {
         random_reg_values = true;
         BaseTest::SetUp();
@@ -183,9 +185,7 @@ TEST_F(MiscTest, BRK) {
 
 class EmuTest : public RegisterBaseTest {
 public:
-    EmuTest() { //
-        instruction_set = InstructionSet::NMOS6502Emu;
-    }
+    EmuTest() : RegisterBaseTest(InstructionSet::NMOS6502Emu) {}
 };
 
 TEST_F(EmuTest, HLT) {
