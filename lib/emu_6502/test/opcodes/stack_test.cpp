@@ -39,9 +39,9 @@ TEST_F(StackTest, PHA) {
 TEST_F(StackTest, PLA) {
     // MNEMONIC                        HEX TIM
     // PLA (PuLl Accumulator)          $68  4
+    expected_regs.stack_pointer++;
     target_address = expected_regs.StackPointerMemoryAddress();
     WriteMemory(target_address, {target_byte});
-    expected_regs.stack_pointer++;
     expected_regs.SetFlag(Flags::Negative, (target_byte & 0x80) > 0);
     expected_regs.SetFlag(Flags::Zero, target_byte == 0);
     expected_regs.a = target_byte;

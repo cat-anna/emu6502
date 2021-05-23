@@ -26,11 +26,11 @@ bool IsAcrossPage(MemPtr base, OffType inc) {
 //-----------------------------------------------------------------------------
 
 void NOP(Cpu *cpu) {
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
 }
 
 void HLT(Cpu *cpu) {
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
     throw ExecutionHalted("Halt");
 }
 
@@ -56,7 +56,7 @@ void Register8Transfer(Cpu *cpu) {
         cpu->reg.SetNegativeZeroFlag(value);
     }
     cpu->reg.*target = value;
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
 }
 
 template <Reg8Ptr source, int8_t direction>
@@ -69,7 +69,7 @@ void Register8Increment(Cpu *cpu) {
     }
     cpu->reg.SetNegativeZeroFlag(value);
     cpu->reg.*source = value;
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
 }
 
 //-----------------------------------------------------------------------------
@@ -84,7 +84,7 @@ void MemoryIncrement(Cpu *cpu) {
         --value;
     }
     cpu->reg.SetNegativeZeroFlag(value);
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
     cpu->memory->Store(addr, value);
 }
 
@@ -144,7 +144,7 @@ void BitOperation(Cpu *cpu) {
 template <Reg8Ptr source, ShiftFunc op>
 void Register8Shift(Cpu *cpu) {
     auto operand = cpu->reg.*source;
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
     auto [result, new_carry] = op(operand, cpu->reg.TestFlag(Flags::Carry));
     cpu->reg.SetNegativeZeroFlag(result);
     cpu->reg.SetFlag(Flags::Carry, new_carry);
@@ -155,7 +155,7 @@ template <ShiftFunc op, MemAddrFunc addr_func>
 void MemoryShift(Cpu *cpu) {
     auto addr = addr_func(cpu);
     auto operand = cpu->memory->Load(addr);
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
     auto [result, new_carry] = op(operand, cpu->reg.TestFlag(Flags::Carry));
     cpu->reg.SetNegativeZeroFlag(result);
     cpu->reg.SetFlag(Flags::Carry, new_carry);
@@ -191,7 +191,7 @@ void ArithmeticOperation(Cpu *cpu) {
 
 template <Flags flag, bool state>
 void SetFlag(Cpu *cpu) {
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
     cpu->reg.SetFlag(flag, state);
 }
 
@@ -200,7 +200,7 @@ void SetFlag(Cpu *cpu) {
 void StackPushByte(Cpu *cpu, uint8_t v, bool reuse_cycle = false) {
     cpu->memory->Store(cpu->reg.StackPointerMemoryAddress(), v);
     if (!reuse_cycle) {
-        cpu->clock->WaitForNextCycle();
+        cpu->WaitForNextCycle();
     }
     cpu->reg.stack_pointer--;
 }
@@ -208,7 +208,7 @@ void StackPushByte(Cpu *cpu, uint8_t v, bool reuse_cycle = false) {
 uint8_t StackPullByte(Cpu *cpu, bool reuse_cycle = false) {
     auto operand = cpu->memory->Load(cpu->reg.StackPointerMemoryAddress());
     if (!reuse_cycle) {
-        cpu->clock->WaitForNextCycle();
+        cpu->WaitForNextCycle();
     }
     cpu->reg.stack_pointer++;
     return operand;
@@ -224,7 +224,7 @@ void StackPush(Cpu *cpu) {
 template <Reg8Ptr source>
 void StackPull(Cpu *cpu) {
     auto operand = StackPullByte(cpu);
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
     cpu->reg.SetNegativeZeroFlag(operand);
     cpu->reg.*source = operand;
 }
@@ -236,11 +236,11 @@ void PushFlags(Cpu *cpu) {
 
 void PullFlags(Cpu *cpu) {
     auto operand = cpu->memory->Load(cpu->reg.StackPointerMemoryAddress());
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
     cpu->reg.flags = operand;
     cpu->reg.SetFlag(Flags::Brk, false);
     cpu->reg.SetFlag(Flags::NotUsed, false);
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
     cpu->reg.stack_pointer++;
 }
 
@@ -250,9 +250,9 @@ template <Registers::Flags flag, bool state>
 void Branch(Cpu *cpu) {
     auto offset_address = static_cast<int8_t>(FetchNextByte(cpu));
     if (cpu->reg.TestFlag(flag) == state) {
-        cpu->clock->WaitForNextCycle();
+        cpu->WaitForNextCycle();
         if (IsAcrossPage(cpu->reg.program_counter, offset_address)) {
-            cpu->clock->WaitForNextCycle();
+            cpu->WaitForNextCycle();
         }
         cpu->reg.program_counter += offset_address;
     }
@@ -282,7 +282,7 @@ void JSR(Cpu *cpu) { //
 void RTS(Cpu *cpu) { //
     uint16_t low = StackPullByte(cpu);
     uint16_t hi = StackPullByte(cpu);
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
     cpu->reg.program_counter = (hi << 8 | low) + 1;
 }
 
@@ -295,7 +295,7 @@ void RTI(Cpu *cpu) {
 
 void BRK(Cpu *cpu) {
     for (int i = 0; i < 6; ++i) {
-        cpu->clock->WaitForNextCycle();
+        cpu->WaitForNextCycle();
     }
 
     ++cpu->reg.program_counter;

@@ -3,6 +3,7 @@
 #include "emu6502/instruction_set.hpp"
 #include "instruction_functors.hpp"
 #include "memory_addressing.hpp"
+#include <fmt/format.h>
 
 namespace emu::emu6502::cpu {
 
@@ -260,7 +261,9 @@ void Registers::Reset() {
 
 //-----------------------------------------------------------------------------
 
-Cpu::Cpu(InstructionSet instruction_set) : instruction_handlers(&GetInstructionHandlerArray(instruction_set)) {
+Cpu::Cpu(Clock *clock, Memory16 *memory, bool verbose, InstructionSet instruction_set)
+    : clock(clock), memory(memory), verbose(verbose),
+      instruction_handlers(&GetInstructionHandlerArray(instruction_set)) {
 }
 
 const InstructionHandlerArray &Cpu::GetInstructionHandlerArray(InstructionSet instruction_set) {
@@ -293,28 +296,33 @@ void Cpu::Execute() {
     }
 }
 
-void Cpu::ExecuteWithTimeout(std::chrono::microseconds timeout) {
+void Cpu::ExecuteUntil(std::chrono::steady_clock::time_point deadline) {
     Reset();
-    auto deadline = std::chrono::steady_clock::now() + timeout;
     while (deadline > std::chrono::steady_clock::now()) {
         ExecuteNextInstruction();
     }
 }
 
-void Cpu::ExecuteUntil(uint64_t cycle) {
-    Reset();
-    while (clock->CurrentCycle() < cycle) {
-        ExecuteNextInstruction();
-    }
+void Cpu::ExecuteFor(std::chrono::nanoseconds timeout) {
+    return ExecuteUntil(std::chrono::steady_clock::now() + timeout);
 }
 
 void Cpu::ExecuteNextInstruction() {
+    if (verbose) {
+        //TODO
+    }
     auto opcode = instructions::FetchNextByte(this);
     auto handler = (*instruction_handlers)[opcode];
     if (handler == nullptr) {
         throw std::runtime_error(fmt::format("Invalid opcode {:02x} at address {:04x}", opcode, reg.program_counter));
     }
     handler(this);
+}
+
+void Cpu::WaitForNextCycle() const {
+    if (clock != nullptr) {
+        clock->WaitForNextCycle();
+    }
 }
 
 } // namespace emu::emu6502::cpu

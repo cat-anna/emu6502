@@ -18,7 +18,7 @@ MemPtr GetAbsoluteAddress(Cpu *cpu) { // mode: a
 MemPtr GetAddressAbsoluteIndexedIndirectWithX(Cpu *cpu) { // mode (a,x)
     MemPtr location = GetAbsoluteAddress(cpu);
     location += cpu->reg.x;
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
     MemPtr addr = cpu->memory->Load(location++);
     return addr | cpu->memory->Load(location) << 8;
 }
@@ -27,7 +27,7 @@ template <bool fast>
 MemPtr GetAddressAbsoluteIndexedWithX(Cpu *cpu) { // mode a,x
     auto r = GetAbsoluteAddress(cpu);
     if constexpr (!fast) {
-        cpu->clock->WaitForNextCycle(); //TODO: if across page ?
+        cpu->WaitForNextCycle(); //TODO: if across page ?
     }
     return r + cpu->reg.x;
 }
@@ -36,7 +36,7 @@ template <bool fast>
 MemPtr GetAddressAbsoluteIndexedWithY(Cpu *cpu) { // mode a,y
     auto r = GetAbsoluteAddress(cpu);
     if constexpr (!fast) {
-        cpu->clock->WaitForNextCycle(); //TODO: if across page ?
+        cpu->WaitForNextCycle(); //TODO: if across page ?
     }
     return r + cpu->reg.y;
 }
@@ -53,7 +53,7 @@ MemPtr GetAddressAccumulator(Cpu *cpu) { // mode A
 
 MemPtr GetAddressProgramCounterRelative(Cpu *cpu) { // mode r
     auto offset = FetchNextByte(cpu);
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
     return cpu->reg.program_counter + offset;
 }
 
@@ -67,21 +67,21 @@ MemPtr GetZeroPageAddress(Cpu *cpu) { //mode zp
 
 MemPtr GetAddresZeroPageIndexedIndirectWithX(Cpu *cpu) { // mode (zp,x)
     MemPtr zp = GetZeroPageAddress(cpu);
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
     MemPtr indirect = zp + cpu->reg.x;
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
     return cpu->memory->Load(indirect);
 }
 
 MemPtr GetZeroPageIndirectAddressWithX(Cpu *cpu) { // mode zp,x
     MemPtr zp = GetZeroPageAddress(cpu);
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
     return zp + cpu->reg.x;
 }
 
 MemPtr GetZeroPageIndirectAddressWithY(Cpu *cpu) { // mode zp,y
     MemPtr zp = GetZeroPageAddress(cpu);
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
     return zp + cpu->reg.y;
 }
 
@@ -92,10 +92,10 @@ MemPtr GetZeroPageIndirectAddress(Cpu *cpu) { // mode (zp)
 template <bool fast>
 MemPtr GetAddresZeroPageIndirectIndexedWithY(Cpu *cpu) { // mode (zp),y
     MemPtr zp = GetZeroPageAddress(cpu);
-    cpu->clock->WaitForNextCycle();
+    cpu->WaitForNextCycle();
     auto mem = cpu->memory->Load(zp);
     if constexpr (!fast) {
-        cpu->clock->WaitForNextCycle();
+        cpu->WaitForNextCycle();
     }
     return mem + cpu->reg.y;
 }

@@ -193,8 +193,9 @@ TEST_F(JumpTest, RTS) {
     // MODE           SYNTAX       HEX LEN TIM
     // Implied       RTS           $60  1   6
     auto pc = test_address - 1;
+    expected_regs.stack_pointer += 1;
     WriteMemory(expected_regs.StackPointerMemoryAddress(), {(uint8_t)(pc & 0xFF), (uint8_t)(pc >> 8)});
-    expected_regs.stack_pointer += 2;
+    expected_regs.stack_pointer += 1;
     expected_regs.program_counter = test_address;
     expected_cycles = 6;
     expected_code_length = 1;
@@ -218,9 +219,10 @@ TEST_F(JumpTest, RTI) {
 
     auto pc = test_address;
     cpu.reg.flags = RandomByte();
+    expected_regs.stack_pointer += 1;
     WriteMemory(expected_regs.StackPointerMemoryAddress(),
                 {(uint8_t)(pc & 0xFF), (uint8_t)(pc >> 8), expected_regs.flags});
-    expected_regs.stack_pointer += 3;
+    expected_regs.stack_pointer += 2;
     expected_regs.program_counter = test_address;
     expected_cycles = 6;
     expected_code_length = 1;
