@@ -205,9 +205,8 @@ OpcodeInstructionMap GenJumpsInstructions(InstructionSet instruction_set) {
         {INS_JMP_IND, {INS_JMP_IND, "JMP"sv, AddressMode::ABS_IND}},
 
         //Call/Return subroutine
-        {INS_JSR, {INS_JSR, "JSR"sv, AddressMode::Immediate}},
-        {INS_RTS, {INS_RTS, "RTS"sv, AddressMode::Immediate}},
-
+        {INS_JSR, {INS_JSR, "JSR"sv, AddressMode::ABS}},
+        {INS_RTS, {INS_RTS, "RTS"sv, AddressMode::Implied}},
     };
 }
 
