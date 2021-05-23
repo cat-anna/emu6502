@@ -255,7 +255,7 @@ std::string Registers::Dump() const {
 void Registers::Reset() {
     program_counter = 0;
     a = x = y = 0;
-    stack_pointer = 0;
+    stack_pointer = kStackResetValue;
     flags = 0;
 }
 

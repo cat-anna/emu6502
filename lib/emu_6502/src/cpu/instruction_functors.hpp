@@ -206,11 +206,11 @@ void StackPushByte(Cpu *cpu, uint8_t v, bool reuse_cycle = false) {
 }
 
 uint8_t StackPullByte(Cpu *cpu, bool reuse_cycle = false) {
+    cpu->reg.stack_pointer++;
     auto operand = cpu->memory->Load(cpu->reg.StackPointerMemoryAddress());
     if (!reuse_cycle) {
         cpu->WaitForNextCycle();
     }
-    cpu->reg.stack_pointer++;
     return operand;
 }
 
