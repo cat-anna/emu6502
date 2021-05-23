@@ -1,4 +1,4 @@
-#include "byte_utils.hpp"
+#include "emu_core/byte_utils.hpp"
 #include <cinttypes>
 #include <fmt/format.h>
 #include <limits>
@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <typeinfo>
 
-namespace emu::emu6502::assembler {
+namespace emu {
 
 namespace {
 
@@ -31,4 +31,4 @@ uint16_t ParseWord(std::string_view text, int base) {
     return ParseIntegral<uint16_t>(text, base);
 }
 
-} // namespace emu::assembler6502
+} // namespace emu

@@ -64,7 +64,7 @@ struct SparseMemory : public MemoryInterface<_Address_t> {
         }
     }
 
-    VectorType ReadRange(Address_t addr, size_t len) {
+    VectorType ReadRange(Address_t addr, Address_t len) {
         VectorType r;
         for (Address_t pos = 0; pos < len; ++pos) {
             r.emplace_back(memory_map.at(addr + pos));
@@ -79,11 +79,17 @@ struct SparseMemory : public MemoryInterface<_Address_t> {
         }
     }
 
+    void Fill(Address_t addr, Address_t len, uint8_t value = 0) {
+        for (Address_t pos = 0; pos < len; ++pos) {
+            memory_map[addr + pos] = value;
+        }
+    }
+
 private:
-    void AccessLog(Address_t address, uint8_t value, bool read, bool not_init = false) const {
+    void AccessLog(Address_t address, uint8_t value, bool write, bool not_init = false) const {
         if (verbose) {
-            std::cout << fmt::format("MEM {:5} [{:04x}] -> {:02x} {}\n", (read ? "READ" : "WRITE"), address, value,
-                                     (not_init ? "NOT INITIALIZED" : ""));
+            std::cout << fmt::format("MEM {:5} [{:04x}] {} {:02x} {}\n", (write ? "WRITE" : "READ"), address,
+                                     (write ? "<-" : "->"), value, (not_init ? "NOT INITIALIZED" : ""));
         }
     }
 

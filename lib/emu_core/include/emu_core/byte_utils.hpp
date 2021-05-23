@@ -4,7 +4,7 @@
 #include <string_view>
 #include <vector>
 
-namespace emu::emu6502::assembler {
+namespace emu {
 
 uint8_t ParseByte(std::string_view text, int base = 0);
 uint16_t ParseWord(std::string_view text, int base = 0);
@@ -24,4 +24,4 @@ inline std::vector<uint8_t> ToBytes(uint16_t v) {
     };
 }
 
-} // namespace emu::emu6502::assembler
+} // namespace emu

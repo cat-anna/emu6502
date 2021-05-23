@@ -15,7 +15,7 @@ class ResetTest : public ::testing::Test {
 public:
     ClockSimple clock;
     SparseMemory16 memory{&clock, true, true};
-    cpu::Cpu cpu{&clock, &memory, InstructionSet::NMOS6502Emu};
+    cpu::Cpu cpu{&clock, &memory, true, InstructionSet::NMOS6502Emu};
 
     ResetTest() {}
 };

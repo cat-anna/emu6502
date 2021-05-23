@@ -10,12 +10,6 @@
 
 namespace emu::emu6502::cpu {
 
-using Reg8 = uint8_t;
-using Reg16 = uint16_t;
-using MemPtr = uint16_t;
-
-constexpr Reg8 kNegativeBit = 0x80;
-
 struct Cpu;
 
 using OperandFunctionPtr = void (*)(Cpu *cpu);
@@ -74,7 +68,7 @@ struct Cpu {
     Memory16 *const memory;
     const InstructionHandlerArray *instruction_handlers;
 
-    Cpu(Clock *clock, Memory16 *memory, InstructionSet instruction_set = InstructionSet::NMOS6502);
+    Cpu(Clock *clock, Memory16 *memory, bool verbose, InstructionSet instruction_set = InstructionSet::NMOS6502);
 
     static const InstructionHandlerArray &GetInstructionHandlerArray(InstructionSet instruction_set);
 
@@ -89,6 +83,7 @@ struct Cpu {
 
 private:
     Clock *const clock;
+    const bool verbose;
 };
 
 } // namespace emu::emu6502::cpu

@@ -1,5 +1,5 @@
 #include "compilation_context.hpp"
-#include "byte_utils.hpp"
+#include "emu_core/byte_utils.hpp"
 #include "instruction_argument.hpp"
 
 namespace emu::emu6502::assembler {
@@ -121,7 +121,7 @@ AddressMode CompilationContext::SelectInstuctionVariant(const std::set<AddressMo
 
 AddressMode CompilationContext::SelectInstuctionVariant(std::set<AddressMode> modes,
                                                         const InstructionParsingInfo &instruction, std::string label) {
-    modes.erase(AddressMode::ZPX); // TODO: not yet supported for labels/aliases
+    modes.erase(AddressMode::ZPX); // TODO: not (yet) supported for labels/aliases
     modes.erase(AddressMode::ZPY);
     modes.erase(AddressMode::ZP);
     if (modes.size() != 1) {

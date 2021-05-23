@@ -15,7 +15,7 @@ class ExecutionTest : public ::testing::Test {
 public:
     ClockSimple clock;
     SparseMemory16 memory{&clock, true, true};
-    cpu::Cpu cpu{&clock, &memory, InstructionSet::NMOS6502Emu};
+    cpu::Cpu cpu{&clock, &memory, true, InstructionSet::NMOS6502Emu};
 
     std::vector<uint8_t> test_data;
 

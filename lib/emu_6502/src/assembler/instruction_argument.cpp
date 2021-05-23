@@ -1,5 +1,5 @@
 #include "instruction_argument.hpp"
-#include "byte_utils.hpp"
+#include "emu_core/byte_utils.hpp"
 #include <charconv>
 #include <cinttypes>
 #include <fmt/format.h>

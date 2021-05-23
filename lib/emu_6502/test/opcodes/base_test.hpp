@@ -48,7 +48,7 @@ public:
     bool is_testing_jumps = false;
     bool random_reg_values = false;
 
-    BaseTest(InstructionSet instruction_set = InstructionSet::Default) : cpu{&clock, &memory, instruction_set} {}
+    BaseTest(InstructionSet instruction_set = InstructionSet::Default) : cpu{&clock, &memory, true, instruction_set} {}
 
     void SetUp() override {
         if (random_reg_values) {
@@ -170,7 +170,7 @@ public:
         memory.WriteRange(addr, data);
     }
     void VerifyMemory(MemPtr addr, const std::vector<uint8_t> &data) {
-        auto content = memory.ReadRange(addr, data.size());
+        auto content = memory.ReadRange(addr, static_cast<MemPtr>(data.size()));
         EXPECT_EQ(data, content) << fmt::format("Base address: {:04x}", addr);
     }
 
