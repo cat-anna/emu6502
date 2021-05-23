@@ -21,6 +21,11 @@ public:
 
     ExecutionTest() {}
 
+    void SetUp() override {
+        memory.Fill(kZeroPageBase, kMemoryPageSize);
+        memory.Fill(kStackBase, kMemoryPageSize);
+    }
+
     void PrepareRandomTestData(size_t len = 128) {
         test_data.resize(len);
         std::generate(test_data.begin(), test_data.end(), &ExecutionTest::RandomByte);
