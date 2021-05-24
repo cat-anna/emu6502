@@ -31,6 +31,7 @@ elseif(LINUX)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  message("* Enabling debug features")
   add_definitions(-DDEBUG)
 endif()
 
