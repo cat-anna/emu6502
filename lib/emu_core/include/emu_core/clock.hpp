@@ -20,7 +20,7 @@ struct ClockSimple : public Clock {
     void WaitForNextCycle() override { ++current_cycle; }
     void Reset() override { current_cycle = 0; }
 
-    Clock_t CurrentCycle() const { return current_cycle; }
+    Clock_t CurrentCycle() const override { return current_cycle; }
 
 private:
     Clock_t current_cycle = 0;
