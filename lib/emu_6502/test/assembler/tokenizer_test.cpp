@@ -41,17 +41,26 @@ TEST_P(TokenizerTest, ) {
 
 INSTANTIATE_TEST_SUITE_P(, TokenizerTest,
                          ::testing::ValuesIn({
-                             TokenizerTestArg{" test test   test  \t \t"s, {"test"s, "test"s, "test"s}},
-                             TokenizerTestArg{"  test   #$FF  \t \t"s, {"test"s, "#$FF"s}}, //
-                             TokenizerTestArg{";  test     \t \t"s, {}},
-                             TokenizerTestArg{" test,test test "s, {"test"s, "test"s, "test"s}},
-                             TokenizerTestArg{" test\ttest\ttest "s, {"test"s, "test"s, "test"s}},
-                             TokenizerTestArg{" test:\ttest:\ttest"s, {"test:"s, "test:"s, "test"}},
-                             TokenizerTestArg{".test.test:\ttest"s, {".test.test:"s, "test"s}},
-                             TokenizerTestArg{"test;test"s, {"test"s}}, //
-                             TokenizerTestArg{"test#test"s, {"test#test"s}},
-                             TokenizerTestArg{"    \t\t\t \t\t\t   "s, {}},
-                             TokenizerTestArg{""s, {}},
+                             //basic
+                             TokenizerTestArg{" test test   test  \t \t"s, {"test"s, "test"s, "test"s}}, //
+                             TokenizerTestArg{"  test   #$FF  \t \t"s, {"test"s, "#$FF"s}},              //
+                             TokenizerTestArg{";  test     \t \t"s, {}},                                 //
+                             TokenizerTestArg{" test,test test "s, {"test"s, "test"s, "test"s}},         //
+                             TokenizerTestArg{" test\ttest\ttest "s, {"test"s, "test"s, "test"s}},       //
+                             TokenizerTestArg{" test:\ttest:\ttest"s, {"test:"s, "test:"s, "test"}},     //
+                             TokenizerTestArg{".test.test:\ttest"s, {".test.test:"s, "test"s}},          //
+                             TokenizerTestArg{"test;test"s, {"test"s}},                                  //
+                             TokenizerTestArg{"test#test"s, {"test#test"s}},                             //
+                             TokenizerTestArg{"    \t\t\t \t\t\t   "s, {}},                              //
+                             TokenizerTestArg{""s, {}},                                                  //
+                             //string and escape characters
+                             TokenizerTestArg{R"=("a")="s, {"\"a\""}},                                     //
+                             TokenizerTestArg{R"=(  "a b"  )="s, {"\"a b\""}},                             //
+                             TokenizerTestArg{R"=("a" "b")="s, {"\"a\"", "\"b\""}},                        //
+                             TokenizerTestArg{R"=("|\n|" "|\0|")="s, {"\"|\n|\"", "\"|\0|\""s}},           //
+                             TokenizerTestArg{R"=("\\" "\"")="s, {"\"\\\"", "\"\"\""}},                    //
+                             TokenizerTestArg{R"=("\a\b\t\n\v\f\r")="s, {"\"\a\b\t\n\v\f\r\""}},           //
+                             TokenizerTestArg{R"=("\07\08\x09\xA\xB\x0C\x0D")="s, {"\"\a\b\t\n\v\f\r\""}}, //
                          }));
 
 } // namespace

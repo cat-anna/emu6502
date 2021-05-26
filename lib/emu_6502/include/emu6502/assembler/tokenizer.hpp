@@ -15,13 +15,23 @@ struct TokenLocation {};
 struct Token {
     LineTokenizer &line;
     std::string_view value;
-    TokenLocation location;
+    const TokenLocation location;
+
+    Token(LineTokenizer &line, TokenLocation location, std::string input)
+        : line(line), location(location), token_container(input) {
+        value = token_container;
+    }
+    Token(LineTokenizer &line, TokenLocation location, std::string_view input)
+        : line(line), value(input), location(location) {}
 
     operator bool() const { return !value.empty(); }
 
     std::string Upper() const;
     std::string Lower() const;
     auto String() const { return std::string(value); }
+
+private:
+    std::string token_container;
 };
 
 std::string to_string(const Token &token);
