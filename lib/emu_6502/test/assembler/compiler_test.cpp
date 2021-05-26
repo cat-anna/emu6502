@@ -1,6 +1,7 @@
 #include "emu6502/assembler/compiler.hpp"
 #include "emu6502/cpu/opcode.hpp"
 #include "emu6502/instruction_set.hpp"
+#include <emu_core/byte_utils.hpp>
 #include <emu_core/program.hpp>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
@@ -14,6 +15,7 @@ namespace {
 using namespace emu::emu6502::cpu::opcode;
 using namespace emu::emu6502::assembler;
 using namespace std::string_literals;
+using namespace std::string_view_literals;
 
 using AssemblerTestArg = std::tuple<std::string, std::string, std::optional<Program>, InstructionSet>;
 class CompilerTest : public testing::TestWithParam<AssemblerTestArg> {};
@@ -117,21 +119,34 @@ AssemblerTestArg GetOriginCommandTest() {
     return {"origin", code, expected, InstructionSet::Default};
 }
 
-// AssemblerTestArg GetPageAlignCommandTest() {
-//     Program expected = {
-//         .sparse_binary_code = SparseBinaryCode({{0_addr, 1_u8}, {0x100_addr, 2_u8}, {0x200_addr, 3_u8}}),
-//         .labels = {},
-//         .relocations = {},
-//     };
-//     auto code = R"==(
-// .byte 1
-// .page_align
-// .byte 2
-// .page_align
-// .byte 3
-// )=="s;
-//     return {"page_align", code, expected, InstructionSet::Default};
-// }
+AssemblerTestArg GetTextCommandTest() {
+    Program expected = {
+        .sparse_binary_code = SparseBinaryCode(0x0100_addr, ToBytes("abcd\n"sv)),
+        .labels = {},
+        .relocations = {},
+    };
+    auto code = R"==(
+.org 0x0100
+.text "abcd\n"
+)=="s;
+    return {"text", code, expected, InstructionSet::Default};
+}
+
+AssemblerTestArg GetPageAlignCommandTest() {
+    Program expected = {
+        .sparse_binary_code = SparseBinaryCode({{0_addr, 1_u8}, {0x100_addr, 2_u8}, {0x200_addr, 3_u8}}),
+        .labels = {},
+        .relocations = {},
+    };
+    auto code = R"==(
+.byte 1
+.page_align
+.byte 2
+.page_align
+.byte 3
+)=="s;
+    return {"page_align", code, expected, InstructionSet::Default};
+}
 
 AssemblerTestArg GetBranchTest() {
     auto L1 = std::make_shared<LabelInfo>(LabelInfo{"L1", 1_addr, false});
@@ -191,8 +206,9 @@ INSTANTIATE_TEST_SUITE_P(positive, CompilerTest,
                          ::testing::ValuesIn({
                              GetAbsoluteAddressingTest(),
                              GetImpliedTest(),
-                             //  GetPageAlignCommandTest(),
+                             GetPageAlignCommandTest(),
                              GetOriginCommandTest(),
+                             GetTextCommandTest(),
                              GetJumpTest(),
                              GetBranchTest(),
                              GetImmediateTest(),

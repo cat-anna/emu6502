@@ -67,6 +67,8 @@ private:
     void ParseByteCommand(LineTokenizer &tokenizer);
     void ParseWordCommand(LineTokenizer &tokenizer);
     void ParseOriginCommand(LineTokenizer &tokenizer);
+    void ParseTextCommand(LineTokenizer &tokenizer);
+    void ParsePageAlignCommand(LineTokenizer &tokenizer);
     void ParseResetCommand(LineTokenizer &tokenizer);
 
     void PutLabelReference(bool relative, const std::string &label, Address_t position);

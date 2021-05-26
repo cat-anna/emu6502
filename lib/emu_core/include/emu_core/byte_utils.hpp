@@ -24,4 +24,8 @@ inline std::vector<uint8_t> ToBytes(uint16_t v) {
     };
 }
 
+inline std::vector<uint8_t> ToBytes(std::string_view v) {
+    return {v.begin(), v.end()};
+}
+
 } // namespace emu

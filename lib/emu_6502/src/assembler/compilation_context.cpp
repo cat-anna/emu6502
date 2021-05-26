@@ -5,10 +5,12 @@
 namespace emu::emu6502::assembler {
 
 const std::unordered_map<std::string, CommandParsingInfo> CompilationContext::kCommandParseInfo = {
-    {"byte", {&CompilationContext::ParseByteCommand}},
-    {"word", {&CompilationContext::ParseWordCommand}},
-    {"org", {&CompilationContext::ParseOriginCommand}},
-    {"isr_reset", {&CompilationContext::ParseResetCommand}},
+    {"byte", {&CompilationContext::ParseByteCommand}},            //
+    {"word", {&CompilationContext::ParseWordCommand}},            //
+    {"org", {&CompilationContext::ParseOriginCommand}},           //
+    {"text", {&CompilationContext::ParseTextCommand}},            //
+    {"page_align", {&CompilationContext::ParsePageAlignCommand}}, //
+    {"isr_reset", {&CompilationContext::ParseResetCommand}},      //
 };
 
 void CompilationContext::ParseByteCommand(LineTokenizer &tokenizer) {
@@ -25,6 +27,29 @@ void CompilationContext::ParseWordCommand(LineTokenizer &tokenizer) {
         program.sparse_binary_code.PutBytes(current_position, ToBytes(ParseWord(tok.value)));
         current_position += 2;
     }
+}
+
+void CompilationContext::ParseTextCommand(LineTokenizer &tokenizer) {
+    auto tok = tokenizer.NextToken();
+    if (tok.value.starts_with('"')) {
+        auto token = tok.value;
+        token.remove_prefix(1);
+        token.remove_suffix(1);
+        program.sparse_binary_code.PutBytes(current_position, ToBytes(token));
+        current_position += static_cast<Address_t>(token.size());
+        return;
+    }
+    throw std::runtime_error("Invalid .text token");
+}
+
+void CompilationContext::ParsePageAlignCommand(LineTokenizer &tokenizer) {
+    auto new_address = current_position;
+    if ((new_address & 0xFF) != 0) {
+        new_address &= 0xFF00;
+        new_address += kMemoryPageSize;
+    }
+    Log("Setting position {:04x} -> {:04x}", current_position, new_address);
+    current_position = new_address;
 }
 
 void CompilationContext::ParseOriginCommand(LineTokenizer &tokenizer) {
