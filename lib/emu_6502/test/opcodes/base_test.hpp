@@ -28,7 +28,7 @@ public:
     using Flags = Registers::Flags;
 
     ClockSimple clock;
-    SparseMemory16 memory{&clock, true, true};
+    MemorySparse16 memory{&clock, true, true};
 
     Cpu cpu;
     Registers expected_regs;

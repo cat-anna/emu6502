@@ -18,5 +18,21 @@ public:
 };
 
 using Memory16 = MemoryInterface<uint16_t>;
+} // namespace emu
+
+#ifdef WANTS_GTEST_MOCKS
+
+#include <gmock/gmock.h>
+namespace emu {
+template <typename _Address_t>
+struct MemoryInterfaceMock : public MemoryInterface<_Address_t> {
+    using Address_t = _Address_t;
+    MOCK_METHOD(uint8_t, Load, (Address_t), (const));
+    MOCK_METHOD(void, Store, (Address_t, uint8_t));
+};
+
+using MemoryMock16 = MemoryInterfaceMock<uint16_t>;
 
 } // namespace emu
+
+#endif

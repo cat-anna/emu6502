@@ -17,7 +17,7 @@ class ExecutionTest : public ::testing::Test {
 public:
     using ClockType = std::conditional_t<kOptimizedBuild, ClockSteady, ClockSimple>;
     ClockType clock;
-    SparseMemory16 memory{&clock, true, kDebugBuild};
+    MemorySparse16 memory{&clock, true, kDebugBuild};
     cpu::Cpu cpu{&clock, &memory, kDebugBuild, InstructionSet::NMOS6502Emu};
 
     std::vector<uint8_t> test_data;

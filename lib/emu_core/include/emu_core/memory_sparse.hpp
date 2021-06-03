@@ -15,7 +15,7 @@
 namespace emu {
 
 template <std::unsigned_integral _Address_t>
-struct SparseMemory : public MemoryInterface<_Address_t> {
+struct MemorySparse : public MemoryInterface<_Address_t> {
     using Address_t = _Address_t;
 
     using MapType = std::unordered_map<Address_t, uint8_t>;
@@ -29,7 +29,7 @@ struct SparseMemory : public MemoryInterface<_Address_t> {
 
     static uint8_t RandomByte() { return rand() & 0xFF; }
 
-    SparseMemory(Clock *clock, bool strict_access = false, bool verbose = false)
+    MemorySparse(Clock *clock, bool strict_access = false, bool verbose = false)
         : clock(clock), strict_access(strict_access), verbose(verbose) {}
 
     uint8_t Load(Address_t address) const override {
@@ -100,6 +100,6 @@ private:
     }
 };
 
-using SparseMemory16 = SparseMemory<uint16_t>;
+using MemorySparse16 = MemorySparse<uint16_t>;
 
 } // namespace emu

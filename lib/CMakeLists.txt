@@ -32,6 +32,7 @@ function(define_static_lib_with_ut target_name)
 
   file(GLOB_RECURSE gtest_src test/*)
   if(gtest_src)
+    message("* Adding UTs for ${target_name}")
     set(ut_target ${target_name}_ut)
     define_ut_target(${target_name} ${ut_target} "${gtest_src}")
     target_link_libraries(${ut_target} PUBLIC GTest::gmock GTest::gtest) # gtest_main
