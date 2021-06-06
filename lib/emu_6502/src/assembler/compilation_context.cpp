@@ -14,16 +14,14 @@ const std::unordered_map<std::string, CommandParsingInfo> CompilationContext::kC
 };
 
 void CompilationContext::ParseByteCommand(LineTokenizer &tokenizer) {
-    while (tokenizer.HasInput()) {
-        auto tok = tokenizer.NextToken();
+    for (auto tok : tokenizer.TokenList(",")) {
         program.sparse_binary_code.PutBytes(current_position, ToBytes(ParseByte(tok.value)));
         ++current_position;
     }
 }
 
 void CompilationContext::ParseWordCommand(LineTokenizer &tokenizer) {
-    while (tokenizer.HasInput()) {
-        auto tok = tokenizer.NextToken();
+    for (auto tok : tokenizer.TokenList(",")) {
         program.sparse_binary_code.PutBytes(current_position, ToBytes(ParseWord(tok.value)));
         current_position += 2;
     }
@@ -32,7 +30,7 @@ void CompilationContext::ParseWordCommand(LineTokenizer &tokenizer) {
 void CompilationContext::ParseTextCommand(LineTokenizer &tokenizer) {
     auto tok = tokenizer.NextToken();
     if (tok.value.starts_with('"')) {
-        auto token = tok.value;
+        auto token = std::string_view(tok.value);
         token.remove_prefix(1);
         token.remove_suffix(1);
         program.sparse_binary_code.PutBytes(current_position, ToBytes(token));
@@ -88,7 +86,7 @@ void CompilationContext::AddLabel(const std::string &name) {
 void CompilationContext::RelocateLabel(const LabelInfo &label_info) {
     for (auto weak_rel : label_info.label_references) {
         auto rel = weak_rel.lock();
-        Log("Relocating reference to {} at {}", label_info.name, to_string(*rel));
+        Log("Relocating reference to label '{}' at {}", label_info.name, to_string(*rel));
         if (rel->mode == RelocationMode::Absolute) {
             auto bytes = ToBytes(current_position);
             program.sparse_binary_code.PutBytes(rel->position, bytes, true);
@@ -104,8 +102,15 @@ void CompilationContext::ParseInstruction(LineTokenizer &tokenizer, const Instru
     auto token = first_token.String();
 
     if (auto next = tokenizer.NextToken(); next) {
+        if (next != ",") {
+            throw std::runtime_error("Invalid token");
+        }
+        auto value = tokenizer.NextToken();
+        if (!value) {
+            throw std::runtime_error("expected token after ,");
+        }
         token += ",";
-        token += next.String();
+        token += value.value;
     }
 
     auto argument = ParseInstructionArgument(token);
@@ -188,7 +193,7 @@ void CompilationContext::PutLabelReference(bool relative, const std::string &lab
 
     auto existing_it = program.labels.find(label);
     if (existing_it == program.labels.end()) {
-        std::cout << "ADDING LABEL FORWARD REF " << label << " at " << position << "\n";
+        Log("Adding reference at {:04x} to unknown label '{}'", position, label);
         auto l = LabelInfo{
             .name = label,
             .imported = true,
@@ -197,7 +202,7 @@ void CompilationContext::PutLabelReference(bool relative, const std::string &lab
         program.labels[l.name] = std::make_shared<LabelInfo>(l);
         existing_it = program.labels.find(label);
     } else {
-        std::cout << "ADDING LABEL REF " << label << " at " << position << "\n";
+        Log("Adding reference at {:04x} to label '{}'", position, label);
         existing_it->second->label_references.emplace_back(relocation);
     }
 

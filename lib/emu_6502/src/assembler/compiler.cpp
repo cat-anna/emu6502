@@ -48,15 +48,16 @@ void Compiler6502::ProcessLine(CompilationContext &context, LineTokenizer &line)
             continue;
         }
 
-        if (token.value.ends_with(":")) {
-            token.value.remove_suffix(1);
-            context.AddLabel(token.String());
+        auto tok = std::string_view(token.value);
+        if (tok.ends_with(":")) {
+            tok.remove_suffix(1);
+            context.AddLabel(std::string(tok));
             continue;
         }
 
-        if (token.value.starts_with(".")) {
-            token.value.remove_prefix(1);
-            auto parse_info_it = CompilationContext::kCommandParseInfo.find(token.String());
+        if (tok.starts_with(".")) {
+            tok.remove_prefix(1);
+            auto parse_info_it = CompilationContext::kCommandParseInfo.find(std::string(tok));
             if (parse_info_it == CompilationContext::kCommandParseInfo.end()) {
                 throw std::runtime_error(fmt::format("Failed to parse .{} command", token));
             } else {
