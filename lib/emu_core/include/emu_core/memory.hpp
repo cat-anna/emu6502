@@ -13,7 +13,7 @@ public:
 
     virtual ~MemoryInterface() = default;
 
-    virtual uint8_t Load(Address_t address) const = 0;
+    [[nodiscard]] virtual uint8_t Load(Address_t address) const = 0;
     virtual void Store(Address_t address, uint8_t value) = 0;
 };
 

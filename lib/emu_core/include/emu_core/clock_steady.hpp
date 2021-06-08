@@ -52,16 +52,23 @@ struct ClockSteady : public ClockSimple {
 
     void Reset() override {
         ClockSimple::Reset();
-        next_cycle = steady_clock::now() + tick;
+        start_time = steady_clock::now();
+        next_cycle = start_time + tick;
     }
 
-    uint64_t LostCycles() const override { return lost_cycles; }
-    uint64_t Frequency() const override { return frequency; }
+    [[nodiscard]] uint64_t LostCycles() const override { return lost_cycles; }
+    [[nodiscard]] uint64_t Frequency() const override { return frequency; }
+
+    [[nodiscard]] double Time() const override {
+        std::chrono::duration<double> dt = steady_clock::now() - start_time;
+        return dt.count();
+    };
 
 private:
     const uint64_t frequency;
     std::chrono::nanoseconds const tick;
     steady_clock::time_point next_cycle;
+    steady_clock::time_point start_time;
     uint64_t lost_cycles = 0;
 };
 
