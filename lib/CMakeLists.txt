@@ -13,37 +13,57 @@ function(define_static_lib target_name)
       PARENT_SCOPE)
 endfunction()
 
-function(define_ut_target target_name ut_target_name target_src)
-  add_executable(${ut_target_name} ${target_src})
-  target_include_directories(${ut_target_name} PRIVATE src test)
-  target_link_libraries(${ut_target_name} PUBLIC ${target_name} fmt::fmt)
-  add_dependencies(build_all_test ${ut_target_name})
+function(define_ut_target target_name ut_name)
+  file(GLOB src_ut ${ut_name}/*)
+
+  string(REGEX REPLACE "test(.*)" "\\1" short_ut_name ${ut_name})
+  string(REPLACE "/" "_" valid_ut_name "${short_ut_name}")
+
+  set(target_ut_name "${target_name}${valid_ut_name}_ut")
+  message("* Adding UTs ${target_ut_name} ")
+
+  add_executable(${target_ut_name} ${src_ut})
+  target_include_directories(${target_ut_name} PRIVATE src test)
+  target_link_libraries(${target_ut_name} PUBLIC ${target_name} fmt::fmt GTest::gmock GTest::gtest emu_test_base)
+  target_compile_definitions(${target_ut_name} PRIVATE -DWANTS_GTEST_MOCKS)
+
   add_custom_target(
-    run_${ut_target_name}
-    COMMAND ${ut_target_name}
+    run_${target_ut_name}
+    COMMAND ${target_ut_name}
     WORKING_DIRECTORY ${TARGET_DESTINATTION}
-    COMMENT "Running test ${ut_target_name}"
-    DEPENDS ${ut_target_name} ${target_name})
-  add_dependencies(execute_all_test run_${ut_target_name})
+    COMMENT "Running test ${target_ut_name}"
+    DEPENDS ${target_ut_name} ${target_name})
+
+  add_dependencies(execute_all_test run_${target_ut_name})
+  add_dependencies(build_all_test ${target_ut_name})
+endfunction()
+
+function(define_ut_multi_target target_name ut_name)
+  file(
+    GLOB src_ut
+    LIST_DIRECTORIES true
+    ${ut_name}/*)
+
+  set(srclist "")
+
+  foreach(child ${src_ut})
+    file(RELATIVE_PATH rel_child ${CMAKE_CURRENT_SOURCE_DIR} ${child})
+    if(IS_DIRECTORY ${child})
+      define_ut_target(${target_name} ${rel_child})
+    else()
+      list(APPEND srclist ${rel_child})
+    endif()
+  endforeach()
+  if(srclist)
+    define_ut_target(${target_name} ${ut_name})
+  endif()
 endfunction()
 
 function(define_static_lib_with_ut target_name)
   define_static_lib(${target_name})
-
-  file(GLOB_RECURSE gtest_src test/*)
-  if(gtest_src)
-    message("* Adding UTs for ${target_name}")
-    set(ut_target ${target_name}_ut)
-    define_ut_target(${target_name} ${ut_target} "${gtest_src}")
-    target_link_libraries(${ut_target} PUBLIC GTest::gmock GTest::gtest) # gtest_main
-    target_compile_definitions(${ut_target} PRIVATE -DWANTS_GTEST_MOCKS)
-  endif()
-
+  define_ut_multi_target(${target_name} test)
   set(TARGET
       ${target_name}
-      PARENT_SCOPE)
-  set(TARGET_UT
-      ${ut_target}
       PARENT_SCOPE)
 endfunction()
 
