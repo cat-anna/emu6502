@@ -1,6 +1,6 @@
 #pragma once
 
-#include "emu6502/cpu/cpu.hpp"
+#include "emu_6502/cpu/cpu.hpp"
 #include <emu_core/clock.hpp>
 #include <emu_core/memory.hpp>
 

@@ -7,11 +7,11 @@
 namespace emu {
 
 template <typename iterable>
-static std::string ToHex(const iterable &container) {
+static std::string ToHex(const iterable &container, std::string_view sep = " ") {
     std::string hex_table;
     for (auto v : container) {
         if (!hex_table.empty()) {
-            hex_table += " ";
+            hex_table += sep;
         }
         hex_table += fmt::format("{:02x}", v);
     }

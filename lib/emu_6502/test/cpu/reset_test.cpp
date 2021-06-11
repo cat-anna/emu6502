@@ -1,6 +1,6 @@
 #include <algorithm>
-#include <emu6502/cpu/cpu.hpp>
-#include <emu6502/cpu/opcode.hpp>
+#include <emu_6502/cpu/cpu.hpp>
+#include <emu_6502/cpu/opcode.hpp>
 #include <emu_core/base16.hpp>
 #include <emu_core/clock.hpp>
 #include <emu_core/memory.hpp>

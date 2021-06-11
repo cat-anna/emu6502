@@ -1,4 +1,4 @@
-#include "emu6502/assembler/tokenizer.hpp"
+#include "emu_6502/assembler/tokenizer.hpp"
 #include <algorithm>
 #include <fmt/format.h>
 #include <stdexcept>
@@ -137,7 +137,7 @@ std::string Token::Lower() const {
 }
 
 std::string to_string(const Token &token) {
-    return "Token{TODO}";
+    return fmt::format("Token '{}' at {}", token.value, to_string(token.location));
 }
 
 //-----------------------------------------------------------------------------

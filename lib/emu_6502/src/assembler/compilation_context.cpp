@@ -1,29 +1,40 @@
 #include "compilation_context.hpp"
+#include "emu_core/base16.hpp"
 #include "emu_core/byte_utils.hpp"
 #include "instruction_argument.hpp"
 
 namespace emu::emu6502::assembler {
 
 const std::unordered_map<std::string, CommandParsingInfo> CompilationContext::kCommandParseInfo = {
-    {"byte", {&CompilationContext::ParseByteCommand}},            //
-    {"word", {&CompilationContext::ParseWordCommand}},            //
+    {"byte", {&CompilationContext::ParseDataCommand<1>}},         //
+    {"word", {&CompilationContext::ParseDataCommand<2>}},         //
     {"org", {&CompilationContext::ParseOriginCommand}},           //
     {"text", {&CompilationContext::ParseTextCommand}},            //
     {"page_align", {&CompilationContext::ParsePageAlignCommand}}, //
-    {"isr_reset", {&CompilationContext::ParseResetCommand}},      //
+    {"isr", {&CompilationContext::ParseIsrCommand}},              //
 };
 
-void CompilationContext::ParseByteCommand(LineTokenizer &tokenizer) {
+void CompilationContext::ParseDataCommand(LineTokenizer &tokenizer, Address_t element_size) {
     for (auto tok : tokenizer.TokenList(",")) {
-        program.sparse_binary_code.PutBytes(current_position, ToBytes(ParseByte(tok.value)));
-        ++current_position;
-    }
-}
+        switch (GetTokenType(tok, program)) {
+        case TokenType::kAlias:
+        case TokenType::kValue:
+            program.sparse_binary_code.PutBytes(current_position, ParseTokenToBytes(tok, element_size));
+            current_position += element_size;
+            continue;
 
-void CompilationContext::ParseWordCommand(LineTokenizer &tokenizer) {
-    for (auto tok : tokenizer.TokenList(",")) {
-        program.sparse_binary_code.PutBytes(current_position, ToBytes(ParseWord(tok.value)));
-        current_position += 2;
+        case TokenType::kUnknown:
+        case TokenType::kLabel:
+            if (element_size == 2) {
+                PutLabelReference(RelocationMode::Absolute, tok.String(), current_position);
+                current_position += element_size;
+                continue;
+            } else {
+                throw std::runtime_error("ParseDataCommand: Cannot put 1 byte reference to label");
+            }
+        }
+
+        throw std::runtime_error("ParseDataCommand: Invalid token");
     }
 }
 
@@ -35,6 +46,8 @@ void CompilationContext::ParseTextCommand(LineTokenizer &tokenizer) {
         token.remove_suffix(1);
         program.sparse_binary_code.PutBytes(current_position, ToBytes(token));
         current_position += static_cast<Address_t>(token.size());
+        program.sparse_binary_code.PutBytes(current_position, {0});
+        ++current_position;
         return;
     }
     throw std::runtime_error("Invalid .text token");
@@ -52,14 +65,60 @@ void CompilationContext::ParsePageAlignCommand(LineTokenizer &tokenizer) {
 
 void CompilationContext::ParseOriginCommand(LineTokenizer &tokenizer) {
     auto tok = tokenizer.NextToken();
-    auto new_pos = ParseWord(tok.value);
-    Log("Setting position {:04x} -> {:04x}", current_position, new_pos);
-    current_position = new_pos;
+    if (tokenizer.HasInput()) {
+        throw std::runtime_error("ParseOriginCommand: Unexpected input after .org command");
+    }
+    switch (GetTokenType(tok, program)) {
+    case TokenType::kAlias:
+    case TokenType::kValue: {
+        auto new_pos = ParseWord(tok.value);
+        Log("Setting position {:04x} -> {:04x}", current_position, new_pos);
+        current_position = new_pos;
+        return;
+    }
+    case TokenType::kUnknown:
+    case TokenType::kLabel:
+        throw std::runtime_error("ParseOriginCommand: Cannot change origin to label");
+    }
+
+    throw std::runtime_error("ParseOriginCommand: Unknown token type");
 }
 
-void CompilationContext::ParseResetCommand(LineTokenizer &tokenizer) {
+void CompilationContext::ParseIsrCommand(LineTokenizer &tokenizer) {
+    auto isr = tokenizer.NextToken();
+
+    std::optional<Address_t> addr;
+    if (isr.value == "reset") {
+        addr = kResetVector;
+    }
+
+    if (!addr.has_value()) {
+        throw std::runtime_error(fmt::format("Unknown isr '{}'", isr.value));
+    }
+
     auto tok = tokenizer.NextToken();
-    PutLabelReference(false, tok.String(), kResetVector);
+    Log("Setting ISR {} to '{}'", isr.value, tok.value);
+    switch (GetTokenType(tok, program)) {
+    case TokenType::kAlias:
+        break;
+    case TokenType::kValue:
+        break;
+
+    case TokenType::kUnknown:
+    case TokenType::kLabel:
+        PutLabelReference(RelocationMode::Absolute, tok.String(), addr.value());
+        return;
+    }
+
+    throw std::runtime_error(fmt::format("Invalid isr command argument '{}'", tok.value));
+}
+
+std::vector<uint8_t> CompilationContext::ParseTokenToBytes(const Token &value_token, size_t expected_byte_size) {
+    try {
+        return ParseImmediateValue(value_token.View(), program.aliases, expected_byte_size);
+    } catch (const std::exception &e) {
+        throw; //TODO: append location and throw proper exception
+    }
 }
 
 void CompilationContext::AddLabel(const std::string &name) {
@@ -70,7 +129,7 @@ void CompilationContext::AddLabel(const std::string &name) {
             .offset = current_position,
             .imported = false,
         };
-        program.labels[l.name] = std::make_shared<LabelInfo>(l);
+        program.AddLabel(std::make_shared<LabelInfo>(l));
     } else {
         Log("Found label '{}' at {:04x}", name, current_position);
         it->second->imported = false;
@@ -113,7 +172,7 @@ void CompilationContext::ParseInstruction(LineTokenizer &tokenizer, const Instru
         token += value.value;
     }
 
-    auto argument = ParseInstructionArgument(token);
+    auto argument = ParseInstructionArgument(token, program.aliases);
 
     std::vector<AddressMode> instruction_address_modes;
     for (auto &[f, s] : instruction.variants) {
@@ -142,7 +201,8 @@ void CompilationContext::ParseInstruction(LineTokenizer &tokenizer, const Instru
 }
 
 AddressMode CompilationContext::SelectInstuctionVariant(const std::set<AddressMode> &modes,
-                                                        const InstructionParsingInfo &instruction, std::nullptr_t) {
+                                                        const InstructionParsingInfo &instruction,
+                                                        std::nullptr_t) const {
     if (modes.size() != 1 || *modes.begin() != AddressMode::Implied) {
         throw std::runtime_error("Failed to select implied variant");
     }
@@ -150,10 +210,17 @@ AddressMode CompilationContext::SelectInstuctionVariant(const std::set<AddressMo
 }
 
 AddressMode CompilationContext::SelectInstuctionVariant(std::set<AddressMode> modes,
-                                                        const InstructionParsingInfo &instruction, std::string label) {
-    modes.erase(AddressMode::ZPX); // TODO: not (yet) supported for labels/aliases
-    modes.erase(AddressMode::ZPY);
-    modes.erase(AddressMode::ZP);
+                                                        const InstructionParsingInfo &instruction,
+                                                        std::string label) const {
+    if (const auto it = program.aliases.find(label); it != program.aliases.end() && it->second->value.size() == 1) {
+        modes.erase(AddressMode::ABS);
+        modes.erase(AddressMode::ABSX);
+        modes.erase(AddressMode::ABSY);
+    } else {
+        modes.erase(AddressMode::ZPX);
+        modes.erase(AddressMode::ZPY);
+        modes.erase(AddressMode::ZP);
+    }
     if (modes.size() != 1) {
         throw std::runtime_error("Failed to select label variant");
     }
@@ -162,7 +229,7 @@ AddressMode CompilationContext::SelectInstuctionVariant(std::set<AddressMode> mo
 
 AddressMode CompilationContext::SelectInstuctionVariant(const std::set<AddressMode> &modes,
                                                         const InstructionParsingInfo &instruction,
-                                                        std::vector<uint8_t> data) {
+                                                        std::vector<uint8_t> data) const {
     if (modes.size() != 1) {
         throw std::runtime_error("Failed to select data variant");
     }
@@ -170,9 +237,15 @@ AddressMode CompilationContext::SelectInstuctionVariant(const std::set<AddressMo
 }
 
 void CompilationContext::ProcessInstructionArgument(const OpcodeInfo &opcode, std::string label) {
-    bool relative = opcode.addres_mode == AddressMode::REL;
-    PutLabelReference(relative, label, current_position);
-    if (relative) {
+    if (const auto it = program.aliases.find(label); it != program.aliases.end()) {
+        const auto &v = it->second->value;
+        program.sparse_binary_code.PutBytes(current_position, v);
+        current_position += v.size();
+    }
+
+    auto mode = opcode.addres_mode == AddressMode::REL ? RelocationMode::Relative : RelocationMode::Absolute;
+    PutLabelReference(mode, label, current_position);
+    if (mode == RelocationMode::Relative) {
         ++current_position;
     } else {
         current_position += 2;
@@ -187,7 +260,7 @@ void CompilationContext::ProcessInstructionArgument(const OpcodeInfo &opcode, st
     current_position += static_cast<Address_t>(data.size());
 }
 
-void CompilationContext::PutLabelReference(bool relative, const std::string &label, Address_t position) {
+void CompilationContext::PutLabelReference(RelocationMode mode, const std::string &label, Address_t position) {
     auto relocation = std::make_shared<RelocationInfo>();
     relocation->position = position;
 
@@ -199,7 +272,7 @@ void CompilationContext::PutLabelReference(bool relative, const std::string &lab
             .imported = true,
             .label_references = {relocation},
         };
-        program.labels[l.name] = std::make_shared<LabelInfo>(l);
+        program.AddLabel(std::make_shared<LabelInfo>(l));
         existing_it = program.labels.find(label);
     } else {
         Log("Adding reference at {:04x} to label '{}'", position, label);
@@ -208,17 +281,26 @@ void CompilationContext::PutLabelReference(bool relative, const std::string &lab
 
     relocation->target_label = existing_it->second;
     auto label_addr = existing_it->second->offset.value_or(position);
-    if (relative) {
-        auto bytes = ToBytes(RelativeJumpOffset(position + 1, label_addr));
-        relocation->mode = RelocationMode::Relative;
-        program.sparse_binary_code.PutBytes(position, bytes);
+    relocation->mode = mode;
+    std::vector<uint8_t> bytes;
+
+    if (mode == RelocationMode::Relative) {
+        bytes = ToBytes(RelativeJumpOffset(position + 1, label_addr));
     } else {
-        relocation->mode = RelocationMode::Absolute;
-        auto bytes = ToBytes(label_addr);
-        program.sparse_binary_code.PutBytes(position, bytes);
+        bytes = ToBytes(label_addr);
     }
 
+    program.sparse_binary_code.PutBytes(position, bytes);
     program.relocations.insert(relocation);
+}
+
+void CompilationContext::AddAlias(const std::string &name, const Token &value_token) {
+    if (name.size() <= 3) {
+        //
+    }
+    auto data = ParsePackedIntegral(value_token.View());
+    Log("Adding alias '{}' = '{}'", name, ToHex(data, ""));
+    program.AddAlias(std::make_shared<ValueAlias>(ValueAlias{name, data}));
 }
 
 } // namespace emu::emu6502::assembler

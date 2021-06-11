@@ -11,6 +11,10 @@
 
 namespace emu {
 
+using ByteVector = std::vector<uint8_t>;
+
+//-----------------------------------------------------------------------------
+
 using Address_t = uint16_t;
 using Offset_t = int16_t;
 using NearOffset_t = int8_t;
@@ -45,6 +49,8 @@ struct LabelInfo {
 std::string to_string(const LabelInfo &label);
 std::string to_string(std::weak_ptr<LabelInfo> label);
 
+using LabelMap = std::unordered_map<std::string, std::shared_ptr<LabelInfo>>;
+
 //-----------------------------------------------------------------------------
 
 enum class RelocationMode {
@@ -73,6 +79,18 @@ struct RelocationInfoComp {
 
 //-----------------------------------------------------------------------------
 
+struct ValueAlias {
+    std::string name;
+    std::vector<uint8_t> value;
+};
+
+std::string to_string(const ValueAlias &value_alias);
+std::string to_string(std::shared_ptr<ValueAlias> value_alias);
+
+using AliasMap = std::unordered_map<std::string, std::shared_ptr<ValueAlias>>;
+
+//-----------------------------------------------------------------------------
+
 struct SparseBinaryCode {
     using MapType = std::unordered_map<Address_t, uint8_t>;
     using VectorType = std::vector<uint8_t>;
@@ -96,12 +114,17 @@ struct SparseBinaryCode {
 
 struct Program {
     SparseBinaryCode sparse_binary_code;
-    std::unordered_map<std::string, std::shared_ptr<LabelInfo>> labels;
+    LabelMap labels;
+    AliasMap aliases;
     std::set<std::shared_ptr<RelocationInfo>, RelocationInfoComp> relocations;
 
     bool operator==(const Program &other) const;
+
+    void AddAlias(std::shared_ptr<ValueAlias> alias);
+    void AddLabel(std::shared_ptr<LabelInfo> label);
 };
 
 std::string to_string(const Program &program);
+std::ostream &operator<<(std::ostream &o, const Program &program);
 
 } // namespace emu

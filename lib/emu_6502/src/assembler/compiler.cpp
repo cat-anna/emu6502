@@ -1,4 +1,4 @@
-#include "emu6502/assembler/compiler.hpp"
+#include "emu_6502/assembler/compiler.hpp"
 #include "compilation_context.hpp"
 #include <fstream>
 #include <sstream>
@@ -71,6 +71,23 @@ void Compiler6502::ProcessLine(CompilationContext &context, LineTokenizer &line)
         if (op_handler != instruction_set.end()) {
             context.ParseInstruction(line, op_handler->second);
             continue;
+        }
+
+        if (line.HasInput()) {
+            auto next_token = line.NextToken();
+            if (next_token == "=" || next_token.Lower() == "equ") {
+                if (!line.HasInput()) {
+                    throw std::runtime_error(fmt::format("Unexpected end of input after {}", to_string(next_token)));
+                }
+                auto alias_value = line.NextToken();
+
+                if (line.HasInput()) {
+                    throw std::runtime_error(fmt::format("Unexpected input after {}", to_string(alias_value)));
+                }
+
+                context.AddAlias(token.String(), alias_value);
+                continue;
+            }
         }
 
         throw std::runtime_error(fmt::format("Unknown {}", to_string(token)));

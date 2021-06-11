@@ -1,4 +1,4 @@
-#include "emu6502/assembler/tokenizer.hpp"
+#include "emu_6502/assembler/tokenizer.hpp"
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <sstream>

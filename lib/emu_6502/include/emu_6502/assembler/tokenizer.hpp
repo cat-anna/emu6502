@@ -3,6 +3,7 @@
 #include <iostream>
 #include <optional>
 #include <stack>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -34,7 +35,7 @@ public:
     TokenizerSubException(const TokenizerSubException &sub_exception, size_t _offset)
         : message(sub_exception.message), error(sub_exception.error), offset(_offset + sub_exception.offset) {}
 
-    virtual const char *what() const { return message.c_str(); }
+    const char *what() const noexcept override { return message.c_str(); }
 
     std::string message;
     const TokenizerError error;
@@ -83,7 +84,8 @@ struct Token {
 
     std::string Upper() const;
     std::string Lower() const;
-    auto String() const { return std::string(value); }
+    std::string_view View() const { return std::string_view(value); }
+    const std::string &String() const { return value; }
 };
 
 std::string to_string(const Token &token);

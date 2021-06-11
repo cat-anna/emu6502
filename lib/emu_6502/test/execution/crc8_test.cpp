@@ -32,7 +32,7 @@ uint8_t crc8(const iterable &container) {
 
 TEST_F(ExecutionTest, crc8) {
     auto code = R"==(
-.isr_reset TEST_ENTRY
+.isr reset TEST_ENTRY
 .org 0x2000
 TEST_ENTRY:
     NOP

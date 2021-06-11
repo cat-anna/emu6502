@@ -115,6 +115,16 @@ std::string to_string(std::weak_ptr<RelocationInfo> relocation) {
 
 //-----------------------------------------------------------------------------
 
+std::string to_string(const ValueAlias &value_alias) {
+    return fmt::format("ValueAlias{{name={},value=[{}]}}", value_alias.name, ToHex(value_alias.value, ""));
+}
+
+std::string to_string(std::shared_ptr<ValueAlias> value_alias) {
+    return to_string(*value_alias);
+}
+
+//-----------------------------------------------------------------------------
+
 std::pair<Address_t, Address_t> SparseBinaryCode::CodeRange() const {
     auto [min, max] =
         std::minmax_element(sparse_map.begin(), sparse_map.end(), [](auto &a, auto &b) { return a.first < b.first; });
@@ -159,10 +169,18 @@ std::string to_string(const Program &program) {
     for (auto &l : program.relocations) {
         r += fmt::format("\t\t{}\n", to_string(*l));
     }
+    r += "\tAliases:\n";
+    for (auto &[n, l] : program.aliases) {
+        r += fmt::format("\t\t{}\n", to_string(*l));
+    }
     r += "\tCode:\n";
     r += program.sparse_binary_code.HexDump("\t\t");
     r += "";
     return r;
+}
+
+std::ostream &operator<<(std::ostream &o, const Program &program) {
+    return o << to_string(program);
 }
 
 bool Program::operator==(const Program &other) const {
@@ -183,6 +201,26 @@ bool Program::operator==(const Program &other) const {
     }
 
     return true;
+}
+
+void Program::AddAlias(std::shared_ptr<ValueAlias> alias) {
+    if (alias->name.size() < 2) {
+        throw std::runtime_error(fmt::format("Label '{}' name is to short", alias->name));
+    }
+    if (aliases.contains(alias->name)) {
+        throw std::runtime_error(fmt::format("Alias '{}' is already defined", alias->name));
+    }
+    aliases[alias->name] = std::move(alias);
+}
+
+void Program::AddLabel(std::shared_ptr<LabelInfo> label) {
+    if (label->name.size() < 2) {
+        throw std::runtime_error(fmt::format("Label '{}' name is to short", label->name));
+    }
+    if (labels.contains(label->name)) {
+        throw std::runtime_error(fmt::format("Label '{}' is already defined", label->name));
+    }
+    labels[label->name] = std::move(label);
 }
 
 } // namespace emu

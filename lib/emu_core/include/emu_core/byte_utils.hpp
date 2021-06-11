@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -8,6 +9,8 @@ namespace emu {
 
 uint8_t ParseByte(std::string_view text, int base = 0);
 uint16_t ParseWord(std::string_view text, int base = 0);
+std::vector<uint8_t> ParsePackedIntegral(std::string_view text, std::optional<size_t> expected_size = std::nullopt,
+                                         int base = 0);
 
 inline std::vector<uint8_t> ToBytes(uint8_t v) {
     return {v};

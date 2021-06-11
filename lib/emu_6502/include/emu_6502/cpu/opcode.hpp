@@ -1,6 +1,6 @@
 #pragma once
 
-#include "emu6502/instruction_set.hpp"
+#include "emu_6502/instruction_set.hpp"
 #include <cstdint>
 #include <string_view>
 #include <unordered_map>

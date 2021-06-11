@@ -1,13 +1,70 @@
 #include "instruction_argument.hpp"
 #include "emu_core/byte_utils.hpp"
+#include "emu_core/text_utils.hpp"
 #include <charconv>
 #include <cinttypes>
 #include <fmt/format.h>
 #include <limits>
 #include <regex>
 #include <stdexcept>
+#include <string_view>
 
 namespace emu::emu6502::assembler {
+
+namespace {
+void FilterPossibleModes(std::set<AddressMode> &modes, size_t size) {
+    using AM = AddressMode;
+    if (size == 1) {
+        modes.erase(AM::ABSX);
+        modes.erase(AM::ABSY);
+        modes.erase(AM::ABS);
+    } else {
+        modes.erase(AM::ZPX);
+        modes.erase(AM::ZPY);
+        modes.erase(AM::ZP);
+    }
+
+    if (modes.empty()) {
+        throw std::runtime_error("Impossible operand size");
+    }
+
+    for (auto i : modes) {
+        if (ArgumentByteSize(i) != size) {
+            throw std::runtime_error("Invalid operand size");
+        }
+    }
+}
+} // namespace
+
+ByteVector ParseImmediateValue(std::string_view data, const AliasMap &aliases, std::optional<size_t> expected_size) {
+    auto check = [&](ByteVector v) {
+        if (expected_size.has_value() && v.size() != expected_size.value()) {
+            throw std::runtime_error(
+                fmt::format("Expected '{}' to have size {}, but got {}", data, expected_size.value(), v.size()));
+        }
+        return v;
+    };
+
+    if (!data.starts_with("$")) {
+        if (const auto it = aliases.find(std::string(data)); it != aliases.end()) {
+            ByteVector r;
+            const auto &v = it->second->value;
+            if (expected_size.has_value() && expected_size.value() > v.size()) {
+                r.resize(expected_size.value() - v.size(), 0);
+            }
+            std::copy(v.begin(), v.end(), std::back_inserter(r));
+            return check(it->second->value);
+        }
+
+        if (data.starts_with("\"")) {
+            data.remove_prefix(1);
+            data.remove_suffix(1);
+            return check(ToBytes(data));
+        }
+    }
+
+    return ParsePackedIntegral(data, expected_size);
+}
 
 std::string to_string(const InstructionArgument &ia) {
     std::string r = "InstructionArgument{{";
@@ -40,7 +97,7 @@ std::string to_string(const InstructionArgument &ia) {
     return r;
 }
 
-InstructionArgument ParseInstructionArgument(std::string_view arg) {
+InstructionArgument ParseInstructionArgument(std::string_view arg, const AliasMap &aliases) {
     // +---------------------+--------------------------+
     // |      mode           |     assembler format     |
     // +=====================+==========================+
@@ -89,7 +146,7 @@ InstructionArgument ParseInstructionArgument(std::string_view arg) {
         {std::regex{R"==(^\(([$\w]+)\),Y$)=="}, {AM::INDY}},
     };
 
-    for (const auto &[regex, set] : fmt_regex) {
+    for (const auto &[regex, matched_modes] : fmt_regex) {
         std::smatch match;
         auto str = std::string(arg);
         if (std::regex_match(str, match, regex)) {
@@ -101,53 +158,79 @@ InstructionArgument ParseInstructionArgument(std::string_view arg) {
                 throw std::runtime_error("value.empty()");
             }
 
+            auto possible_address_modes = matched_modes;
             if (value.starts_with("$")) {
-                value.remove_prefix(1);
-                std::vector<uint8_t> data;
-                switch (value.size()) {
-                case 2:
-                    data = ToBytes(ParseByte(value, 16));
-                    break;
-                case 4:
-                    data = ToBytes(ParseWord(value, 16));
-                    break;
-                default:
-                    throw std::runtime_error("Invalid literal value");
-                }
-                auto possible_address_modes = set;
+                std::vector<uint8_t> data = ParseImmediateValue(value, aliases);
                 possible_address_modes.erase(AM::REL);
-                if (data.size() == 1) {
-                    possible_address_modes.erase(AM::ABSX);
-                    possible_address_modes.erase(AM::ABSY);
-                    possible_address_modes.erase(AM::ABS);
-                } else {
-                    possible_address_modes.erase(AM::ZPX);
-                    possible_address_modes.erase(AM::ZPY);
-                    possible_address_modes.erase(AM::ZP);
-                }
-                if (possible_address_modes.empty()) {
-                    throw std::runtime_error("Impossible literal size");
-                }
-                for (auto i : possible_address_modes) {
-                    if (ArgumentByteSize(i) != data.size()) {
-                        throw std::runtime_error("Invalid literal size");
-                    }
-                }
+                FilterPossibleModes(possible_address_modes, data.size());
                 return InstructionArgument{
                     .possible_address_modes = {possible_address_modes.begin(), possible_address_modes.end()},
                     .argument_value = data,
                 };
             } else {
-                auto possible_address_modes = set;
-                return InstructionArgument{
-                    .possible_address_modes = {possible_address_modes.begin(), possible_address_modes.end()},
-                    .argument_value = s_value,
-                };
+                if (auto it = aliases.find(s_value); it != aliases.end()) {
+                    possible_address_modes.erase(AM::REL);
+                    const auto &v = it->second->value;
+                    FilterPossibleModes(possible_address_modes, v.size());
+                    return InstructionArgument{
+                        .possible_address_modes = {possible_address_modes.begin(), possible_address_modes.end()},
+                        .argument_value = v,
+                    };
+                } else {
+                    return InstructionArgument{
+                        .possible_address_modes = {possible_address_modes.begin(), possible_address_modes.end()},
+                        .argument_value = s_value,
+                    };
+                }
             }
         }
     }
 
     throw std::runtime_error("not implemted");
+}
+
+std::string to_string(TokenType tt) {
+    switch (tt) {
+    case TokenType::kValue:
+        return "TokenType::kValue";
+    case TokenType::kLabel:
+        return "TokenType::kLabel";
+    case TokenType::kAlias:
+        return "TokenType::kAlias";
+    case TokenType::kUnknown:
+        return "TokenType::kUnknown";
+    }
+    return fmt::format("TokenType::{}", static_cast<int>(tt));
+}
+
+std::ostream &operator<<(std::ostream &o, TokenType tt) {
+    return o << to_string(tt);
+}
+
+TokenType GetTokenType(const Token &value_token, const Program &program) {
+    return GetTokenType(value_token, &program.aliases, &program.labels);
+}
+
+TokenType GetTokenType(const Token &value_token, const AliasMap *aliases, const LabelMap *labels) {
+    auto sv = value_token.View();
+    if (sv.starts_with("0x") || sv.starts_with("0X") || sv.starts_with("\"") || sv.starts_with("$")) {
+        return TokenType::kValue;
+    }
+
+    if (VerifyString(sv, [](auto i) { return isdigit(i) != 0; })) {
+        return TokenType::kValue;
+    }
+
+    auto text = std::string(sv);
+    if (aliases != nullptr && aliases->contains(text)) {
+        return TokenType::kAlias;
+    }
+
+    if (labels != nullptr && labels->contains(text)) {
+        return TokenType::kLabel;
+    }
+
+    return TokenType::kUnknown;
 }
 
 } // namespace emu::emu6502::assembler

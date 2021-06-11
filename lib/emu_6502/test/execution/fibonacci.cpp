@@ -20,7 +20,7 @@ class FibonacciTest : public ExecutionTest, public ::testing::WithParamInterface
 
 TEST_P(FibonacciTest, fibonacci_8) {
     auto code = R"==(
-.isr_reset TEST_ENTRY
+.isr reset TEST_ENTRY
 .org 0x2000
 TEST_ENTRY:
     LDX COUNT

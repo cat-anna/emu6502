@@ -1,6 +1,8 @@
 #pragma once
 
-#include "emu6502/instruction_set.hpp"
+#include "emu_6502/assembler/tokenizer.hpp"
+#include "emu_6502/instruction_set.hpp"
+#include "emu_core/program.hpp"
 #include <optional>
 #include <set>
 #include <string>
@@ -21,6 +23,21 @@ struct InstructionArgument {
 
 std::string to_string(const InstructionArgument &ia);
 
-InstructionArgument ParseInstructionArgument(std::string_view arg);
+InstructionArgument ParseInstructionArgument(std::string_view arg, const AliasMap &aliases);
+ByteVector ParseImmediateValue(std::string_view data, const AliasMap &aliases,
+                               std::optional<size_t> expected_size = std::nullopt);
+
+enum class TokenType {
+    kValue = 1,
+    kLabel,
+    kAlias,
+    kUnknown,
+};
+
+std::string to_string(TokenType tt);
+std::ostream &operator<<(std::ostream &o, TokenType tt);
+
+TokenType GetTokenType(const Token &value_token, const AliasMap *aliases, const LabelMap *labels);
+TokenType GetTokenType(const Token &value_token, const Program &program);
 
 } // namespace emu::emu6502::assembler

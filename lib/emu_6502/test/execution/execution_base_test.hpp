@@ -1,5 +1,5 @@
-#include "emu6502/assembler/compiler.hpp"
-#include "emu6502/cpu/cpu.hpp"
+#include "emu_6502/assembler/compiler.hpp"
+#include "emu_6502/cpu/cpu.hpp"
 #include <array>
 #include <chrono>
 #include <emu_core/base16.hpp>
