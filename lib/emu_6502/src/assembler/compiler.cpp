@@ -50,8 +50,7 @@ void Compiler6502::ProcessLine(CompilationContext &context, LineTokenizer &line)
 
         auto tok = std::string_view(token.value);
         if (tok.ends_with(":")) {
-            tok.remove_suffix(1);
-            context.AddLabel(std::string(tok));
+            context.AddLabel(token);
             continue;
         }
 
@@ -69,7 +68,7 @@ void Compiler6502::ProcessLine(CompilationContext &context, LineTokenizer &line)
 
         auto op_handler = instruction_set.find(token.Upper());
         if (op_handler != instruction_set.end()) {
-            context.ParseInstruction(line, op_handler->second);
+            context.EmitInstruction(line, op_handler->second);
             continue;
         }
 
@@ -85,7 +84,7 @@ void Compiler6502::ProcessLine(CompilationContext &context, LineTokenizer &line)
                     throw std::runtime_error(fmt::format("Unexpected input after {}", to_string(alias_value)));
                 }
 
-                context.AddAlias(token.String(), alias_value);
+                context.AddAlias(token, alias_value);
                 continue;
             }
         }

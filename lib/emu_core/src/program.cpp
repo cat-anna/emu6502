@@ -202,6 +202,15 @@ bool Program::operator==(const Program &other) const {
 
     return true;
 }
+std::shared_ptr<ValueAlias> Program::FindAlias(const std::string &name) const {
+    auto it = aliases.find(name);
+    return it == aliases.end() ? nullptr : it->second;
+}
+
+std::shared_ptr<LabelInfo> Program::FindLabel(const std::string &name) const {
+    auto it = labels.find(name);
+    return it == labels.end() ? nullptr : it->second;
+}
 
 void Program::AddAlias(std::shared_ptr<ValueAlias> alias) {
     if (alias->name.size() < 2) {

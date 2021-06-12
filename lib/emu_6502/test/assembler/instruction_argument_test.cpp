@@ -1,4 +1,5 @@
 #include "assembler/instruction_argument.hpp"
+#include "emu_core/byte_utils.hpp"
 #include <gtest/gtest.h>
 #include <memory>
 #include <optional>
@@ -18,8 +19,8 @@ const AliasMap kTestAliases = {
 };
 
 const LabelMap kTestLabelMap = {
-    {"L1", std::make_shared<LabelInfo>(LabelInfo{"L1", 1, false, {}})},
-    {"L2", std::make_shared<LabelInfo>(LabelInfo{"L2", 2, false, {}})},
+    {"L1", std::make_shared<LabelInfo>(LabelInfo{"L1", 1_u8, false, {}})},
+    {"L2", std::make_shared<LabelInfo>(LabelInfo{"L2", 2_u8, false, {}})},
 };
 
 using ArgumentParseTestArg = std::tuple<std::string, std::optional<InstructionArgument>>;

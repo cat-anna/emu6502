@@ -3,6 +3,7 @@
 #include <emu_6502/cpu/cpu.hpp>
 #include <emu_6502/cpu/opcode.hpp>
 #include <emu_core/base16.hpp>
+#include <emu_core/byte_utils.hpp>
 #include <emu_core/clock.hpp>
 #include <emu_core/memory.hpp>
 #include <emu_core/memory_sparse.hpp>
@@ -18,10 +19,6 @@ using namespace emu::emu6502::cpu;
 
 using Reg8Ptr = Reg8(Registers::*);
 using Flags = Registers::Flags;
-
-constexpr uint8_t operator"" _u8(unsigned long long n) {
-    return static_cast<uint8_t>(n);
-}
 
 class BaseTest : public testing::Test {
 public:

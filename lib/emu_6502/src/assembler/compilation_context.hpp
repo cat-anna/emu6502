@@ -21,21 +21,22 @@ struct CommandParsingInfo {
 };
 
 struct CompilationContext {
-    Program &program;
-    const bool verbose_logs = false;
-
-    Address_t current_position = 0;
 
     CompilationContext(Program &program, bool verbose = false) : program(program), verbose_logs(verbose) {}
 
     static const std::unordered_map<std::string, CommandParsingInfo> kCommandParseInfo;
+    static const std::unordered_map<std::string, Address_t> kIsrMap;
 
-    void AddLabel(const std::string &name);
-    void AddAlias(const std::string &name, const Token &value_token);
+    void AddLabel(const Token &name_token);
+    void AddAlias(const Token &name_token, const Token &value_token);
 
-    void ParseInstruction(LineTokenizer &tokenizer, const InstructionParsingInfo &instruction);
+    void EmitInstruction(LineTokenizer &tokenizer, const InstructionParsingInfo &instruction);
 
 private:
+    Program &program;
+    const bool verbose_logs = false;
+    Address_t current_position = 0;
+
     void RelocateLabel(const LabelInfo &label_info);
 
     template <typename... ARGS>
@@ -58,7 +59,7 @@ private:
                                         std::nullptr_t) const;
     AddressMode SelectInstuctionVariant(std::set<AddressMode> modes, const InstructionParsingInfo &instruction,
                                         std::string label) const;
-    AddressMode SelectInstuctionVariant(const std::set<AddressMode> &modes, const InstructionParsingInfo &instruction,
+    AddressMode SelectInstuctionVariant(std::set<AddressMode> modes, const InstructionParsingInfo &instruction,
                                         std::vector<uint8_t> data) const;
 
     void ProcessInstructionArgument(const OpcodeInfo &opcode, std::nullptr_t);
@@ -79,6 +80,8 @@ private:
     std::vector<uint8_t> ParseTokenToBytes(const Token &value_token, size_t expected_byte_size);
 
     void PutLabelReference(RelocationMode mode, const std::string &label, Address_t position);
+
+    void EmitBytes(const ByteVector &data);
 };
 
 } // namespace emu::emu6502::assembler

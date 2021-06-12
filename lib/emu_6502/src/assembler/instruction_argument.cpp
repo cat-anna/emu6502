@@ -11,30 +11,18 @@
 
 namespace emu::emu6502::assembler {
 
-namespace {
-void FilterPossibleModes(std::set<AddressMode> &modes, size_t size) {
-    using AM = AddressMode;
-    if (size == 1) {
-        modes.erase(AM::ABSX);
-        modes.erase(AM::ABSY);
-        modes.erase(AM::ABS);
-    } else {
-        modes.erase(AM::ZPX);
-        modes.erase(AM::ZPY);
-        modes.erase(AM::ZP);
-    }
-
-    if (modes.empty()) {
-        throw std::runtime_error("Impossible operand size");
-    }
-
-    for (auto i : modes) {
-        if (ArgumentByteSize(i) != size) {
-            throw std::runtime_error("Invalid operand size");
+std::set<AddressMode> FilterPossibleModes(const std::set<AddressMode> &modes, size_t size, bool throw_on_empty) {
+    std::set<AddressMode> r;
+    for (auto m : modes) {
+        if (ArgumentByteSize(m) == size) {
+            r.emplace(m);
         }
     }
+    if (throw_on_empty && r.empty()) {
+        throw std::runtime_error("Impossible operand size");
+    }
+    return r;
 }
-} // namespace
 
 ByteVector ParseImmediateValue(std::string_view data, const AliasMap &aliases, std::optional<size_t> expected_size) {
     auto check = [&](ByteVector v) {
@@ -47,12 +35,6 @@ ByteVector ParseImmediateValue(std::string_view data, const AliasMap &aliases, s
 
     if (!data.starts_with("$")) {
         if (const auto it = aliases.find(std::string(data)); it != aliases.end()) {
-            ByteVector r;
-            const auto &v = it->second->value;
-            if (expected_size.has_value() && expected_size.value() > v.size()) {
-                r.resize(expected_size.value() - v.size(), 0);
-            }
-            std::copy(v.begin(), v.end(), std::back_inserter(r));
             return check(it->second->value);
         }
 
@@ -64,6 +46,22 @@ ByteVector ParseImmediateValue(std::string_view data, const AliasMap &aliases, s
     }
 
     return ParsePackedIntegral(data, expected_size);
+}
+
+ByteVector ParseTextValue(const Token &token, bool include_trailing_zero) {
+    auto view = token.View();
+
+    if (!view.starts_with("\"")) {
+        throw std::runtime_error("no \" "); //TODO
+    }
+
+    view.remove_prefix(1);
+    view.remove_suffix(1);
+    auto r = ToBytes(view);
+    if (include_trailing_zero) {
+        r.push_back(0);
+    }
+    return r;
 }
 
 std::string to_string(const InstructionArgument &ia) {
@@ -158,27 +156,26 @@ InstructionArgument ParseInstructionArgument(std::string_view arg, const AliasMa
                 throw std::runtime_error("value.empty()");
             }
 
-            auto possible_address_modes = matched_modes;
             if (value.starts_with("$")) {
                 std::vector<uint8_t> data = ParseImmediateValue(value, aliases);
+                auto possible_address_modes = matched_modes;
                 possible_address_modes.erase(AM::REL);
-                FilterPossibleModes(possible_address_modes, data.size());
                 return InstructionArgument{
-                    .possible_address_modes = {possible_address_modes.begin(), possible_address_modes.end()},
+                    .possible_address_modes = FilterPossibleModes(possible_address_modes, data.size()),
                     .argument_value = data,
                 };
             } else {
                 if (auto it = aliases.find(s_value); it != aliases.end()) {
+                    auto possible_address_modes = matched_modes;
                     possible_address_modes.erase(AM::REL);
                     const auto &v = it->second->value;
-                    FilterPossibleModes(possible_address_modes, v.size());
                     return InstructionArgument{
-                        .possible_address_modes = {possible_address_modes.begin(), possible_address_modes.end()},
+                        .possible_address_modes = FilterPossibleModes(possible_address_modes, v.size(), true),
                         .argument_value = v,
                     };
                 } else {
                     return InstructionArgument{
-                        .possible_address_modes = {possible_address_modes.begin(), possible_address_modes.end()},
+                        .possible_address_modes = matched_modes,
                         .argument_value = s_value,
                     };
                 }

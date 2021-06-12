@@ -1,9 +1,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "emu_core/byte_utils.hpp"
 #include "emu_core/clock.hpp"
 #include "emu_core/memory/memory_linear.hpp"
 #include "emu_core/memory_mapper.hpp"
+#include "emu_core/program.hpp"
 #include <sstream>
 
 namespace emu::test {
@@ -13,13 +15,6 @@ using namespace emu::memory;
 using namespace ::testing;
 
 using Address_t = MemoryLinear16::Address_t;
-
-constexpr Address_t operator"" _addr(unsigned long long n) {
-    return static_cast<Address_t>(n);
-}
-constexpr uint8_t operator"" _u8(unsigned long long n) {
-    return static_cast<uint8_t>(n);
-}
 
 using namespace std::string_view_literals;
 using namespace std::string_literals;

@@ -25,12 +25,6 @@ constexpr Address_t operator"" _addr(unsigned long long n) {
 constexpr Offset_t operator"" _off(unsigned long long n) {
     return static_cast<Offset_t>(n);
 }
-constexpr uint8_t operator"" _u8(unsigned long long n) {
-    return static_cast<uint8_t>(n);
-}
-constexpr int8_t operator"" _s8(unsigned long long n) {
-    return static_cast<int8_t>(n);
-}
 
 NearOffset_t RelativeJumpOffset(Address_t position, Address_t target);
 
@@ -121,7 +115,9 @@ struct Program {
     bool operator==(const Program &other) const;
 
     void AddAlias(std::shared_ptr<ValueAlias> alias);
+    std::shared_ptr<ValueAlias> FindAlias(const std::string &name) const;
     void AddLabel(std::shared_ptr<LabelInfo> label);
+    std::shared_ptr<LabelInfo> FindLabel(const std::string &name) const;
 };
 
 std::string to_string(const Program &program);

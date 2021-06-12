@@ -7,6 +7,21 @@
 
 namespace emu {
 
+constexpr uint8_t operator"" _u8(unsigned long long n) {
+    return static_cast<uint8_t>(n);
+}
+
+constexpr int8_t operator"" _s8(unsigned long long n) {
+    return static_cast<int8_t>(n);
+}
+
+constexpr uint16_t operator"" _u16(unsigned long long n) {
+    return static_cast<uint16_t>(n);
+}
+constexpr int16_t operator"" _416(unsigned long long n) {
+    return static_cast<int16_t>(n);
+}
+
 uint8_t ParseByte(std::string_view text, int base = 0);
 uint16_t ParseWord(std::string_view text, int base = 0);
 std::vector<uint8_t> ParsePackedIntegral(std::string_view text, std::optional<size_t> expected_size = std::nullopt,
