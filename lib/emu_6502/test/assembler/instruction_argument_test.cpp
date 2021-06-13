@@ -1,4 +1,5 @@
 #include "assembler/instruction_argument.hpp"
+#include "emu_6502/assembler/compilation_error.hpp"
 #include "emu_core/byte_utils.hpp"
 #include <gtest/gtest.h>
 #include <memory>
@@ -29,21 +30,30 @@ class ArgumentParseTest : public testing::Test, public ::testing::WithParamInter
 TEST_P(ArgumentParseTest, ) {
     auto &[input, output] = GetParam();
 
+    Token test_token{nullptr, {}, input};
     if (output.has_value()) {
         InstructionArgument r;
         std::cout << "E: " << to_string(output.value()) << "\n";
-        EXPECT_NO_THROW(r = ParseInstructionArgument(std::string_view(input), kTestAliases));
+        EXPECT_NO_THROW(r = ParseInstructionArgument(test_token, kTestAliases));
         std::cout << "R: " << to_string(r) << "\n";
         EXPECT_EQ(output, r);
     } else {
         EXPECT_THROW(
             {
-                auto r = ParseInstructionArgument(std::string_view(input), kTestAliases);
-                std::cout << "R: " << to_string(r) << "\n";
+                try {
+                    auto r = ParseInstructionArgument(test_token, kTestAliases);
+                    std::cout << "R: " << to_string(r) << "\n";
+                } catch (const CompilationException &e) {
+                    std::cout << e.Message() << "\n";
+                    throw;
+                } catch (const std::exception &e) {
+                    std::cout << "std::exception: " << e.what() << "\n";
+                    throw;
+                }
             },
-            std::runtime_error);
+            CompilationException);
     }
-}
+} // namespace
 
 std::vector<ArgumentParseTestArg> GetTestCases() {
     using AM = AddressMode;

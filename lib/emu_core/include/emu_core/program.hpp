@@ -12,6 +12,7 @@
 namespace emu {
 
 using ByteVector = std::vector<uint8_t>;
+using ByteString = std::basic_string<uint8_t>;
 
 //-----------------------------------------------------------------------------
 
@@ -52,6 +53,7 @@ enum class RelocationMode {
     Relative,
 };
 std::string to_string(RelocationMode rel_mode);
+uint8_t RelocationSize(RelocationMode rm);
 
 struct RelocationInfo {
     std::weak_ptr<LabelInfo> target_label;

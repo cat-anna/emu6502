@@ -1,4 +1,5 @@
 #include "instruction_argument.hpp"
+#include "emu_6502/assembler/compilation_error.hpp"
 #include "emu_core/byte_utils.hpp"
 #include "emu_core/text_utils.hpp"
 #include <charconv>
@@ -11,15 +12,12 @@
 
 namespace emu::emu6502::assembler {
 
-std::set<AddressMode> FilterPossibleModes(const std::set<AddressMode> &modes, size_t size, bool throw_on_empty) {
+std::set<AddressMode> FilterPossibleModes(const std::set<AddressMode> &modes, size_t size) {
     std::set<AddressMode> r;
     for (auto m : modes) {
         if (ArgumentByteSize(m) == size) {
             r.emplace(m);
         }
-    }
-    if (throw_on_empty && r.empty()) {
-        throw std::runtime_error("Impossible operand size");
     }
     return r;
 }
@@ -95,13 +93,13 @@ std::string to_string(const InstructionArgument &ia) {
     return r;
 }
 
-InstructionArgument ParseInstructionArgument(std::string_view arg, const AliasMap &aliases) {
+InstructionArgument ParseInstructionArgument(const Token &token, const AliasMap &aliases) {
     // +---------------------+--------------------------+
     // |      mode           |     assembler format     |
     // +=====================+==========================+
 
     // | Implied             |                          |
-    if (arg.empty()) {
+    if (!token) {
         return InstructionArgument{
             .possible_address_modes = {AddressMode::Implied},
             .argument_value = nullptr,
@@ -109,7 +107,7 @@ InstructionArgument ParseInstructionArgument(std::string_view arg, const AliasMa
     }
 
     // | Accumulator         |          A               |
-    if (arg == "A") {
+    if (token.View() == "A") {
         return InstructionArgument{
             .possible_address_modes = {AddressMode::ACC},
             .argument_value = nullptr,
@@ -146,7 +144,7 @@ InstructionArgument ParseInstructionArgument(std::string_view arg, const AliasMa
 
     for (const auto &[regex, matched_modes] : fmt_regex) {
         std::smatch match;
-        auto str = std::string(arg);
+        auto str = token.String();
         if (std::regex_match(str, match, regex)) {
             std::string s_value = match[1];
             auto value = std::string_view(s_value);
@@ -156,11 +154,13 @@ InstructionArgument ParseInstructionArgument(std::string_view arg, const AliasMa
                 throw std::runtime_error("value.empty()");
             }
 
+            InstructionArgument ia;
+
             if (value.starts_with("$")) {
                 std::vector<uint8_t> data = ParseImmediateValue(value, aliases);
                 auto possible_address_modes = matched_modes;
                 possible_address_modes.erase(AM::REL);
-                return InstructionArgument{
+                ia = InstructionArgument{
                     .possible_address_modes = FilterPossibleModes(possible_address_modes, data.size()),
                     .argument_value = data,
                 };
@@ -169,21 +169,26 @@ InstructionArgument ParseInstructionArgument(std::string_view arg, const AliasMa
                     auto possible_address_modes = matched_modes;
                     possible_address_modes.erase(AM::REL);
                     const auto &v = it->second->value;
-                    return InstructionArgument{
-                        .possible_address_modes = FilterPossibleModes(possible_address_modes, v.size(), true),
+                    ia = InstructionArgument{
+                        .possible_address_modes = FilterPossibleModes(possible_address_modes, v.size()),
                         .argument_value = v,
                     };
                 } else {
-                    return InstructionArgument{
+                    ia = InstructionArgument{
                         .possible_address_modes = matched_modes,
                         .argument_value = s_value,
                     };
                 }
             }
+
+            if (ia.possible_address_modes.empty()) {
+                ThrowCompilationError(CompilationError::InvalidOperandArgument, token);
+            }
+            return ia;
         }
     }
 
-    throw std::runtime_error("not implemted");
+    ThrowCompilationError(CompilationError::InvalidOperandArgument, token);
 }
 
 std::string to_string(TokenType tt) {

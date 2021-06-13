@@ -1,3 +1,4 @@
+#include "emu_6502/assembler/compilation_error.hpp"
 #include "emu_6502/assembler/compiler.hpp"
 #include "emu_6502/cpu/opcode.hpp"
 #include "emu_6502/instruction_set.hpp"
@@ -41,12 +42,15 @@ TEST_P(CompilerTest, ) {
                 try {
                     auto r = Compiler6502::CompileString(code, instruction_set);
                     std::cout << "-----------RESULT---------------------\n" << to_string(*r) << "\n";
+                } catch (const CompilationException &e) {
+                    std::cout << e.Message() << "\n";
+                    throw;
                 } catch (const std::exception &e) {
-                    std::cout << "EXCEPTION: " << e.what() << "\n";
+                    std::cout << "std::exception: " << e.what() << "\n";
                     throw;
                 }
             },
-            std::runtime_error);
+            CompilationException);
     }
 }
 

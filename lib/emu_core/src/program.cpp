@@ -59,6 +59,16 @@ std::string to_string(RelocationMode rel_mode) {
     throw std::runtime_error(fmt::format("Unknown RelocationMode {}", static_cast<int>(rel_mode)));
 }
 
+uint8_t RelocationSize(RelocationMode rm) {
+    switch (rm) {
+    case RelocationMode::Absolute:
+        return 2;
+    case RelocationMode::Relative:
+        return 1;
+    }
+    throw std::runtime_error(fmt::format("Unknown relocation mode {}", static_cast<int>(rm)));
+}
+
 bool RelocationInfo::operator==(const RelocationInfo &other) const {
     if (position != other.position || mode != other.mode) {
         return false;

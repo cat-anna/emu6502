@@ -1,5 +1,6 @@
 #include "emu_6502/assembler/compiler.hpp"
 #include "compilation_context.hpp"
+#include "emu_6502/assembler/compilation_error.hpp"
 #include <fstream>
 #include <sstream>
 
@@ -43,53 +44,55 @@ std::unique_ptr<Program> Compiler6502::Compile(Tokenizer &tokenizer) {
 
 void Compiler6502::ProcessLine(CompilationContext &context, LineTokenizer &line) {
     while (line.HasInput()) {
-        auto token = line.NextToken();
-        if (!token) {
+        auto first_token = line.NextToken();
+        if (!first_token) {
             continue;
         }
 
-        auto tok = std::string_view(token.value);
-        if (tok.ends_with(":")) {
-            context.AddLabel(token);
-            continue;
-        }
-
-        if (tok.starts_with(".")) {
-            tok.remove_prefix(1);
-            auto parse_info_it = CompilationContext::kCommandParseInfo.find(std::string(tok));
-            if (parse_info_it == CompilationContext::kCommandParseInfo.end()) {
-                throw std::runtime_error(fmt::format("Failed to parse .{} command", token));
-            } else {
-                auto handler = parse_info_it->second.handler;
-                (context.*handler)(line);
+        {
+            auto first_token_view = first_token.View();
+            if (first_token_view.ends_with(":")) {
+                context.AddLabel(first_token);
+                continue;
             }
-            continue;
+
+            if (first_token_view.starts_with(".")) {
+                context.HandleCommand(first_token, line);
+                continue;
+            }
         }
 
-        auto op_handler = instruction_set.find(token.Upper());
+        auto op_handler = instruction_set.find(first_token.Upper());
         if (op_handler != instruction_set.end()) {
             context.EmitInstruction(line, op_handler->second);
             continue;
         }
 
-        if (line.HasInput()) {
-            auto next_token = line.NextToken();
-            if (next_token == "=" || next_token.Lower() == "equ") {
-                if (!line.HasInput()) {
-                    throw std::runtime_error(fmt::format("Unexpected end of input after {}", to_string(next_token)));
-                }
-                auto alias_value = line.NextToken();
-
-                if (line.HasInput()) {
-                    throw std::runtime_error(fmt::format("Unexpected input after {}", to_string(alias_value)));
-                }
-
-                context.AddAlias(token, alias_value);
-                continue;
-            }
+        if (!line.HasInput()) {
+            ThrowCompilationError(CompilationError::InvalidToken, first_token);
         }
 
-        throw std::runtime_error(fmt::format("Unknown {}", to_string(token)));
+        auto second_token = line.NextToken();
+        if (second_token == "=" || second_token.Lower() == "equ") {
+            if (!line.HasInput()) {
+                ThrowCompilationError(CompilationError::UnexpectedEndOfInput, second_token);
+            }
+            auto alias_value = line.NextToken();
+
+            if (line.HasInput()) {
+                ThrowCompilationError(CompilationError::UnexpectedInput, line.NextToken());
+            }
+
+            context.AddAlias(first_token, alias_value);
+            continue;
+        }
+
+        ThrowCompilationError(CompilationError::InvalidToken, first_token);
+    }
+
+    if (line.HasInput()) {
+        auto t = line.NextToken();
+        ThrowCompilationError(CompilationError::UnexpectedInput, t);
     }
 }
 

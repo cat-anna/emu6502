@@ -1,3 +1,4 @@
+#include "emu_6502/assembler/compilation_error.hpp"
 #include "emu_6502/assembler/compiler.hpp"
 #include "emu_6502/cpu/opcode.hpp"
 #include "emu_6502/instruction_set.hpp"
@@ -39,12 +40,15 @@ TEST_P(CompilerTest, ) {
                 try {
                     auto r = Compiler6502::CompileString(code, instruction_set);
                     std::cout << "-----------RESULT---------------------\n" << to_string(*r) << "\n";
+                } catch (const CompilationException &e) {
+                    std::cout << e.Message() << "\n";
+                    throw;
                 } catch (const std::exception &e) {
-                    std::cout << "EXCEPTION: " << e.what() << "\n";
+                    std::cout << "std::exception: " << e.what() << "\n";
                     throw;
                 }
             },
-            std::runtime_error);
+            CompilationException);
     }
 }
 
@@ -236,6 +240,7 @@ INSTANTIATE_TEST_SUITE_P(
     negative, CompilerTest,
     ::testing::ValuesIn({
         AssemblerTestArg{"duplicated_label", "\nLABEL:\n.byte 0x00\nLABEL:", std::nullopt, InstructionSet::Default},
+        AssemblerTestArg{"duplicated_alias", "ALIAS=0x00\nALIAS equ 0x00\n", std::nullopt, InstructionSet::Default},
         AssemblerTestArg{"invalid_abs_ind_mode", "INC ($1234)", std::nullopt, InstructionSet::Default},
     }),
     [](auto &info) { return std::get<0>(info.param); });
