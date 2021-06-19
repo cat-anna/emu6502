@@ -26,6 +26,8 @@ std::string to_string(CompilationError error) {
         return "AliasIsNotAllowed";
     case CompilationError::InvalidOperandSize:
         return "InvalidOperandSize";
+    case CompilationError::InvalidCommandArgument:
+        return "InvalidCommandArgument";
     }
 
     return fmt::format("Invalid error id {}", static_cast<int>(error));

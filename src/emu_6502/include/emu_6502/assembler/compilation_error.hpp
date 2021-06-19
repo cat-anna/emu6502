@@ -27,6 +27,9 @@ enum class CompilationError {
     InvalidOperandSize,
     InvalidOperandArgument,
     ImpliedModeNotSupported,
+
+    InvalidCommandArgument,
+
 };
 
 std::string to_string(CompilationError error);

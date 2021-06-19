@@ -1,3 +1,7 @@
+add_custom_target(build_all_libs)
+add_custom_target(build_all_test)
+add_custom_target(execute_all_test)
+
 function(define_static_lib target_name)
 
   file(GLOB_RECURSE SRC src/*.cpp src/*.hpp include/*.hpp)
@@ -24,7 +28,7 @@ function(define_ut_target target_name ut_name)
 
   add_executable(${target_ut_name} ${src_ut})
   target_include_directories(${target_ut_name} PRIVATE src test)
-  target_link_libraries(${target_ut_name} PUBLIC ${target_name} fmt::fmt GTest::gmock GTest::gtest emu_test_base)
+  target_link_libraries(${target_ut_name} PUBLIC ${target_name} fmt::fmt GTest::gmock GTest::gtest ${ut_runner})
   target_compile_definitions(${target_ut_name} PRIVATE -DWANTS_GTEST_MOCKS)
 
   add_custom_target(
@@ -66,5 +70,3 @@ function(define_static_lib_with_ut target_name)
       ${target_name}
       PARENT_SCOPE)
 endfunction()
-
-add_all_subdirecties()

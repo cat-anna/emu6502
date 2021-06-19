@@ -1,0 +1,1 @@
+define_static_lib(emu_test_runner)

@@ -3,6 +3,7 @@
 #include "emu_core/byte_utils.hpp"
 #include "instruction_argument.hpp"
 #include "instrution_variant_compiler.hpp"
+#include <bit>
 
 namespace emu::emu6502::assembler {
 
@@ -122,13 +123,22 @@ void CompilationContext::ParseAlignCommand(LineTokenizer &tokenizer) {
     if (tok == "page") {
         alignment = kMemoryPageSize;
     } else {
-        alignment = ParseWord(tok.View());
+        try {
+            alignment = ParseWord(tok.View());
+        } catch (...) {
+            ThrowCompilationError(CompilationError::InvalidCommandArgument, tok, "Cannot parse value");
+        }
     }
 
+    if (std::popcount(alignment) != 1) {
+        ThrowCompilationError(CompilationError::InvalidCommandArgument, tok, "Invalid alignment value");
+    }
+    auto mask = alignment - 1;
+
     auto new_address = current_position;
-    if ((new_address & 0xFF) != 0) {
-        new_address &= 0xFF00;
-        new_address += kMemoryPageSize;
+    if ((new_address & mask) != 0) {
+        new_address &= ~mask;
+        new_address += alignment;
     }
     Log("Setting position {:04x} -> {:04x}", current_position, new_address);
     current_position = new_address;
