@@ -7,12 +7,63 @@
 namespace emu::emu6502::assembler {
 
 const std::unordered_map<std::string, CompilationContext::CommandParsingInfo> CompilationContext::kCommandParseInfo = {
-    {"byte", {&CompilationContext::ParseDataCommand<1>}},         //
-    {"word", {&CompilationContext::ParseDataCommand<2>}},         //
-    {"org", {&CompilationContext::ParseOriginCommand}},           //
-    {"text", {&CompilationContext::ParseTextCommand}},            //
-    {"page_align", {&CompilationContext::ParsePageAlignCommand}}, //
-    {"isr", {&CompilationContext::ParseIsrCommand}},              //
+    //cc65
+    {"addr", {&CompilationContext::ParseDataCommand<2>}},  //
+    {"align", {&CompilationContext::ParseAlignCommand}},   //
+    {"asciiz", {&CompilationContext::ParseTextCommand}},   //
+    {"byt", {&CompilationContext::ParseDataCommand<1>}},   //
+    {"byte", {&CompilationContext::ParseDataCommand<1>}},  //
+    {"dbyt", {&CompilationContext::ParseDataCommand<2>}},  //
+    {"dword", {&CompilationContext::ParseDataCommand<4>}}, //
+    {"org", {&CompilationContext::ParseOriginCommand}},    //
+    {"word", {&CompilationContext::ParseDataCommand<2>}},  //
+
+    // {"autoimport", {nullptr}},  //
+    // {"blankbytes", {nullptr}},  //
+    // {"case", {nullptr}},        //
+    // {"condes", {nullptr}},      //
+    // {"constructor", {nullptr}}, //
+    // {"define", {nullptr}},      //
+    // {"error", {nullptr}},       //
+    // {"export", {nullptr}},      //
+    // {"exportzp", {nullptr}},    //
+    // {"fileopt", {nullptr}},     //
+    // {"fopt", {nullptr}},        //
+    // {"forceimport", {nullptr}}, //
+    // {"global", {nullptr}},      //
+    // {"hibytes", {nullptr}},     //
+    // {"import", {nullptr}},      //
+    // {"importzp", {nullptr}},    //
+    // {"include", {nullptr}},     //
+    // {"interruptor", {nullptr}}, //
+    // {"lobytes", {nullptr}},     //
+    // {"local", {nullptr}},       //
+    // {"out", {nullptr}},         //
+    // {"reloc", {nullptr}},       //
+    // {"res", {nullptr}},         //
+    // {"setcpu", {nullptr}},      //
+    // {"tag", {nullptr}},         //
+    // {"warning", {nullptr}},     //
+
+    // {"enum", {nullptr}},    //
+    // {"endenum", {nullptr}}, //
+    // {"proc", {nullptr}},    //
+    // {"endproc", {nullptr}}, //
+    // {"scope", {nullptr}},    //
+    // {"endscope", {nullptr}}, //
+    // {"struct", {nullptr}},    //
+    // {"endstruct", {nullptr}}, //
+
+    // {"bss", {nullptr}}, //
+    // {"segment", {nullptr}}, //
+    // {"code", {nullptr}}, //
+    // {"data", {nullptr}}, //
+    // {"rodata", {nullptr}}, //
+    // {"zeropage", {nullptr}}, //
+
+    //extensions
+    {"isr", {&CompilationContext::ParseIsrCommand}},   //
+    {"text", {&CompilationContext::ParseTextCommand}}, //
 };
 
 const std::unordered_map<std::string, Address_t> CompilationContext::kIsrMap = {
@@ -65,7 +116,15 @@ void CompilationContext::ParseTextCommand(LineTokenizer &tokenizer) {
     ThrowCompilationError(CompilationError::InvalidToken, tok);
 }
 
-void CompilationContext::ParsePageAlignCommand(LineTokenizer &tokenizer) {
+void CompilationContext::ParseAlignCommand(LineTokenizer &tokenizer) {
+    auto tok = tokenizer.NextToken();
+    Address_t alignment = 0;
+    if (tok == "page") {
+        alignment = kMemoryPageSize;
+    } else {
+        alignment = ParseWord(tok.View());
+    }
+
     auto new_address = current_position;
     if ((new_address & 0xFF) != 0) {
         new_address &= 0xFF00;

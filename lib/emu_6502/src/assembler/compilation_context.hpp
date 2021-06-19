@@ -45,7 +45,7 @@ private:
 
     void ParseOriginCommand(LineTokenizer &tokenizer);
     void ParseTextCommand(LineTokenizer &tokenizer);
-    void ParsePageAlignCommand(LineTokenizer &tokenizer);
+    void ParseAlignCommand(LineTokenizer &tokenizer);
     void ParseIsrCommand(LineTokenizer &tokenizer);
 
     template <Address_t L>

@@ -138,18 +138,25 @@ AssemblerTestArg GetTextCommandTest() {
 
 AssemblerTestArg GetPageAlignCommandTest() {
     Program expected = {
-        .sparse_binary_code = SparseBinaryCode({{0_addr, 1_u8}, {0x100_addr, 2_u8}, {0x200_addr, 3_u8}}),
+        .sparse_binary_code = SparseBinaryCode({
+            {0_addr, 1_u8},
+            {0x100_addr, 2_u8},
+            {0x200_addr, 3_u8},
+            {0x210_addr, 4_u8},
+        }),
         .labels = {},
         .relocations = {},
     };
     auto code = R"==(
 .byte 1
-.page_align
+.align page
 .byte 2
-.page_align
+.align page
 .byte 3
+.align 0x10
+.byte 4
 )=="s;
-    return {"page_align", code, expected, InstructionSet::Default};
+    return {"align", code, expected, InstructionSet::Default};
 }
 
 AssemblerTestArg GetBranchTest() {
