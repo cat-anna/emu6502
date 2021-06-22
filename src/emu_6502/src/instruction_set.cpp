@@ -267,7 +267,8 @@ OpcodeInstructionMap GenMiscInstructions(InstructionSet instruction_set) {
 
 OpcodeInstructionMap GenEmuInstructions(InstructionSet instruction_set) {
     return {
-        {INS_HLT, {INS_HLT, "HLT"sv, AddressMode::Implied}}, //
+        {INS_HLT_ACC, {INS_HLT_ACC, "HLT"sv, AddressMode::ACC}},     //
+        {INS_HLT_IM, {INS_HLT_IM, "HLT"sv, AddressMode::Immediate}}, //
     };
 }
 

@@ -29,9 +29,15 @@ void NOP(Cpu *cpu) {
     cpu->WaitForNextCycle();
 }
 
+template <MemReadFunc read_func>
 void HLT(Cpu *cpu) {
-    cpu->WaitForNextCycle();
-    throw ExecutionHalted("Halt");
+    auto value = read_func(cpu);
+    throw ExecutionHalted(cpu->reg, value);
+}
+
+template <uint8_t opcode>
+void InvalidOpcode(Cpu *cpu) {
+    throw InvalidOpcodeException(cpu->reg, opcode);
 }
 
 //-----------------------------------------------------------------------------
@@ -323,5 +329,7 @@ constexpr auto kFetchFastABSY = &FetchMemory<kAddressFastABSY>;
 
 constexpr auto kFetchINDX = &FetchMemory<kAddressINDX>;
 constexpr auto kFetchINDY = &FetchMemory<kAddressINDY>;
+
+constexpr auto kFetchAcc = &FetchAccumulator;
 
 } // namespace emu::emu6502::cpu::instructions

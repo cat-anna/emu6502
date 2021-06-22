@@ -9,9 +9,17 @@ namespace emu::emu6502::cpu {
 
 namespace {
 
+template <std::size_t... I>
+InstructionHandlerArray InitHandlerArray(std::index_sequence<I...>) {
+    return InstructionHandlerArray{&instructions::InvalidOpcode<I>...};
+}
+
+} // namespace
+
+namespace {
+
 InstructionHandlerArray GenInstructionHandlerArray(InstructionSet instruction_set) {
-    InstructionHandlerArray r;
-    r.fill(nullptr);
+    InstructionHandlerArray r = InitHandlerArray(std::make_index_sequence<256>{});
 
     using namespace opcode;
     using namespace instructions;
@@ -215,7 +223,8 @@ InstructionHandlerArray GenInstructionHandlerArray(InstructionSet instruction_se
     r[INS_NOP] = &NOP;
 
     if (instruction_set == InstructionSet::NMOS6502Emu) {
-        r[INS_HLT] = &HLT;
+        r[INS_HLT_ACC] = &HLT<kFetchAcc>;
+        r[INS_HLT_IM] = &HLT<kFetchIM>;
     }
 
     return r;

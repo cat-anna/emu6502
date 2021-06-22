@@ -188,11 +188,18 @@ public:
     EmuTest() : RegisterBaseTest(InstructionSet::NMOS6502Emu) {}
 };
 
-TEST_F(EmuTest, HLT) {
-    expected_code_length = 1;
+TEST_F(EmuTest, HLT_IM) {
+    expected_code_length = 2;
     expected_cycles = 2;
 
-    EXPECT_THROW(Execute(MakeCode(INS_HLT)), cpu::ExecutionHalted);
+    EXPECT_THROW(Execute(MakeCode(INS_HLT_IM, 1_u8)), cpu::ExecutionHalted);
+}
+
+TEST_F(EmuTest, HLT_ACC) {
+    expected_code_length = 1;
+    expected_cycles = 1;
+
+    EXPECT_THROW(Execute(MakeCode(INS_HLT_ACC)), cpu::ExecutionHalted);
 }
 
 } // namespace

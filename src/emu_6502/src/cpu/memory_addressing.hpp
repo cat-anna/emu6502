@@ -47,7 +47,7 @@ MemPtr GetAddressAbsoluteIndirect(Cpu *cpu) { // mode (a)
     return addr | cpu->memory->Load(location) << 8;
 }
 
-MemPtr GetAddressAccumulator(Cpu *cpu) { // mode A
+uint8_t FetchAccumulator(Cpu *cpu) { // mode A
     return cpu->reg.a;
 }
 

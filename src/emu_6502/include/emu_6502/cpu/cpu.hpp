@@ -15,10 +15,6 @@ struct Cpu;
 using OperandFunctionPtr = void (*)(Cpu *cpu);
 using InstructionHandlerArray = std::array<OperandFunctionPtr, 256>;
 
-struct ExecutionHalted : public std::exception {
-    ExecutionHalted(const std::string &msg) : std::exception(msg.c_str()) {}
-};
-
 struct Registers {
     Reg16 program_counter;
 
@@ -61,6 +57,20 @@ struct Registers {
     uint8_t CarryValue() const { return TestFlag(Flags::Carry) ? 1 : 0; }
 
     MemPtr StackPointerMemoryAddress() const { return kStackBase | stack_pointer; }
+};
+
+struct ExecutionHalted : public std::exception {
+    ExecutionHalted(Registers regs, Reg8 halt_code)
+        : std::exception("Execution halted"), regs(regs), halt_code(halt_code) {}
+    const Registers regs;
+    const Reg8 halt_code;
+};
+
+struct InvalidOpcodeException : public std::exception {
+    InvalidOpcodeException(Registers regs, Reg8 opcode)
+        : std::exception("Invalid opcode"), regs(regs), opcode(opcode) {}
+    const Registers regs;
+    const Reg8 opcode;
 };
 
 struct Cpu {

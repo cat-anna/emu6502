@@ -206,7 +206,8 @@ constexpr Opcode INS_BRK = 0x00;
 constexpr Opcode INS_RTI = 0x4;
 
 //Emu
-constexpr Opcode INS_HLT = 0xFA;
+constexpr Opcode INS_HLT_ACC = 0xFA;
+constexpr Opcode INS_HLT_IM = 0xFB;
 
 //http://wiki.nesdev.com/w/index.php/Programming_with_unofficial_opcodes
 

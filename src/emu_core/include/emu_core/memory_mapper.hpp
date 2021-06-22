@@ -21,7 +21,7 @@ struct MemoryMapper : public MemoryInterface<_Address_t> {
     using Address_t = _Address_t;
 
     using RangePair = std::pair<Address_t, Address_t>;
-    using AreaInterface = std::shared_ptr<MemoryInterface<Address_t>>;
+    using AreaInterface = MemoryInterface<Address_t> *;
     using Area = std::pair<RangePair, AreaInterface>;
 
     struct AreaComp {
@@ -49,6 +49,8 @@ struct MemoryMapper : public MemoryInterface<_Address_t> {
             MapArea(range, ptr);
         }
     }
+    MemoryMapper(Clock *clock, bool strict_access = false, bool verbose = false)
+        : MemoryMapper(clock, {}, strict_access, verbose) {}
 
     void MapArea(RangePair range, AreaInterface mem_iface) {
         if (mem_iface == nullptr) {

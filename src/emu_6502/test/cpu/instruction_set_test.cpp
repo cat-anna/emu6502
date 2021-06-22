@@ -48,7 +48,7 @@ TEST_F(InstructionSetTest, VerifySupportedInstructions) {
 
 TEST_F(InstructionSetTest, VerifySupportedInstructionsEmu) {
     auto instructions_map = GetInstructionSet(InstructionSet::NMOS6502Emu);
-    EXPECT_EQ(instructions_map.size(), 152);
+    EXPECT_EQ(instructions_map.size(), 153);
     CheckInstructionSet(InstructionSet::NMOS6502Emu);
 }
 

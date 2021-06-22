@@ -17,10 +17,12 @@ AddressMode InstructionVariantSelector::DispatchSelect(const ArgumentValueVarian
 }
 
 std::set<AddressMode> InstructionVariantSelector::Select(std::nullptr_t) const {
-    if (!possible_address_modes.contains(AddressMode::Implied)) {
-        ThrowCompilationError(CompilationError::ImpliedModeNotSupported, token);
+    for (auto a : {AddressMode::Implied, AddressMode::ACC}) {
+        if (possible_address_modes.contains(a)) {
+            return possible_address_modes;
+        }
     }
-    return possible_address_modes;
+    ThrowCompilationError(CompilationError::OperandModeNotSupported, token);
 }
 
 std::set<AddressMode> InstructionVariantSelector::Select(const std::string &label) const {
