@@ -28,6 +28,8 @@ std::string to_string(CompilationError error) {
         return "InvalidOperandSize";
     case CompilationError::InvalidCommandArgument:
         return "InvalidCommandArgument";
+    case CompilationError::OperandModeNotSupported:
+        return "OperandModeNotSupported";
     }
 
     return fmt::format("Invalid error id {}", static_cast<int>(error));

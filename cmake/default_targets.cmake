@@ -1,16 +1,32 @@
 add_custom_target(build_all_libs)
 add_custom_target(build_all_test)
+add_custom_target(build_all_executables)
 add_custom_target(execute_all_test)
 
 function(define_static_lib target_name)
-
   file(GLOB_RECURSE SRC src/*.cpp src/*.hpp include/*.hpp)
 
+  message("* Adding static lib ${target_name}")
   add_library(${target_name} STATIC ${SRC})
   target_include_directories(${target_name} PUBLIC include)
   target_include_directories(${target_name} PRIVATE src)
   target_link_libraries(${target_name} PUBLIC fmt::fmt)
   add_dependencies(build_all_libs ${target_name})
+
+  set(TARGET
+      ${target_name}
+      PARENT_SCOPE)
+endfunction()
+
+function(define_executable target_name)
+  file(GLOB_RECURSE SRC src/*.cpp src/*.hpp include/*.hpp)
+
+  message("* Adding executable ${target_name}")
+  add_executable(${target_name} ${SRC})
+  target_include_directories(${target_name} PUBLIC include)
+  target_include_directories(${target_name} PRIVATE src)
+  target_link_libraries(${target_name} PUBLIC fmt::fmt)
+  add_dependencies(build_all_executables ${target_name})
 
   set(TARGET
       ${target_name}

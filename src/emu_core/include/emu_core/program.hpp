@@ -102,6 +102,7 @@ struct SparseBinaryCode {
     void PutBytes(Address_t address, const std::vector<uint8_t> &bytes, bool overwrite = false);
 
     std::string HexDump(std::string_view line_prefix = "") const;
+    ByteVector DumpMemory() const;
 
     bool operator==(const SparseBinaryCode &other) const;
 };

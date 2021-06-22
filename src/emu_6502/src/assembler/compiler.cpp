@@ -6,25 +6,19 @@
 
 namespace emu::emu6502::assembler {
 
-std::unique_ptr<Program> Compiler6502::CompileString(std::string text, InstructionSet cpu_instruction_set) {
-    std::istringstream ss(text);
-    // ss.exceptions(std::ifstream::failbit);
+std::unique_ptr<Program> CompileString(std::string text, InstructionSet cpu_instruction_set) {
     Compiler6502 c{cpu_instruction_set};
-    auto tokenizer = Tokenizer(ss, "string");
-    return c.Compile(tokenizer);
+    return c.CompileFile(std::move(text));
 }
 
-std::unique_ptr<Program> Compiler6502::CompileFile(const std::string &file, InstructionSet cpu_instruction_set) {
-    std::ifstream ss(file, std::ios::in);
-    ss.exceptions(std::ifstream::failbit);
+std::unique_ptr<Program> CompileFile(const std::string &file, InstructionSet cpu_instruction_set) {
     Compiler6502 c{cpu_instruction_set};
-    auto tokenizer = Tokenizer(ss, file);
-    return c.Compile(tokenizer);
+    return c.CompileFile(file);
 }
 
 //-----------------------------------------------------------------------------
 
-Compiler6502::Compiler6502(InstructionSet cpu_instruction_set) {
+Compiler6502::Compiler6502(InstructionSet cpu_instruction_set, bool verbose) : verbose(verbose) {
     for (auto &[opcode, info] : GetInstructionSet(cpu_instruction_set)) {
         instruction_set[info.mnemonic].variants[info.addres_mode] = info;
     }
@@ -32,7 +26,7 @@ Compiler6502::Compiler6502(InstructionSet cpu_instruction_set) {
 
 std::unique_ptr<Program> Compiler6502::Compile(Tokenizer &tokenizer) {
     std::unique_ptr<Program> program = std::make_unique<Program>();
-    CompilationContext context{*program, true};
+    CompilationContext context{*program, verbose};
 
     while (tokenizer.HasInput()) {
         auto line = tokenizer.NextLine();
@@ -40,6 +34,23 @@ std::unique_ptr<Program> Compiler6502::Compile(Tokenizer &tokenizer) {
     }
 
     return program;
+}
+
+std::unique_ptr<Program> Compiler6502::Compile(std::istream &stream, const std::string &name) {
+    auto tokenizer = Tokenizer(stream, name);
+    return Compile(tokenizer);
+}
+
+std::unique_ptr<Program> Compiler6502::CompileString(std::string text) {
+    std::istringstream ss(text);
+    // ss.exceptions(std::ifstream::failbit);
+    return Compile(ss, "string");
+}
+
+std::unique_ptr<Program> Compiler6502::CompileFile(const std::string &file) {
+    std::ifstream ss(file, std::ios::in);
+    ss.exceptions(std::ifstream::badbit);
+    return Compile(ss, file);
 }
 
 void Compiler6502::ProcessLine(CompilationContext &context, LineTokenizer &line) {

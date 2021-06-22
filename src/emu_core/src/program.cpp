@@ -167,6 +167,16 @@ std::string SparseBinaryCode::HexDump(std::string_view line_prefix) const {
     return SparseHexDump(sparse_map, line_prefix);
 }
 
+ByteVector SparseBinaryCode::DumpMemory() const {
+    ByteVector r(0x10000, 0);
+
+    for (auto [addr, value] : sparse_map) {
+        r[addr] = value;
+    }
+
+    return r;
+}
+
 //-----------------------------------------------------------------------------
 
 std::string to_string(const Program &program) {

@@ -26,7 +26,7 @@ TEST_P(CompilerTest, ) {
     std::cout << "------------CODE----------------------\n" << code << "\n";
 
     if (expected.has_value()) {
-        auto result = Compiler6502::CompileString(code, instruction_set);
+        auto result = CompileString(code, instruction_set);
         std::cout << "-----------RESULT---------------------\n"
                   << to_string(*result) << "\n"
                   << "----------EXPECTED--------------------\n"
@@ -38,7 +38,7 @@ TEST_P(CompilerTest, ) {
         EXPECT_THROW(
             {
                 try {
-                    auto r = Compiler6502::CompileString(code, instruction_set);
+                    auto r = CompileString(code, instruction_set);
                     std::cout << "-----------RESULT---------------------\n" << to_string(*r) << "\n";
                 } catch (const CompilationException &e) {
                     std::cout << e.Message() << "\n";

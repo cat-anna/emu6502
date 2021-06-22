@@ -8,6 +8,8 @@
 namespace emu::emu6502::assembler {
 
 enum class CompilationError {
+    NoError = 0,
+
     Unknown,
     UnknownCommand,
 
@@ -26,7 +28,7 @@ enum class CompilationError {
 
     InvalidOperandSize,
     InvalidOperandArgument,
-    ImpliedModeNotSupported,
+    OperandModeNotSupported,
 
     InvalidCommandArgument,
 

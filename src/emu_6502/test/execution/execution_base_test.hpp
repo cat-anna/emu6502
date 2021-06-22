@@ -40,7 +40,7 @@ public:
 
     auto RunCode(const std::string &code, std::chrono::milliseconds timeout = std::chrono::seconds{60}) {
         std::cout << "-----------CODE---------------------\n" << code << "\n";
-        auto program = emu::emu6502::assembler::Compiler6502::CompileString(code, InstructionSet::NMOS6502Emu);
+        auto program = emu::emu6502::assembler::CompileString(code, InstructionSet::NMOS6502Emu);
         std::cout << "-----------PROGRAM---------------------\n" << to_string(*program) << "\n";
         memory.WriteSparse(program->sparse_binary_code.sparse_map);
         std::cout << "-----------EXECUTION---------------------\n";
