@@ -36,7 +36,8 @@ struct MemorySparse : public MemoryInterface<_Address_t> {
         WaitForNextCycle();
         if (auto it = memory_map.find(address); it == memory_map.end()) {
             if (strict_access) {
-                throw std::runtime_error(fmt::format("Attempt to read null address {:04x}", address));
+                throw std::runtime_error(
+                    fmt::format("Attempt to read null address {:04x}", address));
             }
             auto v = RandomByte();
             AccessLog(address, v, false, true);
@@ -52,7 +53,8 @@ struct MemorySparse : public MemoryInterface<_Address_t> {
         WaitForNextCycle();
         bool is_null = memory_map.find(address) == memory_map.end();
         if (is_null && strict_access) {
-            throw std::runtime_error(fmt::format("Attempt to write {:02x} to null address {:04x}", value, address));
+            throw std::runtime_error(fmt::format(
+                "Attempt to write {:02x} to null address {:04x}", value, address));
         }
         AccessLog(address, value, true, is_null);
         memory_map[address] = value;
@@ -86,10 +88,13 @@ struct MemorySparse : public MemoryInterface<_Address_t> {
     }
 
 private:
-    void AccessLog(Address_t address, uint8_t value, bool write, bool not_init = false) const {
+    void AccessLog(Address_t address, uint8_t value, bool write,
+                   bool not_init = false) const {
         if (verbose) {
-            std::cout << fmt::format("MEM {:5} [{:04x}] {} {:02x} {}\n", (write ? "WRITE" : "READ"), address,
-                                     (write ? "<-" : "->"), value, (not_init ? "NOT INITIALIZED" : ""));
+            std::cout << fmt::format("MEM-SPARSE {:5} [{:04x}] {} {:02x} {}\n",
+                                     (write ? "WRITE" : "READ"), address,
+                                     (write ? "<-" : "->"), value,
+                                     (not_init ? "NOT INITIALIZED" : ""));
         }
     }
 

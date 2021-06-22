@@ -59,7 +59,10 @@ struct Options {
     ExecArguments ParseComandline(int argc, char **argv) {
         try {
             po::variables_map vm;
-            po::store(po::command_line_parser(argc, argv).options(all_options).positional(input_positional_opt).run(),
+            po::store(po::command_line_parser(argc, argv) //
+                          .options(all_options)
+                          .positional(input_positional_opt)
+                          .run(),
                       vm);
             po::notify(vm);
             if (vm.count("help") > 0) {
@@ -82,16 +85,6 @@ protected:
 
         ReadInputOptions(args.streams, args.input_options, vm);
         ReadOutputOptions(args.streams, args.output_options, vm);
-        // ReadCpuOptions(args, vm);
-
-        // args.execution = ReadExecutionOptions(vm);
-        // if (vm.count("image") > 0) {
-        //     args.run_mode = ReadImageMode(vm);
-        // } else if (vm.count("code") > 0) {
-        //     args.run_mode = ReadCodeMode(vm);
-        // } else {
-        //     throw std::logic_error("Use of 'image' or 'code' is required");
-        // }
     }
 
     void ReadInputOptions(StreamContainer &streams, ExecArguments::Input &opts, const po::variables_map &vm) {

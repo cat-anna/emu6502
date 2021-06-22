@@ -16,8 +16,9 @@ std::istream *StreamContainer::OpenInput(const std::string &file, bool is_binary
     }
 
     if (std::filesystem::is_regular_file(file)) {
-        auto f = std::make_shared<std::ifstream>(file, std::ios::in | (is_binary ? std::ios::binary : 0));
+        auto f = std::make_shared<std::ifstream>();
         f->exceptions(std::ifstream::badbit);
+        f->open(file, std::ios::in | (is_binary ? std::ios::binary : 0));
         input_streams.emplace_back(f);
         return f.get();
     }
@@ -33,8 +34,9 @@ std::ostream *StreamContainer::OpenOutput(const std::string &file, bool is_binar
         return &std::cout;
     }
 
-    auto f = std::make_shared<std::ofstream>(file, std::ios::out | (is_binary ? std::ios::binary : 0));
+    auto f = std::make_shared<std::ofstream>();
     f->exceptions(std::ifstream::badbit);
+    f->open(file, std::ios::out | (is_binary ? std::ios::binary : 0));
     output_streams.emplace_back(f);
     return f.get();
 }

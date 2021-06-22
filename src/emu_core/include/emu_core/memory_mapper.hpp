@@ -29,8 +29,9 @@ struct MemoryMapper : public MemoryInterface<_Address_t> {
             auto [min_a, max_a] = a.first;
             auto [min_b, max_b] = b.first;
             if ((max_a < min_b && min_b < max_a) || (max_b < min_a && min_a < max_b)) {
-                throw std::runtime_error(fmt::format("AreaComp: overlapping ranges {:04x}:{:04x} <-> {:04x}:{:04x}",
-                                                     min_a, max_a, min_b, max_b));
+                throw std::runtime_error(fmt::format(
+                    "AreaComp: overlapping ranges {:04x}:{:04x} <-> {:04x}:{:04x}", min_a,
+                    max_a, min_b, max_b));
             }
             return min_a < min_b;
         }
@@ -43,7 +44,8 @@ struct MemoryMapper : public MemoryInterface<_Address_t> {
     const bool strict_access;
     const bool verbose;
 
-    MemoryMapper(Clock *clock, const AreaSet &area = {}, bool strict_access = false, bool verbose = false)
+    MemoryMapper(Clock *clock, const AreaSet &area = {}, bool strict_access = false,
+                 bool verbose = false)
         : clock(clock), strict_access(strict_access), verbose(verbose), areas() {
         for (auto [range, ptr] : area) {
             MapArea(range, ptr);
@@ -51,6 +53,11 @@ struct MemoryMapper : public MemoryInterface<_Address_t> {
     }
     MemoryMapper(Clock *clock, bool strict_access = false, bool verbose = false)
         : MemoryMapper(clock, {}, strict_access, verbose) {}
+
+    void MapArea(Address_t offset, Address_t size, AreaInterface mem_iface) {
+        auto end_addr = static_cast<Address_t>(offset + size);
+        MapArea({offset, end_addr}, mem_iface);
+    }
 
     void MapArea(RangePair range, AreaInterface mem_iface) {
         if (mem_iface == nullptr) {
@@ -74,7 +81,8 @@ struct MemoryMapper : public MemoryInterface<_Address_t> {
         }
 
         AccessLog(address, 0, false, true);
-        throw std::runtime_error(fmt::format("MemoryMapper: Attempt to read unmapped address {:04x}", address));
+        throw std::runtime_error(fmt::format(
+            "MemoryMapper: Attempt to read unmapped address {:04x}", address));
     }
 
     void Store(Address_t address, uint8_t value) override {
@@ -87,7 +95,8 @@ struct MemoryMapper : public MemoryInterface<_Address_t> {
             return area->second->Store(relative, value);
         }
         AccessLog(address, value, true, true);
-        throw std::runtime_error(fmt::format("MemoryMapper: Attempt to write unmapped address {:04x}", address));
+        throw std::runtime_error(fmt::format(
+            "MemoryMapper: Attempt to write unmapped address {:04x}", address));
     }
 
 private:
@@ -106,10 +115,12 @@ private:
         return *area_it;
     }
 
-    void AccessLog(Address_t address, uint8_t value, bool write, bool not_mapped = false) const {
+    void AccessLog(Address_t address, uint8_t value, bool write,
+                   bool not_mapped = false) const {
         if (verbose) {
-            std::cout << fmt::format("MEMMAPPER {:5} [{:04x}] {} {:02x} {}\n", (write ? "WRITE" : "READ"), address,
-                                     (write ? "<-" : "->"), value, (not_mapped ? "NOT MAPPED" : ""));
+            std::cout << fmt::format(
+                "MEM-MAPPER {:5} [{:04x}] {} {:02x} {}\n", (write ? "WRITE" : "READ"),
+                address, (write ? "<-" : "->"), value, (not_mapped ? "NOT MAPPED" : ""));
         }
     }
 
