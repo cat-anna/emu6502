@@ -31,9 +31,9 @@ int Runner::Start() {
         std::cerr << "Run error: " << e.what() << "\n";
         code = -1;
     }
-    auto end = std::chrono::steady_clock::now();
-    auto delta = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     if (verbose) {
+        auto end = std::chrono::steady_clock::now();
+        auto delta = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         std::cout << fmt::format("Took {} seconds\n", delta.count() / (1024.0 * 1024.0));
     }
     return code;

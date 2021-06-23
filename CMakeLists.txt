@@ -24,6 +24,7 @@ link_libraries(${Boost_LIBRARIES})
 # find_package(cryptopp CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
+find_package(yaml-cpp CONFIG REQUIRED)
 
 # find_package(xxhash CONFIG REQUIRED) find_library(ZLIB_LIBRARY zlib) link_libraries(${ZLIB_LIBRARY})
 
