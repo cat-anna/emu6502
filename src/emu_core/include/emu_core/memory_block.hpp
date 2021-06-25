@@ -24,10 +24,12 @@ struct MemoryBlock : public MemoryInterface<_Address_t> {
     const bool verbose;
     const MemoryMode mode;
     VectorType block;
+    std::string name;
 
     MemoryBlock(Clock *clock, VectorType memory, MemoryMode mode = MemoryMode::kReadWrite,
-                bool verbose = false)
-        : clock(clock), verbose(verbose), mode(mode), block(std::move(memory)) {}
+                bool verbose = false, std::string name = "")
+        : clock(clock), verbose(verbose), mode(mode), block(std::move(memory)),
+          name(std::move(name)) {}
 
     uint8_t Load(Address_t address) const override {
         if (address > block.size()) {
@@ -66,9 +68,9 @@ private:
 
     void AccessLog(Address_t address, uint8_t value, bool write) const {
         if (verbose) {
-            std::cout << fmt::format("MEM-BLOCK {:5} [{:04x}] {} {:02x}\n",
-                                     (write ? "WRITE" : "READ"), address,
-                                     (write ? "<-" : "->"), value);
+            std::cout << fmt::format("MEM-BLOCK[{}] {:5} [{:04x}] {} {:02x}\n", name,
+                                     (write ? "W" : "R"), address, (write ? "<-" : "->"),
+                                     value);
         }
     }
 

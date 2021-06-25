@@ -55,7 +55,7 @@ struct MemoryMapper : public MemoryInterface<_Address_t> {
         : MemoryMapper(clock, {}, strict_access, verbose) {}
 
     void MapArea(Address_t offset, Address_t size, AreaInterface mem_iface) {
-        auto end_addr = static_cast<Address_t>(offset + size);
+        auto end_addr = static_cast<Address_t>(offset + size - 1);
         MapArea({offset, end_addr}, mem_iface);
     }
 
@@ -118,9 +118,9 @@ private:
     void AccessLog(Address_t address, uint8_t value, bool write,
                    bool not_mapped = false) const {
         if (verbose) {
-            std::cout << fmt::format(
-                "MEM-MAPPER {:5} [{:04x}] {} {:02x} {}\n", (write ? "WRITE" : "READ"),
-                address, (write ? "<-" : "->"), value, (not_mapped ? "NOT MAPPED" : ""));
+            std::cout << fmt::format("MEM-MAPPER {:5} [{:04x}] {} {:02x} {}\n",
+                                     (write ? "W" : "R"), address, (write ? "<-" : "->"),
+                                     value, (not_mapped ? "NOT MAPPED" : ""));
         }
     }
 

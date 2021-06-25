@@ -1,6 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "emu_core/file_search.hpp"
 #include "emu_core/memory_configuration_file.hpp"
 #include <sstream>
 
@@ -13,6 +14,8 @@ using namespace std::string_literals;
 
 class MemoryConfigFileTest : public testing::Test {
 public:
+    std::shared_ptr<emu::FileSearchMock> search_mock =
+        std::make_shared<StrictMock<emu::FileSearchMock>>();
 };
 
 TEST_F(MemoryConfigFileTest, test) {
@@ -35,10 +38,26 @@ memory:
     a: b
     i: 5
     b: false
+- include: test_config.yaml
 )=="s;
 
+    auto t2 = R"==(
+memory:
+- ram:
+  offset: 0x1000
+  size: 0x0100
+)=="s;
+
+    EXPECT_CALL(*search_mock, OpenFile("test_config.yaml", false))
+        .WillOnce(Invoke([&](auto, auto) { //
+            return std::make_shared<std::stringstream>(t2);
+        }));
+    EXPECT_CALL(*search_mock, PrependPath("test_config.yaml")).WillOnce(Invoke([&](auto) {
+        return search_mock;
+    }));
+
     try {
-        auto config = LoadMemoryConfigurationFromString(t);
+        auto config = LoadMemoryConfigurationFromString(t, search_mock.get());
 
         const MemoryConfigEntry i0{
             .name = "",
@@ -73,9 +92,20 @@ memory:
                     .config = {{"a", "b"}, {"i", 5}, {"b", false}},
                 },
         };
-        auto expected = MemoryConfig{
-            .entries = {i0, i1, i2},
+        const MemoryConfigEntry i3{
+            .name = "",
+            .offset = 0x1000,
+            .entry_variant =
+                MemoryConfigEntry::RamArea{
+                    .image = std::nullopt,
+                    .size = 0x0100,
+                    .writable = true,
+                },
         };
+        auto expected = MemoryConfig{
+            .entries = {i0, i1, i2, i3},
+        };
+        std::cout << StoreMemoryConfigurationToString(config);
         EXPECT_EQ(config, expected);
     } catch (const std::exception &e) {
         std::cout << "ERR: " << e.what() << "\n";

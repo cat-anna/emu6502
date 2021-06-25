@@ -1,5 +1,6 @@
 #pragma once
 
+#include "file_search.hpp"
 #include <cstdint>
 #include <map>
 #include <optional>
@@ -26,6 +27,7 @@ struct MemoryConfigEntry {
     };
 
     struct MappedDevice {
+
         std::string class_name;
         std::map<std::string, ValueVariant> config;
         bool operator==(const MappedDevice &o) const = default;
@@ -44,8 +46,10 @@ struct MemoryConfig {
     bool operator==(const MemoryConfig &o) const = default;
 };
 
-MemoryConfig LoadMemoryConfigurationFromFile(const std::string &file_name);
-MemoryConfig LoadMemoryConfigurationFromString(const std::string &text);
+MemoryConfig LoadMemoryConfigurationFromFile(const std::string &file_name,
+                                             FileSearch *searcher = nullptr);
+MemoryConfig LoadMemoryConfigurationFromString(const std::string &text,
+                                               FileSearch *searcher = nullptr);
 
 std::string StoreMemoryConfigurationToString(const MemoryConfig &config);
 

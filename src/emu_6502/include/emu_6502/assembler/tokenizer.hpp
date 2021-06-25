@@ -33,7 +33,8 @@ public:
         : message(std::move(message)), error(error), offset(_offset) {}
 
     TokenizerSubException(const TokenizerSubException &sub_exception, size_t _offset)
-        : message(sub_exception.message), error(sub_exception.error), offset(_offset + sub_exception.offset) {}
+        : message(sub_exception.message), error(sub_exception.error),
+          offset(_offset + sub_exception.offset) {}
 
     const char *what() const noexcept override { return message.c_str(); }
 
@@ -44,17 +45,19 @@ public:
 
 class TokenizerException : public std::exception {
 public:
-    TokenizerException(std::string message, TokenizerError error, TokenLocation location = {})
+    TokenizerException(std::string message, TokenizerError error,
+                       TokenLocation location = {})
         : message(std::move(message)), error(error), location(std::move(location)) {}
 
-    TokenizerException(const TokenizerSubException &sub_exception, TokenLocation location = {})
+    TokenizerException(const TokenizerSubException &sub_exception,
+                       TokenLocation location = {})
         : message(sub_exception.message), error(sub_exception.error),
           location(std::move(location), sub_exception.offset) {}
 
     virtual std::string Message() const;
     const TokenLocation &Location() const { return location; }
     TokenizerError Error() const { return error; }
-    virtual const char *what() const { return message.c_str(); }
+    virtual const char *what() const noexcept override { return message.c_str(); }
 
 private:
     const std::string message;
@@ -92,7 +95,8 @@ std::string to_string(const Token &token);
 
 struct LineTokenizer {
     LineTokenizer(Tokenizer &_tokenizer, size_t _line_number, std::string _line_storage)
-        : tokenizer(_tokenizer), line_number(_line_number), line_storage(_line_storage), line(line_storage) {}
+        : tokenizer(_tokenizer), line_number(_line_number), line_storage(_line_storage),
+          line(line_storage) {}
 
     bool HasInput();
     Token NextToken();
@@ -111,7 +115,8 @@ private:
 };
 
 struct Tokenizer {
-    Tokenizer(std::istream &_input, std::string _input_name) : input(_input), input_name(_input_name) {}
+    Tokenizer(std::istream &_input, std::string _input_name)
+        : input(_input), input_name(_input_name) {}
 
     LineTokenizer NextLine();
     bool HasInput();
@@ -124,7 +129,8 @@ private:
 };
 
 struct TokenListIterator {
-    TokenListIterator(LineTokenizer &tokenizer, std::string separator) : tokenizer(tokenizer), separator(separator) {}
+    TokenListIterator(LineTokenizer &tokenizer, std::string separator)
+        : tokenizer(tokenizer), separator(separator) {}
 
     struct Iterator {
         using iterator_category = std::input_iterator_tag;
@@ -138,7 +144,10 @@ struct TokenListIterator {
         std::optional<Token> current_token = std::nullopt;
 
         Iterator() = default;
-        Iterator(LineTokenizer *parent, std::string separator) : parent(parent), separator(separator) { operator++(); }
+        Iterator(LineTokenizer *parent, std::string separator)
+            : parent(parent), separator(separator) {
+            operator++();
+        }
         Token operator*();
         void operator++();
         bool operator!=(const Iterator &other);

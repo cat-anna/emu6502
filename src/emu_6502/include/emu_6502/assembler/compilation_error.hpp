@@ -45,7 +45,7 @@ public:
     virtual std::string Message() const;
     const TokenLocation &Location() const { return token.location; }
     CompilationError Error() const { return error; }
-    virtual const char *what() const { return message.c_str(); }
+    virtual const char *what() const noexcept { return message.c_str(); }
 
     template <typename... ARGS>
     static std::string FormatMessage(CompilationError err, const Token &t, const char *fmt = nullptr, ARGS &&... args) {

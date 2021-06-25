@@ -18,4 +18,11 @@ inline bool VerifyString(std::string_view s, F f) {
     return true;
 }
 
+inline std::string ToUpper(const std::string &s) {
+    std::string r;
+    std::transform(s.begin(), s.end(), std::back_inserter(r),
+                   [](char c) -> char { return static_cast<char>(::toupper(c)); });
+    return r;
+}
+
 } // namespace emu

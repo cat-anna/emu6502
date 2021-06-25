@@ -35,7 +35,7 @@ std::ostream *StreamContainer::OpenOutput(const std::string &file, bool is_binar
     }
 
     auto f = std::make_shared<std::ofstream>();
-    f->exceptions(std::ifstream::badbit);
+    f->exceptions(std::ofstream::badbit);
     f->open(file, std::ios::out | (is_binary ? std::ios::binary : 0));
     output_streams.emplace_back(f);
     return f.get();

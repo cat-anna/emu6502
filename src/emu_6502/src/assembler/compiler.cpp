@@ -6,19 +6,22 @@
 
 namespace emu::emu6502::assembler {
 
-std::unique_ptr<Program> CompileString(std::string text, InstructionSet cpu_instruction_set) {
+std::unique_ptr<Program> CompileString(std::string text,
+                                       InstructionSet cpu_instruction_set) {
     Compiler6502 c{cpu_instruction_set};
-    return c.CompileFile(std::move(text));
+    return c.CompileString(std::move(text));
 }
 
-std::unique_ptr<Program> CompileFile(const std::string &file, InstructionSet cpu_instruction_set) {
+std::unique_ptr<Program> CompileFile(const std::string &file,
+                                     InstructionSet cpu_instruction_set) {
     Compiler6502 c{cpu_instruction_set};
     return c.CompileFile(file);
 }
 
 //-----------------------------------------------------------------------------
 
-Compiler6502::Compiler6502(InstructionSet cpu_instruction_set, bool verbose) : verbose(verbose) {
+Compiler6502::Compiler6502(InstructionSet cpu_instruction_set, bool verbose)
+    : verbose(verbose) {
     for (auto &[opcode, info] : GetInstructionSet(cpu_instruction_set)) {
         instruction_set[info.mnemonic].variants[info.addres_mode] = info;
     }
@@ -36,14 +39,15 @@ std::unique_ptr<Program> Compiler6502::Compile(Tokenizer &tokenizer) {
     return program;
 }
 
-std::unique_ptr<Program> Compiler6502::Compile(std::istream &stream, const std::string &name) {
+std::unique_ptr<Program> Compiler6502::Compile(std::istream &stream,
+                                               const std::string &name) {
     auto tokenizer = Tokenizer(stream, name);
     return Compile(tokenizer);
 }
 
 std::unique_ptr<Program> Compiler6502::CompileString(std::string text) {
     std::istringstream ss(text);
-    // ss.exceptions(std::ifstream::failbit);
+    ss.exceptions(std::ifstream::badbit);
     return Compile(ss, "string");
 }
 
@@ -86,12 +90,14 @@ void Compiler6502::ProcessLine(CompilationContext &context, LineTokenizer &line)
         auto second_token = line.NextToken();
         if (second_token == "=" || second_token.Lower() == "equ") {
             if (!line.HasInput()) {
-                ThrowCompilationError(CompilationError::UnexpectedEndOfInput, second_token);
+                ThrowCompilationError(CompilationError::UnexpectedEndOfInput,
+                                      second_token);
             }
             auto alias_value = line.NextToken();
 
             if (line.HasInput()) {
-                ThrowCompilationError(CompilationError::UnexpectedInput, line.NextToken());
+                ThrowCompilationError(CompilationError::UnexpectedInput,
+                                      line.NextToken());
             }
 
             context.AddAlias(first_token, alias_value);
