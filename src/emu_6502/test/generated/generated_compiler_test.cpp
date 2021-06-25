@@ -19,7 +19,8 @@ using namespace emu::emu6502::assembler;
 using namespace std::string_literals;
 using namespace std::string_view_literals;
 
-using AssemblerTestArg = std::tuple<std::string, std::string, std::optional<Program>, InstructionSet>;
+using AssemblerTestArg =
+    std::tuple<std::string, std::string, std::optional<Program>, InstructionSet>;
 class CompilerTest : public testing::TestWithParam<AssemblerTestArg> {};
 using u8v = std::vector<uint8_t>;
 
@@ -41,7 +42,8 @@ TEST_P(CompilerTest, ) {
             {
                 try {
                     auto r = CompileString(code, instruction_set);
-                    std::cout << "-----------RESULT---------------------\n" << to_string(*r) << "\n";
+                    std::cout << "-----------RESULT---------------------\n"
+                              << to_string(*r) << "\n";
                 } catch (const CompilationException &e) {
                     std::cout << e.Message() << "\n";
                     throw;
@@ -55,10 +57,13 @@ TEST_P(CompilerTest, ) {
 }
 
 std::vector<AssemblerTestArg> GenTestCases(AddressMode filter) {
-    std::unordered_map<std::string_view, std::unordered_map<AddressMode, std::tuple<OpcodeInfo, InstructionSet>>>
+    std::unordered_map<
+        std::string_view,
+        std::unordered_map<AddressMode, std::tuple<OpcodeInfo, InstructionSet>>>
         instruction_set;
 
-    std::vector<InstructionSet> instruction_sets{InstructionSet::NMOS6502Emu, InstructionSet::NMOS6502};
+    std::vector<InstructionSet> instruction_sets{InstructionSet::NMOS6502Emu,
+                                                 InstructionSet::NMOS6502};
     for (auto is : instruction_sets) {
         for (auto &[opcode, info] : GetInstructionSet(is)) {
             instruction_set[info.mnemonic][info.addres_mode] = {info, is};
@@ -73,6 +78,7 @@ std::vector<AssemblerTestArg> GenTestCases(AddressMode filter) {
         std::string relocation;
     };
     const std::vector<TestVariant> test_variants = {
+        // clang-format off
         // | Immediate           |          #aa             |
         {"value", AddressMode::Immediate, "#$AA"s, u8v{0xaa}, {}},
         {"label_before", AddressMode::Immediate, "#LABEL_BEFORE,X"s, std::nullopt, {}},
@@ -88,20 +94,20 @@ std::vector<AssemblerTestArg> GenTestCases(AddressMode filter) {
 
         // | Absolute            |          aaaa            |
         {"value", AddressMode::ABS, "$1234"s, u8v{0x34, 0x12}, {}},
-        {"label_before", AddressMode::ABS, "LABEL_BEFORE"s, u8v{0x00, 0x00}, "LABEL_BEFORE"s},
+        {"label_before", AddressMode::ABS, "LABEL_BEFORE"s, u8v{0x01, 0x00}, "LABEL_BEFORE"s},
         {"label_after", AddressMode::ABS, "LABEL_AFTER"s, u8v{0x20, 0x00}, "LABEL_AFTER"s},
         // {"alias_before", AddressMode::ABS, "ALIAS_BEFORE"s, u8v{0, 0x55}, {}}, // ZP
         {"alias_before_long", AddressMode::ABS, "ALIAS_BEFORE_LONG"s, u8v{0x34, 0x12}, {}},
 
         // | Relative            |          aaaa            |
-        {"label_before", AddressMode::REL, "LABEL_BEFORE"s, u8v{0xed}, "LABEL_BEFORE"s},
+        {"label_before", AddressMode::REL, "LABEL_BEFORE"s, u8v{0xee}, "LABEL_BEFORE"s},
         {"label_after", AddressMode::REL, "LABEL_AFTER"s, u8v{0x0d}, "LABEL_AFTER"s},
         {"alias_before", AddressMode::REL, "ALIAS_BEFORE"s, std::nullopt, {}},
         {"alias_before_long", AddressMode::REL, "ALIAS_BEFORE_LONG"s, std::nullopt, {}},
 
         // | Indirect Absolute   |          (aaaa)          |
         {"value", AddressMode::ABS_IND, "($1234)"s, u8v{0x34, 0x12}, {}},
-        {"label_before", AddressMode::ABS_IND, "(LABEL_BEFORE)"s, u8v{0x00, 0x00}, "LABEL_BEFORE"s},
+        {"label_before", AddressMode::ABS_IND, "(LABEL_BEFORE)"s, u8v{0x01, 0x00}, "LABEL_BEFORE"s},
         {"label_after", AddressMode::ABS_IND, "(LABEL_AFTER)"s, u8v{0x20, 0x00}, "LABEL_AFTER"s},
         {"alias_before", AddressMode::ABS_IND, "(ALIAS_BEFORE)"s, std::nullopt, {}},
         {"alias_before_long", AddressMode::ABS_IND, "(ALIAS_BEFORE_LONG)"s, u8v{0x34, 0x12}, {}},
@@ -129,14 +135,14 @@ std::vector<AssemblerTestArg> GenTestCases(AddressMode filter) {
 
         // | Absolute Indexed,X  |          aaaa,X          |
         {"value", AddressMode::ABSX, "$1234,X"s, u8v{0x34, 0x12}, {}},
-        {"label_before", AddressMode::ABSX, "LABEL_BEFORE,X"s, u8v{0x00, 0x00}, "LABEL_BEFORE"s},
+        {"label_before", AddressMode::ABSX, "LABEL_BEFORE,X"s, u8v{0x01, 0x00}, "LABEL_BEFORE"s},
         {"label_after", AddressMode::ABSX, "LABEL_AFTER,X"s, u8v{0x20, 0x00}, "LABEL_AFTER"s},
         // {"alias_before", AddressMode::ABSX, "ALIAS_BEFORE,X"s, std::nullopt, {}}, // ZPX
         {"alias_before_long", AddressMode::ABSX, "ALIAS_BEFORE_LONG,X"s, u8v{0x34, 0x12}, {}},
 
         // | Absolute Indexed,Y  |          aaaa,Y          |
         {"value", AddressMode::ABSY, "$1234,Y"s, u8v{0x34, 0x12}, {}},
-        {"label_before", AddressMode::ABSY, "LABEL_BEFORE,Y"s, u8v{0x00, 0x00}, "LABEL_BEFORE"s},
+        {"label_before", AddressMode::ABSY, "LABEL_BEFORE,Y"s, u8v{0x01, 0x00}, "LABEL_BEFORE"s},
         {"label_after", AddressMode::ABSY, "LABEL_AFTER,Y"s, u8v{0x20, 0x00}, "LABEL_AFTER"s},
         // {"alias_before", AddressMode::ABSY, "ALIAS_BEFORE,Y"s, std::nullopt, {}}, // ZPY
         {"alias_before_long", AddressMode::ABSY, "ALIAS_BEFORE_LONG,Y"s, u8v{0x34, 0x12}, {}},
@@ -154,6 +160,7 @@ std::vector<AssemblerTestArg> GenTestCases(AddressMode filter) {
         {"label_after", AddressMode::INDY, "(LABEL_AFTER),Y"s, std::nullopt, {}},
         {"alias_before", AddressMode::INDY, "(ALIAS_BEFORE),Y"s, u8v{0x55}, {}},
         {"alias_before_long", AddressMode::INDY, "(ALIAS_BEFORE_LONG),Y"s, std::nullopt, {}},
+        // clang-format on
     };
 
     const std::unordered_map<AddressMode, std::set<AddressMode>> kSkipScenarios = {
@@ -171,16 +178,24 @@ std::vector<AssemblerTestArg> GenTestCases(AddressMode filter) {
             if (variant.mode != filter) {
                 continue;
             }
-            auto LABEL_BEFORE = std::make_shared<LabelInfo>(LabelInfo{"LABEL_BEFORE", 0_addr, false});
-            auto LABEL = std::make_shared<LabelInfo>(LabelInfo{"LABEL", 0x0010_addr, false});
-            auto LABEL_AFTER = std::make_shared<LabelInfo>(LabelInfo{"LABEL_AFTER", 0x0020_addr, false});
+            auto LABEL_BEFORE =
+                std::make_shared<SymbolInfo>(SymbolInfo{"LABEL_BEFORE", 1_addr, false});
+            auto LABEL =
+                std::make_shared<SymbolInfo>(SymbolInfo{"LABEL", 0x0010_addr, false});
+            auto LABEL_AFTER = std::make_shared<SymbolInfo>(
+                SymbolInfo{"LABEL_AFTER", 0x0020_addr, false});
 
-            auto ALIAS_BEFORE = std::make_shared<ValueAlias>(ValueAlias{"ALIAS_BEFORE", {0x55}});
-            auto ALIAS_BEFORE_LONG = std::make_shared<ValueAlias>(ValueAlias{"ALIAS_BEFORE_LONG", {0x34, 0x12}});
-            auto ALIAS_AFTER = std::make_shared<ValueAlias>(ValueAlias{"ALIAS_AFTER", {0xaa}});
-            auto ALIAS_AFTER_LONG = std::make_shared<ValueAlias>(ValueAlias{"ALIAS_AFTER_LONG", {0x67, 0x89}});
+            auto ALIAS_BEFORE =
+                std::make_shared<ValueAlias>(ValueAlias{"ALIAS_BEFORE", {0x55}});
+            auto ALIAS_BEFORE_LONG = std::make_shared<ValueAlias>(
+                ValueAlias{"ALIAS_BEFORE_LONG", {0x34, 0x12}});
+            auto ALIAS_AFTER =
+                std::make_shared<ValueAlias>(ValueAlias{"ALIAS_AFTER", {0xaa}});
+            auto ALIAS_AFTER_LONG = std::make_shared<ValueAlias>(
+                ValueAlias{"ALIAS_AFTER_LONG", {0x67, 0x89}});
 
-            std::string name = fmt::format("{}_{}_{}", instruction.first, to_string(variant.mode), variant.name);
+            std::string name = fmt::format("{}_{}_{}", instruction.first,
+                                           to_string(variant.mode), variant.name);
             if (name.back() == '_') {
                 name.pop_back();
             }
@@ -190,6 +205,7 @@ ALIAS_BEFORE=$55
 ALIAS_BEFORE_LONG=$1234
 
 .org 0x0000
+    NOP
 LABEL_BEFORE:
     NOP
 
@@ -206,9 +222,11 @@ LABEL_AFTER:
 ALIAS_AFTER=0xaa
 ALIAS_AFTER_LONG=0x6789
 )=="s;
-            std::string code = fmt::format(code_format, instruction.first, variant.test_string);
+            std::string code =
+                fmt::format(code_format, instruction.first, variant.test_string);
             bool skip = false;
-            if (auto skip_it = kSkipScenarios.find(variant.mode); skip_it != kSkipScenarios.end()) {
+            if (auto skip_it = kSkipScenarios.find(variant.mode);
+                skip_it != kSkipScenarios.end()) {
                 for (auto item : skip_it->second) {
                     if (instruction.second.find(item) != instruction.second.end()) {
                         skip = true;
@@ -228,15 +246,16 @@ ALIAS_AFTER_LONG=0x6789
                 auto [opcodeinfo, is] = opcode->second;
                 opcode_instruction_set = is;
                 SparseBinaryCode bin_code;
-                bin_code.PutBytes(0x0000, {INS_NOP});
+                bin_code.PutBytes(0x0000, {INS_NOP, INS_NOP});
                 bin_code.PutBytes(0x0010, {INS_NOP, opcodeinfo.opcode});
                 bin_code.PutBytes(0x0012, test_data);
-                bin_code.PutBytes(static_cast<Address_t>(0x0012 + test_data.size()), {INS_NOP});
+                bin_code.PutBytes(static_cast<Address_t>(0x0012 + test_data.size()),
+                                  {INS_NOP});
                 bin_code.PutBytes(0x0020, {INS_NOP});
 
                 expected = Program{
                     .sparse_binary_code = bin_code,
-                    .labels =
+                    .symbols =
                         {
                             {"LABEL_BEFORE", LABEL_BEFORE},
                             {"LABEL", LABEL},
@@ -252,14 +271,15 @@ ALIAS_AFTER_LONG=0x6789
                     .relocations = {},
                 };
                 if (!variant.relocation.empty()) {
-                    auto l = expected->labels[variant.relocation];
+                    auto l = expected->symbols[variant.relocation];
                     auto ri = RelocationInfo{
-                        .target_label = l,
+                        .target_symbol = l,
                         .position = 0x0012,
-                        .mode = variant.mode == AddressMode::REL ? RelocationMode::Relative : RelocationMode::Absolute,
+                        .mode = variant.mode == AddressMode::REL
+                                    ? RelocationMode::Relative
+                                    : RelocationMode::Absolute,
                     };
                     auto sri = std::make_shared<RelocationInfo>(ri);
-                    l->label_references.emplace_back(sri);
                     expected->relocations.insert(sri);
                 }
             }
@@ -274,19 +294,45 @@ auto GetTestName() {
     return [](auto &info) { return std::get<0>(info.param); };
 }
 
-INSTANTIATE_TEST_SUITE_P(IM, CompilerTest, ::testing::ValuesIn(GenTestCases(AddressMode::IM)), GetTestName());
-INSTANTIATE_TEST_SUITE_P(Implied, CompilerTest, ::testing::ValuesIn(GenTestCases(AddressMode::Implied)), GetTestName());
-INSTANTIATE_TEST_SUITE_P(ABS, CompilerTest, ::testing::ValuesIn(GenTestCases(AddressMode::ABS)), GetTestName());
-INSTANTIATE_TEST_SUITE_P(ZP, CompilerTest, ::testing::ValuesIn(GenTestCases(AddressMode::ZP)), GetTestName());
-INSTANTIATE_TEST_SUITE_P(ZPX, CompilerTest, ::testing::ValuesIn(GenTestCases(AddressMode::ZPX)), GetTestName());
-INSTANTIATE_TEST_SUITE_P(ZPY, CompilerTest, ::testing::ValuesIn(GenTestCases(AddressMode::ZPY)), GetTestName());
-INSTANTIATE_TEST_SUITE_P(ABSX, CompilerTest, ::testing::ValuesIn(GenTestCases(AddressMode::ABSX)), GetTestName());
-INSTANTIATE_TEST_SUITE_P(ABSY, CompilerTest, ::testing::ValuesIn(GenTestCases(AddressMode::ABSY)), GetTestName());
-INSTANTIATE_TEST_SUITE_P(INDX, CompilerTest, ::testing::ValuesIn(GenTestCases(AddressMode::INDX)), GetTestName());
-INSTANTIATE_TEST_SUITE_P(INDY, CompilerTest, ::testing::ValuesIn(GenTestCases(AddressMode::INDY)), GetTestName());
-INSTANTIATE_TEST_SUITE_P(ACC, CompilerTest, ::testing::ValuesIn(GenTestCases(AddressMode::ACC)), GetTestName());
-INSTANTIATE_TEST_SUITE_P(REL, CompilerTest, ::testing::ValuesIn(GenTestCases(AddressMode::REL)), GetTestName());
-INSTANTIATE_TEST_SUITE_P(ABS_IND, CompilerTest, ::testing::ValuesIn(GenTestCases(AddressMode::ABS_IND)), GetTestName());
+INSTANTIATE_TEST_SUITE_P(IM, CompilerTest,
+                         ::testing::ValuesIn(GenTestCases(AddressMode::IM)),
+                         GetTestName());
+INSTANTIATE_TEST_SUITE_P(Implied, CompilerTest,
+                         ::testing::ValuesIn(GenTestCases(AddressMode::Implied)),
+                         GetTestName());
+INSTANTIATE_TEST_SUITE_P(ABS, CompilerTest,
+                         ::testing::ValuesIn(GenTestCases(AddressMode::ABS)),
+                         GetTestName());
+INSTANTIATE_TEST_SUITE_P(ZP, CompilerTest,
+                         ::testing::ValuesIn(GenTestCases(AddressMode::ZP)),
+                         GetTestName());
+INSTANTIATE_TEST_SUITE_P(ZPX, CompilerTest,
+                         ::testing::ValuesIn(GenTestCases(AddressMode::ZPX)),
+                         GetTestName());
+INSTANTIATE_TEST_SUITE_P(ZPY, CompilerTest,
+                         ::testing::ValuesIn(GenTestCases(AddressMode::ZPY)),
+                         GetTestName());
+INSTANTIATE_TEST_SUITE_P(ABSX, CompilerTest,
+                         ::testing::ValuesIn(GenTestCases(AddressMode::ABSX)),
+                         GetTestName());
+INSTANTIATE_TEST_SUITE_P(ABSY, CompilerTest,
+                         ::testing::ValuesIn(GenTestCases(AddressMode::ABSY)),
+                         GetTestName());
+INSTANTIATE_TEST_SUITE_P(INDX, CompilerTest,
+                         ::testing::ValuesIn(GenTestCases(AddressMode::INDX)),
+                         GetTestName());
+INSTANTIATE_TEST_SUITE_P(INDY, CompilerTest,
+                         ::testing::ValuesIn(GenTestCases(AddressMode::INDY)),
+                         GetTestName());
+INSTANTIATE_TEST_SUITE_P(ACC, CompilerTest,
+                         ::testing::ValuesIn(GenTestCases(AddressMode::ACC)),
+                         GetTestName());
+INSTANTIATE_TEST_SUITE_P(REL, CompilerTest,
+                         ::testing::ValuesIn(GenTestCases(AddressMode::REL)),
+                         GetTestName());
+INSTANTIATE_TEST_SUITE_P(ABS_IND, CompilerTest,
+                         ::testing::ValuesIn(GenTestCases(AddressMode::ABS_IND)),
+                         GetTestName());
 
 } // namespace
 } // namespace emu::emu6502::test

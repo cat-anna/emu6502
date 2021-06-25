@@ -12,9 +12,11 @@
 
 namespace emu::emu6502::assembler {
 
-std::set<AddressMode> FilterPossibleModes(const std::set<AddressMode> &modes, size_t size);
+std::set<AddressMode> FilterPossibleModes(const std::set<AddressMode> &modes,
+                                          size_t size);
 
-using ArgumentValueVariant = std::variant<std::nullptr_t, std::string, std::vector<uint8_t>>;
+using ArgumentValueVariant =
+    std::variant<std::nullptr_t, std::string, std::vector<uint8_t>>;
 struct InstructionArgument {
     std::set<AddressMode> possible_address_modes;
     ArgumentValueVariant argument_value;
@@ -35,7 +37,7 @@ ByteVector ParseTextValue(const Token &token, bool include_trailing_zero);
 
 enum class TokenType {
     kValue = 1,
-    kLabel,
+    kSymbol,
     kAlias,
     kUnknown,
 };
@@ -43,7 +45,8 @@ enum class TokenType {
 std::string to_string(TokenType tt);
 std::ostream &operator<<(std::ostream &o, TokenType tt);
 
-TokenType GetTokenType(const Token &value_token, const AliasMap *aliases, const LabelMap *labels);
+TokenType GetTokenType(const Token &value_token, const AliasMap *aliases,
+                       const SymbolMap *symbols);
 TokenType GetTokenType(const Token &value_token, const Program &program);
 
 } // namespace emu::emu6502::assembler

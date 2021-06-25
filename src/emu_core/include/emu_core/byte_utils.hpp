@@ -24,8 +24,13 @@ constexpr int16_t operator"" _416(unsigned long long n) {
 
 uint8_t ParseByte(std::string_view text, int base = 0);
 uint16_t ParseWord(std::string_view text, int base = 0);
-std::vector<uint8_t> ParsePackedIntegral(std::string_view text, std::optional<size_t> expected_size = std::nullopt,
-                                         int base = 0);
+std::vector<uint8_t>
+ParsePackedIntegral(std::string_view text,
+                    std::optional<size_t> expected_size = std::nullopt, int base = 0);
+
+inline std::vector<uint8_t> ToBytes(std::monostate) {
+    return {};
+}
 
 inline std::vector<uint8_t> ToBytes(uint8_t v) {
     return {v};

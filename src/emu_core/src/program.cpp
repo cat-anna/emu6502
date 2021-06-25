@@ -18,8 +18,9 @@ NearOffset_t RelativeJumpOffset(Address_t position, Address_t target) {
 
 //-----------------------------------------------------------------------------
 
-bool LabelInfo::operator==(const LabelInfo &other) const {
-    if (name != other.name || imported != other.imported || offset.has_value() != other.offset.has_value()) {
+bool SymbolInfo::operator==(const SymbolInfo &other) const {
+    if (name != other.name || imported != other.imported ||
+        offset.has_value() != other.offset.has_value()) {
         return false;
     }
 
@@ -30,20 +31,27 @@ bool LabelInfo::operator==(const LabelInfo &other) const {
     return true;
 }
 
-std::string to_string(const LabelInfo &label) {
-    std::string r = "LabelInfo:{";
-    std::string str_off = label.offset.has_value() ? fmt::format("{:04x}", label.offset.value()) : std::string("----");
-    r += fmt::format("offset:{},imported:{},name:'{}'", str_off, label.imported, label.name);
+std::string to_string(const SymbolInfo &symbol) {
+    std::string r = "SymbolInfo:{";
+    std::string str_off = symbol.offset.has_value()
+                              ? fmt::format("{:04x}", symbol.offset.value())
+                              : std::string("----");
+    r += fmt::format("offset:{},imported:{},name:'{}',segment:{}", str_off,
+                     symbol.imported, symbol.name, to_string(symbol.segment));
     r += "}";
     return r;
 }
 
-std::string to_string(std::weak_ptr<LabelInfo> label) {
-    auto ptr = label.lock();
+std::string to_string(std::weak_ptr<SymbolInfo> symbol) {
+    auto ptr = symbol.lock();
     if (!ptr) {
-        return "LabelInfo:NULL";
+        return "SymbolInfo:NULL";
     }
     return to_string(*ptr);
+}
+
+std::string to_string(Segment mode) {
+    return "todo";
 }
 
 //-----------------------------------------------------------------------------
@@ -54,9 +62,12 @@ std::string to_string(RelocationMode rel_mode) {
         return "Absolute";
     case RelocationMode::Relative:
         return "Relative";
+    case RelocationMode::ZeroPage:
+        return "ZeroPage";
     }
 
-    throw std::runtime_error(fmt::format("Unknown RelocationMode {}", static_cast<int>(rel_mode)));
+    throw std::runtime_error(
+        fmt::format("Unknown RelocationMode {}", static_cast<int>(rel_mode)));
 }
 
 uint8_t RelocationSize(RelocationMode rm) {
@@ -64,9 +75,11 @@ uint8_t RelocationSize(RelocationMode rm) {
     case RelocationMode::Absolute:
         return 2;
     case RelocationMode::Relative:
+    case RelocationMode::ZeroPage:
         return 1;
     }
-    throw std::runtime_error(fmt::format("Unknown relocation mode {}", static_cast<int>(rm)));
+    throw std::runtime_error(
+        fmt::format("Unknown relocation mode {}", static_cast<int>(rm)));
 }
 
 bool RelocationInfo::operator==(const RelocationInfo &other) const {
@@ -74,13 +87,13 @@ bool RelocationInfo::operator==(const RelocationInfo &other) const {
         return false;
     }
 
-    auto my_label = target_label.lock();
-    auto oth_label = other.target_label.lock();
-    if (static_cast<bool>(my_label) != static_cast<bool>(oth_label)) {
+    auto my_symbol = target_symbol.lock();
+    auto oth_symbol = other.target_symbol.lock();
+    if (static_cast<bool>(my_symbol) != static_cast<bool>(oth_symbol)) {
         return false;
     }
-    if (my_label) {
-        return *my_label == *oth_label;
+    if (my_symbol) {
+        return *my_symbol == *oth_symbol;
     } else {
         return true;
     }
@@ -94,13 +107,13 @@ bool RelocationInfo::operator<(const RelocationInfo &other) const {
 
     return false;
 
-    // auto my_label = target_label.lock();
-    // auto oth_label = other.target_label.lock();
-    // if (static_cast<bool>(my_label) != static_cast<bool>(oth_label)) {
+    // auto my_symbol = target_symbol.lock();
+    // auto oth_symbol = other.target_symbol.lock();
+    // if (static_cast<bool>(my_symbol) != static_cast<bool>(oth_symbol)) {
     //     return false;
     // }
-    // if (my_label) {
-    //     return my_label->name < oth_label->name;
+    // if (my_symbol) {
+    //     return my_symbol->name < oth_symbol->name;
     // } else {
     //     return true;
     // }
@@ -108,9 +121,11 @@ bool RelocationInfo::operator<(const RelocationInfo &other) const {
 
 std::string to_string(const RelocationInfo &relocation) {
     std::string r = "RelocationInfo:{";
-    auto label = relocation.target_label.lock();
-    std::string label_name = label ? fmt::format("'{}'", label->name) : std::string("-");
-    r += fmt::format("position:{:04x},mode:{},label:{}", relocation.position, to_string(relocation.mode), label_name);
+    auto symbol = relocation.target_symbol.lock();
+    std::string symbol_name =
+        symbol ? fmt::format("'{}'", symbol->name) : std::string("-");
+    r += fmt::format("position:{:04x},mode:{},symbol:{}", relocation.position,
+                     to_string(relocation.mode), symbol_name);
     r += "}";
     return r;
 }
@@ -126,7 +141,8 @@ std::string to_string(std::weak_ptr<RelocationInfo> relocation) {
 //-----------------------------------------------------------------------------
 
 std::string to_string(const ValueAlias &value_alias) {
-    return fmt::format("ValueAlias{{name={},value=[{}]}}", value_alias.name, ToHex(value_alias.value, ""));
+    return fmt::format("ValueAlias{{name={},value=[{}]}}", value_alias.name,
+                       ToHex(value_alias.value, ""));
 }
 
 std::string to_string(std::shared_ptr<ValueAlias> value_alias) {
@@ -137,18 +153,21 @@ std::string to_string(std::shared_ptr<ValueAlias> value_alias) {
 
 std::pair<Address_t, Address_t> SparseBinaryCode::CodeRange() const {
     auto [min, max] =
-        std::minmax_element(sparse_map.begin(), sparse_map.end(), [](auto &a, auto &b) { return a.first < b.first; });
+        std::minmax_element(sparse_map.begin(), sparse_map.end(),
+                            [](auto &a, auto &b) { return a.first < b.first; });
     return {min->first, max->first};
 }
 
 void SparseBinaryCode::PutByte(Address_t address, uint8_t byte, bool overwrite) {
     if (sparse_map.find(address) != sparse_map.end() && !overwrite) {
-        throw std::runtime_error(fmt::format("Address {:04x} is already occupied", address));
+        throw std::runtime_error(
+            fmt::format("Address {:04x} is already occupied", address));
     }
     sparse_map[address] = byte;
 }
 
-void SparseBinaryCode::PutBytes(Address_t address, const std::vector<uint8_t> &bytes, bool overwrite) {
+void SparseBinaryCode::PutBytes(Address_t address, const std::vector<uint8_t> &bytes,
+                                bool overwrite) {
     for (size_t i = 0; i < bytes.size(); i++) {
         size_t a = address;
         a += i;
@@ -181,8 +200,8 @@ ByteVector SparseBinaryCode::DumpMemory() const {
 
 std::string to_string(const Program &program) {
     std::string r = "Program:\n";
-    r += "\tLabels:\n";
-    for (auto &[n, l] : program.labels) {
+    r += "\tsymbols:\n";
+    for (auto &[n, l] : program.symbols) {
         r += fmt::format("\t\t{}\n", to_string(*l));
     }
     r += "\tRelocations:\n";
@@ -208,14 +227,15 @@ bool Program::operator==(const Program &other) const {
         return false;
     }
 
-    for (auto &item : labels) {
-        auto other_it = other.labels.find(item.first);
-        if (other_it == other.labels.end() || (*other_it->second) != (*item.second)) {
+    for (auto &item : symbols) {
+        auto other_it = other.symbols.find(item.first);
+        if (other_it == other.symbols.end() || (*other_it->second) != (*item.second)) {
             return false;
         }
     }
 
-    if (!std::equal(relocations.begin(), relocations.end(), other.relocations.begin(), other.relocations.end(),
+    if (!std::equal(relocations.begin(), relocations.end(), other.relocations.begin(),
+                    other.relocations.end(),
                     [](auto &a, auto &b) { return (*a) == (*b); })) {
         return false;
     }
@@ -227,29 +247,33 @@ std::shared_ptr<ValueAlias> Program::FindAlias(const std::string &name) const {
     return it == aliases.end() ? nullptr : it->second;
 }
 
-std::shared_ptr<LabelInfo> Program::FindLabel(const std::string &name) const {
-    auto it = labels.find(name);
-    return it == labels.end() ? nullptr : it->second;
+std::shared_ptr<SymbolInfo> Program::FindSymbol(const std::string &name) const {
+    auto it = symbols.find(name);
+    return it == symbols.end() ? nullptr : it->second;
 }
 
 void Program::AddAlias(std::shared_ptr<ValueAlias> alias) {
     if (alias->name.size() < 2) {
-        throw std::runtime_error(fmt::format("Label '{}' name is to short", alias->name));
+        throw std::runtime_error(
+            fmt::format("symbol '{}' name is to short", alias->name));
     }
     if (aliases.contains(alias->name)) {
-        throw std::runtime_error(fmt::format("Alias '{}' is already defined", alias->name));
+        throw std::runtime_error(
+            fmt::format("Alias '{}' is already defined", alias->name));
     }
     aliases[alias->name] = std::move(alias);
 }
 
-void Program::AddLabel(std::shared_ptr<LabelInfo> label) {
-    if (label->name.size() < 2) {
-        throw std::runtime_error(fmt::format("Label '{}' name is to short", label->name));
+void Program::AddSymbol(std::shared_ptr<SymbolInfo> symbol) {
+    if (symbol->name.size() < 2) {
+        throw std::runtime_error(
+            fmt::format("symbol '{}' name is to short", symbol->name));
     }
-    if (labels.contains(label->name)) {
-        throw std::runtime_error(fmt::format("Label '{}' is already defined", label->name));
+    if (symbols.contains(symbol->name)) {
+        throw std::runtime_error(
+            fmt::format("symbol '{}' is already defined", symbol->name));
     }
-    labels[label->name] = std::move(label);
+    symbols[symbol->name] = std::move(symbol);
 }
 
 } // namespace emu

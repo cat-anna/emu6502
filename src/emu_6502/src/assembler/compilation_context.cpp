@@ -2,69 +2,70 @@
 #include "emu_core/base16.hpp"
 #include "emu_core/byte_utils.hpp"
 #include "instruction_argument.hpp"
-#include "instrution_variant_compiler.hpp"
+#include "instruction_variant_compiler.hpp"
 #include <bit>
 
 namespace emu::emu6502::assembler {
 
-const std::unordered_map<std::string, CompilationContext::CommandParsingInfo> CompilationContext::kCommandParseInfo = {
-    //cc65
-    {"addr", {&CompilationContext::ParseDataCommand<2>}},  //
-    {"align", {&CompilationContext::ParseAlignCommand}},   //
-    {"asciiz", {&CompilationContext::ParseTextCommand}},   //
-    {"byt", {&CompilationContext::ParseDataCommand<1>}},   //
-    {"byte", {&CompilationContext::ParseDataCommand<1>}},  //
-    {"dbyt", {&CompilationContext::ParseDataCommand<2>}},  //
-    {"dword", {&CompilationContext::ParseDataCommand<4>}}, //
-    {"org", {&CompilationContext::ParseOriginCommand}},    //
-    {"word", {&CompilationContext::ParseDataCommand<2>}},  //
+const std::unordered_map<std::string, CompilationContext::CommandParsingInfo>
+    CompilationContext::kCommandParseInfo = {
+        //cc65
+        {"addr", {&CompilationContext::ParseDataCommand<2>}},  //
+        {"align", {&CompilationContext::ParseAlignCommand}},   //
+        {"asciiz", {&CompilationContext::ParseTextCommand}},   //
+        {"byt", {&CompilationContext::ParseDataCommand<1>}},   //
+        {"byte", {&CompilationContext::ParseDataCommand<1>}},  //
+        {"dbyt", {&CompilationContext::ParseDataCommand<2>}},  //
+        {"dword", {&CompilationContext::ParseDataCommand<4>}}, //
+        {"org", {&CompilationContext::ParseOriginCommand}},    //
+        {"word", {&CompilationContext::ParseDataCommand<2>}},  //
 
-    // {"autoimport", {nullptr}},  //
-    // {"blankbytes", {nullptr}},  //
-    // {"case", {nullptr}},        //
-    // {"condes", {nullptr}},      //
-    // {"constructor", {nullptr}}, //
-    // {"define", {nullptr}},      //
-    // {"error", {nullptr}},       //
-    // {"export", {nullptr}},      //
-    // {"exportzp", {nullptr}},    //
-    // {"fileopt", {nullptr}},     //
-    // {"fopt", {nullptr}},        //
-    // {"forceimport", {nullptr}}, //
-    // {"global", {nullptr}},      //
-    // {"hibytes", {nullptr}},     //
-    // {"import", {nullptr}},      //
-    // {"importzp", {nullptr}},    //
-    // {"include", {nullptr}},     //
-    // {"interruptor", {nullptr}}, //
-    // {"lobytes", {nullptr}},     //
-    // {"local", {nullptr}},       //
-    // {"out", {nullptr}},         //
-    // {"reloc", {nullptr}},       //
-    // {"res", {nullptr}},         //
-    // {"setcpu", {nullptr}},      //
-    // {"tag", {nullptr}},         //
-    // {"warning", {nullptr}},     //
+        // {"autoimport", {nullptr}},  //
+        // {"blankbytes", {nullptr}},  //
+        // {"case", {nullptr}},        //
+        // {"condes", {nullptr}},      //
+        // {"constructor", {nullptr}}, //
+        // {"define", {nullptr}},      //
+        // {"error", {nullptr}},       //
+        // {"export", {nullptr}},      //
+        // {"exportzp", {nullptr}},    //
+        // {"fileopt", {nullptr}},     //
+        // {"fopt", {nullptr}},        //
+        // {"forceimport", {nullptr}}, //
+        // {"global", {nullptr}},      //
+        // {"hibytes", {nullptr}},     //
+        // {"import", {nullptr}},      //
+        // {"importzp", {nullptr}},    //
+        // {"include", {nullptr}},     //
+        // {"interruptor", {nullptr}}, //
+        // {"lobytes", {nullptr}},     //
+        // {"local", {nullptr}},       //
+        // {"out", {nullptr}},         //
+        // {"reloc", {nullptr}},       //
+        // {"res", {nullptr}},         //
+        // {"setcpu", {nullptr}},      //
+        // {"tag", {nullptr}},         //
+        // {"warning", {nullptr}},     //
 
-    // {"enum", {nullptr}},    //
-    // {"endenum", {nullptr}}, //
-    // {"proc", {nullptr}},    //
-    // {"endproc", {nullptr}}, //
-    // {"scope", {nullptr}},    //
-    // {"endscope", {nullptr}}, //
-    // {"struct", {nullptr}},    //
-    // {"endstruct", {nullptr}}, //
+        // {"enum", {nullptr}},    //
+        // {"endenum", {nullptr}}, //
+        // {"proc", {nullptr}},    //
+        // {"endproc", {nullptr}}, //
+        // {"scope", {nullptr}},    //
+        // {"endscope", {nullptr}}, //
+        // {"struct", {nullptr}},    //
+        // {"endstruct", {nullptr}}, //
 
-    // {"bss", {nullptr}}, //
-    // {"segment", {nullptr}}, //
-    // {"code", {nullptr}}, //
-    // {"data", {nullptr}}, //
-    // {"rodata", {nullptr}}, //
-    // {"zeropage", {nullptr}}, //
+        // {"bss", {nullptr}}, //
+        // {"segment", {nullptr}}, //
+        // {"code", {nullptr}}, //
+        // {"data", {nullptr}}, //
+        // {"rodata", {nullptr}}, //
+        // {"zeropage", {nullptr}}, //
 
-    //extensions
-    {"isr", {&CompilationContext::ParseIsrCommand}},   //
-    {"text", {&CompilationContext::ParseTextCommand}}, //
+        //extensions
+        {"isr", {&CompilationContext::ParseIsrCommand}},   //
+        {"text", {&CompilationContext::ParseTextCommand}}, //
 };
 
 const std::unordered_map<std::string, Address_t> CompilationContext::kIsrMap = {
@@ -73,10 +74,12 @@ const std::unordered_map<std::string, Address_t> CompilationContext::kIsrMap = {
     {"nmib", kNmibVector},
 };
 
-void CompilationContext::HandleCommand(const Token &command_token, LineTokenizer &line_tokenizer) {
+void CompilationContext::HandleCommand(const Token &command_token,
+                                       LineTokenizer &line_tokenizer) {
     auto command = command_token.View();
     command.remove_prefix(1);
-    if (auto it = kCommandParseInfo.find(std::string(command)); it == kCommandParseInfo.end()) {
+    if (auto it = kCommandParseInfo.find(std::string(command));
+        it == kCommandParseInfo.end()) {
         ThrowCompilationError(CompilationError::UnknownCommand, command_token);
     } else {
         auto handler = it->second.handler;
@@ -84,7 +87,8 @@ void CompilationContext::HandleCommand(const Token &command_token, LineTokenizer
     }
 }
 
-void CompilationContext::ParseDataCommand(LineTokenizer &tokenizer, Address_t element_size) {
+void CompilationContext::ParseDataCommand(LineTokenizer &tokenizer,
+                                          Address_t element_size) {
     for (auto tok : tokenizer.TokenList(",")) {
         switch (GetTokenType(tok, program)) {
         case TokenType::kAlias:
@@ -93,13 +97,14 @@ void CompilationContext::ParseDataCommand(LineTokenizer &tokenizer, Address_t el
             continue;
 
         case TokenType::kUnknown:
-        case TokenType::kLabel:
+        case TokenType::kSymbol:
             if (element_size == 2) {
-                PutLabelReference(RelocationMode::Absolute, tok.String(), current_position);
+                PutSymbolReference(RelocationMode::Absolute, tok.String(),
+                                   current_position);
                 continue;
             } else {
                 ThrowCompilationError(CompilationError::InvalidOperandSize, tok,
-                                      "Cannot put 1 byte reference to label");
+                                      "Cannot put 1 byte reference to symbol");
             }
         }
 
@@ -126,12 +131,14 @@ void CompilationContext::ParseAlignCommand(LineTokenizer &tokenizer) {
         try {
             alignment = ParseWord(tok.View());
         } catch (...) {
-            ThrowCompilationError(CompilationError::InvalidCommandArgument, tok, "Cannot parse value");
+            ThrowCompilationError(CompilationError::InvalidCommandArgument, tok,
+                                  "Cannot parse value");
         }
     }
 
     if (std::popcount(alignment) != 1) {
-        ThrowCompilationError(CompilationError::InvalidCommandArgument, tok, "Invalid alignment value");
+        ThrowCompilationError(CompilationError::InvalidCommandArgument, tok,
+                              "Invalid alignment value");
     }
     auto mask = alignment - 1;
 
@@ -156,8 +163,8 @@ void CompilationContext::ParseOriginCommand(LineTokenizer &tokenizer) {
         return;
     }
     case TokenType::kUnknown:
-    case TokenType::kLabel:
-        ThrowCompilationError(CompilationError::LabelIsNotAllowed, tok);
+    case TokenType::kSymbol:
+        ThrowCompilationError(CompilationError::SymbolIsNotAllowed, tok);
     }
 
     ThrowCompilationError(CompilationError::InvalidToken, tok);
@@ -183,68 +190,53 @@ void CompilationContext::ParseIsrCommand(LineTokenizer &tokenizer) {
         break;
 
     case TokenType::kUnknown:
-    case TokenType::kLabel:
-        PutLabelReference(RelocationMode::Absolute, tok.String(), addr);
+    case TokenType::kSymbol:
+        PutSymbolReference(RelocationMode::Absolute, tok.String(), addr);
         return;
     }
 
-    ThrowCompilationError(CompilationError::InvalidIsrArgument, tok, "Unknown isr command argument '{}'", tok.String());
+    ThrowCompilationError(CompilationError::InvalidIsrArgument, tok,
+                          "Unknown isr command argument '{}'", tok.String());
 }
 
-std::vector<uint8_t> CompilationContext::ParseTokenToBytes(const Token &value_token, size_t expected_byte_size) {
+std::vector<uint8_t> CompilationContext::ParseTokenToBytes(const Token &value_token,
+                                                           size_t expected_byte_size) {
     try {
-        return ParseImmediateValue(value_token.View(), program.aliases, expected_byte_size);
+        return ParseImmediateValue(value_token.View(), program.aliases,
+                                   expected_byte_size);
     } catch (const std::exception &e) {
         ThrowCompilationError(CompilationError::InvalidToken, value_token, e.what());
     }
 }
 
-void CompilationContext::AddLabel(const Token &name_token) {
+void CompilationContext::BeginSymbol(const Token &name_token) {
     auto view = name_token.View();
     if (view.ends_with(":")) {
         view.remove_suffix(1);
     }
-    auto label_name = std::string(view);
+    auto symbol_name = std::string(view);
 
-    if (auto label = program.FindLabel(label_name); label == nullptr) {
-        Log("Adding label '{}' at {:04x}", label_name, current_position);
-        auto l = LabelInfo{
-            .name = label_name,
+    if (auto symbol = program.FindSymbol(symbol_name); symbol == nullptr) {
+        Log("Adding symbol '{}' at {:04x}", symbol_name, current_position);
+        auto l = SymbolInfo{
+            .name = symbol_name,
             .offset = current_position,
             .imported = false,
         };
-        program.AddLabel(std::make_shared<LabelInfo>(l));
+        program.AddSymbol(std::make_shared<SymbolInfo>(l));
     } else {
-        Log("Found label '{}' at {:04x}", label_name, current_position);
-        label->imported = false;
-        if (label->offset.has_value()) {
-            ThrowCompilationError(CompilationError::LabelRedefinition, name_token);
+        Log("Found symbol '{}' at {:04x}", symbol_name, current_position);
+        symbol->imported = false;
+        if (symbol->offset.has_value()) {
+            ThrowCompilationError(CompilationError::SymbolRedefinition, name_token);
         }
 
-        label->offset = current_position;
-        RelocateLabel(*label);
+        symbol->offset = current_position;
     }
 }
 
-void CompilationContext::ApplyRelocation(const RelocationInfo &relocation, const LabelInfo &label_info) {
-    Log("Relocating reference to label '{}' at {}", label_info.name, to_string(relocation));
-    if (relocation.mode == RelocationMode::Absolute) {
-        auto bytes = ToBytes(label_info.offset.value_or(0));
-        program.sparse_binary_code.PutBytes(relocation.position, bytes, true);
-    } else {
-        auto jump = RelativeJumpOffset(relocation.position + 1, label_info.offset.value_or(relocation.position));
-        program.sparse_binary_code.PutBytes(relocation.position, ToBytes(jump), true);
-    }
-}
-
-void CompilationContext::RelocateLabel(const LabelInfo &label_info) {
-    for (auto weak_rel : label_info.label_references) {
-        auto rel = weak_rel.lock();
-        ApplyRelocation(*rel, label_info);
-    }
-}
-
-void CompilationContext::EmitInstruction(LineTokenizer &tokenizer, const InstructionParsingInfo &instruction) {
+void CompilationContext::EmitInstruction(LineTokenizer &tokenizer,
+                                         const InstructionParsingInfo &instruction) {
     auto first_token = tokenizer.NextToken();
     auto token = first_token.String();
 
@@ -274,9 +266,11 @@ void CompilationContext::EmitInstruction(LineTokenizer &tokenizer, const Instruc
         .aliases = program.aliases,
     };
 
-    std::set_intersection(argument.possible_address_modes.begin(), argument.possible_address_modes.end(), //
-                          instruction_address_modes.begin(), instruction_address_modes.end(),             //
-                          std::inserter(selector.possible_address_modes, selector.possible_address_modes.begin()));
+    std::set_intersection(
+        argument.possible_address_modes.begin(), argument.possible_address_modes.end(), //
+        instruction_address_modes.begin(), instruction_address_modes.end(),             //
+        std::inserter(selector.possible_address_modes,
+                      selector.possible_address_modes.begin()));
 
     AddressMode selected_mode = selector.DispatchSelect(argument.argument_value);
 
@@ -289,38 +283,40 @@ void CompilationContext::EmitInstruction(LineTokenizer &tokenizer, const Instruc
         auto r = iadp.DispatchProcess(argument.argument_value);
         EmitBytes(r.bytes);
         if (r.relocation_mode.has_value()) {
-            PutLabelReference(*r.relocation_mode, r.relocation_label, r.relocation_position);
+            PutSymbolReference(*r.relocation_mode, r.relocation_symbol,
+                               r.relocation_position);
         }
     } catch (const std::exception &e) {
-        ThrowCompilationError(CompilationError::InvalidOperandArgument, first_token, "{}", e.what());
+        ThrowCompilationError(CompilationError::InvalidOperandArgument, first_token, "{}",
+                              e.what());
     }
 }
 
-void CompilationContext::PutLabelReference(RelocationMode mode, const std::string &label, Address_t position) {
+void CompilationContext::PutSymbolReference(RelocationMode mode,
+                                            const std::string &symbol,
+                                            Address_t position) {
     auto relocation = std::make_shared<RelocationInfo>();
-    std::shared_ptr<LabelInfo> label_ptr = program.FindLabel(label);
-    if (label_ptr == nullptr) {
-        Log("Adding reference at {:04x} to unknown label '{}'", position, label);
-        auto l = LabelInfo{
-            .name = label,
+    std::shared_ptr<SymbolInfo> symbol_ptr = program.FindSymbol(symbol);
+    if (symbol_ptr == nullptr) {
+        Log("Adding reference at {:04x} to unknown symbol '{}'", position, symbol);
+        auto l = SymbolInfo{
+            .name = symbol,
             .imported = true,
-            .label_references = {relocation},
         };
-        program.AddLabel(label_ptr = std::make_shared<LabelInfo>(l));
+        program.AddSymbol(symbol_ptr = std::make_shared<SymbolInfo>(l));
     } else {
-        Log("Adding reference at {:04x} to label '{}'", position, label);
-        label_ptr->label_references.emplace_back(relocation);
+        Log("Adding reference at {:04x} to symbol '{}'", position, symbol);
     }
 
     relocation->position = position;
     relocation->mode = mode;
-    relocation->target_label = label_ptr;
+    relocation->target_symbol = symbol_ptr;
     program.relocations.insert(relocation);
-
-    ApplyRelocation(*relocation, *label_ptr);
+    // program.sparse_binary_code.PutBytes(position, ByteVector(RelocationSize(mode), 0));
 }
 
-void CompilationContext::AddAlias(const Token &name_token, const Token &value_token) {
+void CompilationContext::AddDefinition(const Token &name_token,
+                                       const Token &value_token) {
     auto data = ParsePackedIntegral(value_token.View());
     Log("Adding alias '{}' = '{}'", name_token.String(), ToHex(data, ""));
     if (program.FindAlias(name_token.String()) != nullptr) {
@@ -332,6 +328,27 @@ void CompilationContext::AddAlias(const Token &name_token, const Token &value_to
 void CompilationContext::EmitBytes(const ByteVector &data) {
     program.sparse_binary_code.PutBytes(current_position, data);
     current_position += static_cast<Address_t>(data.size());
+}
+
+void CompilationContext::UpdateRelocations() {
+    for (const auto &relocation : program.relocations) {
+        auto symbol = relocation->target_symbol.lock();
+        if (!symbol) {
+            //TODO
+        }
+        Log("Relocating reference to symbol '{}' at {}", symbol->name,
+            to_string(relocation));
+
+        if (relocation->mode == RelocationMode::Absolute) {
+            auto bytes = ToBytes(symbol->offset.value_or(0));
+            program.sparse_binary_code.PutBytes(relocation->position, bytes, true);
+        } else {
+            auto jump = RelativeJumpOffset(relocation->position + 1,
+                                           symbol->offset.value_or(relocation->position));
+            program.sparse_binary_code.PutBytes(relocation->position, ToBytes(jump),
+                                                true);
+        }
+    }
 }
 
 } // namespace emu::emu6502::assembler

@@ -36,6 +36,7 @@ std::unique_ptr<Program> Compiler6502::Compile(Tokenizer &tokenizer) {
         ProcessLine(context, line);
     }
 
+    context.UpdateRelocations();
     return program;
 }
 
@@ -67,7 +68,7 @@ void Compiler6502::ProcessLine(CompilationContext &context, LineTokenizer &line)
         {
             auto first_token_view = first_token.View();
             if (first_token_view.ends_with(":")) {
-                context.AddLabel(first_token);
+                context.BeginSymbol(first_token);
                 continue;
             }
 
@@ -100,7 +101,7 @@ void Compiler6502::ProcessLine(CompilationContext &context, LineTokenizer &line)
                                       line.NextToken());
             }
 
-            context.AddAlias(first_token, alias_value);
+            context.AddDefinition(first_token, alias_value);
             continue;
         }
 

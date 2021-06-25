@@ -12,7 +12,8 @@
 
 namespace emu::emu6502::assembler {
 
-std::set<AddressMode> FilterPossibleModes(const std::set<AddressMode> &modes, size_t size) {
+std::set<AddressMode> FilterPossibleModes(const std::set<AddressMode> &modes,
+                                          size_t size) {
     std::set<AddressMode> r;
     for (auto m : modes) {
         if (ArgumentByteSize(m) == size) {
@@ -22,11 +23,13 @@ std::set<AddressMode> FilterPossibleModes(const std::set<AddressMode> &modes, si
     return r;
 }
 
-ByteVector ParseImmediateValue(std::string_view data, const AliasMap &aliases, std::optional<size_t> expected_size) {
+ByteVector ParseImmediateValue(std::string_view data, const AliasMap &aliases,
+                               std::optional<size_t> expected_size) {
     auto check = [&](ByteVector v) {
         if (expected_size.has_value() && v.size() != expected_size.value()) {
             throw std::runtime_error(
-                fmt::format("Expected '{}' to have size {}, but got {}", data, expected_size.value(), v.size()));
+                fmt::format("Expected '{}' to have size {}, but got {}", data,
+                            expected_size.value(), v.size()));
         }
         return v;
     };
@@ -93,7 +96,8 @@ std::string to_string(const InstructionArgument &ia) {
     return r;
 }
 
-InstructionArgument ParseInstructionArgument(const Token &token, const AliasMap &aliases) {
+InstructionArgument ParseInstructionArgument(const Token &token,
+                                             const AliasMap &aliases) {
     // +---------------------+--------------------------+
     // |      mode           |     assembler format     |
     // +=====================+==========================+
@@ -161,7 +165,8 @@ InstructionArgument ParseInstructionArgument(const Token &token, const AliasMap 
                 auto possible_address_modes = matched_modes;
                 possible_address_modes.erase(AM::REL);
                 ia = InstructionArgument{
-                    .possible_address_modes = FilterPossibleModes(possible_address_modes, data.size()),
+                    .possible_address_modes =
+                        FilterPossibleModes(possible_address_modes, data.size()),
                     .argument_value = data,
                 };
             } else {
@@ -170,7 +175,8 @@ InstructionArgument ParseInstructionArgument(const Token &token, const AliasMap 
                     possible_address_modes.erase(AM::REL);
                     const auto &v = it->second->value;
                     ia = InstructionArgument{
-                        .possible_address_modes = FilterPossibleModes(possible_address_modes, v.size()),
+                        .possible_address_modes =
+                            FilterPossibleModes(possible_address_modes, v.size()),
                         .argument_value = v,
                     };
                 } else {
@@ -195,8 +201,8 @@ std::string to_string(TokenType tt) {
     switch (tt) {
     case TokenType::kValue:
         return "TokenType::kValue";
-    case TokenType::kLabel:
-        return "TokenType::kLabel";
+    case TokenType::kSymbol:
+        return "TokenType::kSymbol";
     case TokenType::kAlias:
         return "TokenType::kAlias";
     case TokenType::kUnknown:
@@ -210,12 +216,14 @@ std::ostream &operator<<(std::ostream &o, TokenType tt) {
 }
 
 TokenType GetTokenType(const Token &value_token, const Program &program) {
-    return GetTokenType(value_token, &program.aliases, &program.labels);
+    return GetTokenType(value_token, &program.aliases, &program.symbols);
 }
 
-TokenType GetTokenType(const Token &value_token, const AliasMap *aliases, const LabelMap *labels) {
+TokenType GetTokenType(const Token &value_token, const AliasMap *aliases,
+                       const SymbolMap *symbols) {
     auto sv = value_token.View();
-    if (sv.starts_with("0x") || sv.starts_with("0X") || sv.starts_with("\"") || sv.starts_with("$")) {
+    if (sv.starts_with("0x") || sv.starts_with("0X") || sv.starts_with("\"") ||
+        sv.starts_with("$")) {
         return TokenType::kValue;
     }
 
@@ -228,8 +236,8 @@ TokenType GetTokenType(const Token &value_token, const AliasMap *aliases, const 
         return TokenType::kAlias;
     }
 
-    if (labels != nullptr && labels->contains(text)) {
-        return TokenType::kLabel;
+    if (symbols != nullptr && symbols->contains(text)) {
+        return TokenType::kSymbol;
     }
 
     return TokenType::kUnknown;

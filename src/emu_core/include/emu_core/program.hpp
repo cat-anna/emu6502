@@ -31,32 +31,43 @@ NearOffset_t RelativeJumpOffset(Address_t position, Address_t target);
 
 struct RelocationInfo;
 
-struct LabelInfo {
+struct RelocationInfo;
+enum class Segment {
+    Unknown,
+    ZeroPage,
+    Code,
+    Data,
+    RoData,
+    AbsoluteAddress,
+};
+std::string to_string(Segment mode);
+
+struct SymbolInfo {
     std::string name;
     std::optional<Address_t> offset;
     bool imported = false;
+    Segment segment = Segment::Unknown;
 
-    std::vector<std::weak_ptr<RelocationInfo>> label_references;
-
-    bool operator==(const LabelInfo &other) const;
+    bool operator==(const SymbolInfo &other) const;
 };
 
-std::string to_string(const LabelInfo &label);
-std::string to_string(std::weak_ptr<LabelInfo> label);
+std::string to_string(const SymbolInfo &symbol);
+std::string to_string(std::weak_ptr<SymbolInfo> symbol);
 
-using LabelMap = std::unordered_map<std::string, std::shared_ptr<LabelInfo>>;
+using SymbolMap = std::unordered_map<std::string, std::shared_ptr<SymbolInfo>>;
 
 //-----------------------------------------------------------------------------
 
 enum class RelocationMode {
     Absolute,
     Relative,
+    ZeroPage,
 };
 std::string to_string(RelocationMode rel_mode);
 uint8_t RelocationSize(RelocationMode rm);
 
 struct RelocationInfo {
-    std::weak_ptr<LabelInfo> target_label;
+    std::weak_ptr<SymbolInfo> target_symbol;
     Address_t position;
     RelocationMode mode;
 
@@ -68,7 +79,8 @@ std::string to_string(const RelocationInfo &relocation);
 std::string to_string(std::weak_ptr<RelocationInfo> relocation);
 
 struct RelocationInfoComp {
-    bool operator()(const std::shared_ptr<RelocationInfo> &lhs, const std::shared_ptr<RelocationInfo> &rhs) const {
+    bool operator()(const std::shared_ptr<RelocationInfo> &lhs,
+                    const std::shared_ptr<RelocationInfo> &rhs) const {
         return (*lhs) < (*rhs);
     }
 };
@@ -92,14 +104,18 @@ struct SparseBinaryCode {
     using VectorType = std::vector<uint8_t>;
     MapType sparse_map;
 
-    SparseBinaryCode(std::initializer_list<MapType::value_type> init) : sparse_map(std::move(init)) {}
+    SparseBinaryCode(std::initializer_list<MapType::value_type> init)
+        : sparse_map(std::move(init)) {}
     SparseBinaryCode() = default;
-    SparseBinaryCode(Address_t base_address, const VectorType &bytes) { PutBytes(base_address, bytes); }
+    SparseBinaryCode(Address_t base_address, const VectorType &bytes) {
+        PutBytes(base_address, bytes);
+    }
     SparseBinaryCode(const VectorType &bytes) : SparseBinaryCode(0, bytes) {}
 
     std::pair<Address_t, Address_t> CodeRange() const;
     void PutByte(Address_t address, uint8_t byte, bool overwrite = false);
-    void PutBytes(Address_t address, const std::vector<uint8_t> &bytes, bool overwrite = false);
+    void PutBytes(Address_t address, const std::vector<uint8_t> &bytes,
+                  bool overwrite = false);
 
     std::string HexDump(std::string_view line_prefix = "") const;
     ByteVector DumpMemory() const;
@@ -111,16 +127,17 @@ struct SparseBinaryCode {
 
 struct Program {
     SparseBinaryCode sparse_binary_code;
-    LabelMap labels;
+    SymbolMap symbols;
     AliasMap aliases;
     std::set<std::shared_ptr<RelocationInfo>, RelocationInfoComp> relocations;
 
     bool operator==(const Program &other) const;
 
+    void AddSymbol(std::shared_ptr<SymbolInfo> symbol);
+    std::shared_ptr<SymbolInfo> FindSymbol(const std::string &name) const;
+
     void AddAlias(std::shared_ptr<ValueAlias> alias);
     std::shared_ptr<ValueAlias> FindAlias(const std::string &name) const;
-    void AddLabel(std::shared_ptr<LabelInfo> label);
-    std::shared_ptr<LabelInfo> FindLabel(const std::string &name) const;
 };
 
 std::string to_string(const Program &program);

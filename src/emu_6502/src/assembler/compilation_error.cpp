@@ -12,16 +12,16 @@ std::string to_string(CompilationError error) {
         return "UnexpectedEndOfInput";
     case CompilationError::InvalidToken:
         return "InvalidToken";
-    case CompilationError::LabelRedefinition:
-        return "LabelRedefinition";
+    case CompilationError::SymbolRedefinition:
+        return "SymbolRedefinition";
     case CompilationError::AliasRedefinition:
         return "AliasRedefinition";
     case CompilationError::UnknownIsr:
         return "UnknownIsr";
     case CompilationError::InvalidIsrArgument:
         return "InvalidIsrArgument";
-    case CompilationError::LabelIsNotAllowed:
-        return "LabelIsNotAllowed";
+    case CompilationError::SymbolIsNotAllowed:
+        return "SymbolIsNotAllowed";
     case CompilationError::AliasIsNotAllowed:
         return "AliasIsNotAllowed";
     case CompilationError::InvalidOperandSize:
@@ -46,8 +46,8 @@ std::string GetDefaultMessage(CompilationError error, const Token &t) {
         return fmt::format("More input was expected after '{}'", t.View());
     case CompilationError::InvalidToken:
         return fmt::format("'{}' is not valid in its context", t.View());
-    case CompilationError::LabelRedefinition:
-        return fmt::format("Label '{}' is already defined", t.View());
+    case CompilationError::SymbolRedefinition:
+        return fmt::format("Symbol '{}' is already defined", t.View());
     case CompilationError::AliasRedefinition:
         return fmt::format("Alias '{}' is already defined", t.View());
     case CompilationError::UnknownIsr:
@@ -57,8 +57,8 @@ std::string GetDefaultMessage(CompilationError error, const Token &t) {
 
         // case CompilationError::InvalidIsrArgument:
         //     return "InvalidIsrArgument";
-        // case CompilationError::LabelIsNotAllowed:
-        //     return "LabelIsNotAllowed";
+        // case CompilationError::SymbolIsNotAllowed:
+        //     return "SymbolIsNotAllowed";
         // case CompilationError::AliasIsNotAllowed:
         //     return "AliasIsNotAllowed";
         // case CompilationError::InvalidOperandSize:

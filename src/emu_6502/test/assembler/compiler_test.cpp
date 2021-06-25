@@ -18,7 +18,8 @@ using namespace emu::emu6502::assembler;
 using namespace std::string_literals;
 using namespace std::string_view_literals;
 
-using AssemblerTestArg = std::tuple<std::string, std::string, std::optional<Program>, InstructionSet>;
+using AssemblerTestArg =
+    std::tuple<std::string, std::string, std::optional<Program>, InstructionSet>;
 class CompilerTest : public testing::TestWithParam<AssemblerTestArg> {};
 
 TEST_P(CompilerTest, ) {
@@ -39,7 +40,8 @@ TEST_P(CompilerTest, ) {
             {
                 try {
                     auto r = CompileString(code, instruction_set);
-                    std::cout << "-----------RESULT---------------------\n" << to_string(*r) << "\n";
+                    std::cout << "-----------RESULT---------------------\n"
+                              << to_string(*r) << "\n";
                 } catch (const CompilationException &e) {
                     std::cout << e.Message() << "\n";
                     throw;
@@ -53,13 +55,16 @@ TEST_P(CompilerTest, ) {
 }
 
 AssemblerTestArg GetJumpTest() {
-    auto LABEL = std::make_shared<LabelInfo>(LabelInfo{"LABEL", 10_addr, false});
+    auto LABEL = std::make_shared<SymbolInfo>(SymbolInfo{"LABEL", 10_addr, false});
     Program expected = {
         .sparse_binary_code =
-            SparseBinaryCode(1_addr, {0xaa, INS_JMP_ABS, 0x0a, 0x00, 0x55, INS_JMP_IND, 0x0a, 0x00, 0x55, INS_NOP}),
-        .labels = {{"LABEL", LABEL}},
-        .relocations = {std::make_shared<RelocationInfo>(RelocationInfo{LABEL, 3_addr, RelocationMode::Absolute}),
-                        std::make_shared<RelocationInfo>(RelocationInfo{LABEL, 7_addr, RelocationMode::Absolute})},
+            SparseBinaryCode(1_addr, {0xaa, INS_JMP_ABS, 0x0a, 0x00, 0x55, INS_JMP_IND,
+                                      0x0a, 0x00, 0x55, INS_NOP}),
+        .symbols = {{"LABEL", LABEL}},
+        .relocations = {std::make_shared<RelocationInfo>(
+                            RelocationInfo{LABEL, 3_addr, RelocationMode::Absolute}),
+                        std::make_shared<RelocationInfo>(
+                            RelocationInfo{LABEL, 7_addr, RelocationMode::Absolute})},
     };
     auto code = R"==(
 .org 0x01
@@ -76,9 +81,10 @@ LABEL:
 
 AssemblerTestArg GetAbsoluteAddressingTest() {
     Program expected = {
-        .sparse_binary_code = SparseBinaryCode(0x1000_addr, {INS_DEC_ABS, 0xAA, 0x55, INS_INC_ABS, 0x55, 0xAA,
-                                                             INS_LDA_ABSX, 0x00, 0x20, INS_LDA_ABSY, 0x00, 0x20}),
-        .labels = {},
+        .sparse_binary_code = SparseBinaryCode(
+            0x1000_addr, {INS_DEC_ABS, 0xAA, 0x55, INS_INC_ABS, 0x55, 0xAA, INS_LDA_ABSX,
+                          0x00, 0x20, INS_LDA_ABSY, 0x00, 0x20}),
+        .symbols = {},
         .relocations = {},
     };
     auto code = R"==(
@@ -94,7 +100,7 @@ AssemblerTestArg GetAbsoluteAddressingTest() {
 AssemblerTestArg GetImpliedTest() {
     Program expected = {
         .sparse_binary_code = SparseBinaryCode({INS_NOP, INS_INY, INS_INX}),
-        .labels = {},
+        .symbols = {},
         .relocations = {},
     };
     auto code = R"==(
@@ -107,8 +113,9 @@ INX
 
 AssemblerTestArg GetOriginCommandTest() {
     Program expected = {
-        .sparse_binary_code = SparseBinaryCode(0xE_addr, {0xaa, 55, 0x22, 0x11, 0x33, 0x22}),
-        .labels = {},
+        .sparse_binary_code =
+            SparseBinaryCode(0xE_addr, {0xaa, 55, 0x22, 0x11, 0x33, 0x22}),
+        .symbols = {},
         .relocations = {},
     };
     auto code = R"==(
@@ -126,7 +133,7 @@ AssemblerTestArg GetOriginCommandTest() {
 AssemblerTestArg GetTextCommandTest() {
     Program expected = {
         .sparse_binary_code = SparseBinaryCode(0x0100_addr, ToBytes("abcd\n\0"sv)),
-        .labels = {},
+        .symbols = {},
         .relocations = {},
     };
     auto code = R"==(
@@ -144,7 +151,7 @@ AssemblerTestArg GetPageAlignCommandTest() {
             {0x200_addr, 3_u8},
             {0x210_addr, 4_u8},
         }),
-        .labels = {},
+        .symbols = {},
         .relocations = {},
     };
     auto code = R"==(
@@ -160,15 +167,18 @@ AssemblerTestArg GetPageAlignCommandTest() {
 }
 
 AssemblerTestArg GetBranchTest() {
-    auto L1 = std::make_shared<LabelInfo>(LabelInfo{"L1", 1_addr, false});
-    auto L2 = std::make_shared<LabelInfo>(LabelInfo{"L2", 6_addr, false});
+    auto L1 = std::make_shared<SymbolInfo>(SymbolInfo{"L1", 1_addr, false});
+    auto L2 = std::make_shared<SymbolInfo>(SymbolInfo{"L2", 6_addr, false});
     Program expected = {
-        .sparse_binary_code = SparseBinaryCode({INS_NOP, INS_BEQ, 0x03_u8, INS_NOP, INS_BPL, 0xfb_u8, INS_NOP}),
-        .labels = {{"L1", L1}, {"L2", L2}},
+        .sparse_binary_code = SparseBinaryCode(
+            {INS_NOP, INS_BEQ, 0x03_u8, INS_NOP, INS_BPL, 0xfb_u8, INS_NOP}),
+        .symbols = {{"L1", L1}, {"L2", L2}},
         .relocations =
             {
-                std::make_shared<RelocationInfo>(RelocationInfo{L2, 2_addr, RelocationMode::Relative}),
-                std::make_shared<RelocationInfo>(RelocationInfo{L1, 5_addr, RelocationMode::Relative}),
+                std::make_shared<RelocationInfo>(
+                    RelocationInfo{L2, 2_addr, RelocationMode::Relative}),
+                std::make_shared<RelocationInfo>(
+                    RelocationInfo{L1, 5_addr, RelocationMode::Relative}),
             },
     };
     auto code = R"==(
@@ -185,8 +195,9 @@ L2:
 
 AssemblerTestArg GetImmediateTest() {
     Program expected = {
-        .sparse_binary_code = SparseBinaryCode({INS_AND_IM, 0xdd_u8, INS_ORA_IM, 0xaa_u8, INS_EOR_IM, 0xff_u8}),
-        .labels = {},
+        .sparse_binary_code = SparseBinaryCode(
+            {INS_AND_IM, 0xdd_u8, INS_ORA_IM, 0xaa_u8, INS_EOR_IM, 0xff_u8}),
+        .symbols = {},
         .relocations = {},
     };
     auto code = R"==(
@@ -200,8 +211,9 @@ EOR #$ff
 AssemblerTestArg GetZPTest() {
     Program expected = {
         .sparse_binary_code =
-            SparseBinaryCode({INS_AND_ZP, 0xdd_u8, INS_LDY_ZP, 0xaa, INS_LDY_ZPX, 0xaa_u8, INS_LDX_ZPY, 0xff_u8}),
-        .labels = {},
+            SparseBinaryCode({INS_AND_ZP, 0xdd_u8, INS_LDY_ZP, 0xaa, INS_LDY_ZPX, 0xaa_u8,
+                              INS_LDX_ZPY, 0xff_u8}),
+        .symbols = {},
         .relocations = {},
     };
     auto code = R"==(
@@ -216,7 +228,8 @@ LDX $ff,Y
 AssemblerTestArg GetAliasTest() {
     auto ALIAS = std::make_shared<ValueAlias>(ValueAlias{"ALIAS", {0x10_u8}});
     Program expected = {
-        .sparse_binary_code = SparseBinaryCode(0_addr, {0x10, INS_LDA_ZP, 0x10, INS_LDA_IM, 0x10}),
+        .sparse_binary_code =
+            SparseBinaryCode(0_addr, {0x10, INS_LDA_ZP, 0x10, INS_LDA_IM, 0x10}),
         .aliases = {{"ALIAS", ALIAS}},
     };
     auto code = R"==(
@@ -246,9 +259,12 @@ INSTANTIATE_TEST_SUITE_P(positive, CompilerTest,
 INSTANTIATE_TEST_SUITE_P(
     negative, CompilerTest,
     ::testing::ValuesIn({
-        AssemblerTestArg{"duplicated_label", "\nLABEL:\n.byte 0x00\nLABEL:", std::nullopt, InstructionSet::Default},
-        AssemblerTestArg{"duplicated_alias", "ALIAS=0x00\nALIAS equ 0x00\n", std::nullopt, InstructionSet::Default},
-        AssemblerTestArg{"invalid_abs_ind_mode", "INC ($1234)", std::nullopt, InstructionSet::Default},
+        AssemblerTestArg{"duplicated_label", "\nLABEL:\n.byte 0x00\nLABEL:", std::nullopt,
+                         InstructionSet::Default},
+        AssemblerTestArg{"duplicated_alias", "ALIAS=0x00\nALIAS equ 0x00\n", std::nullopt,
+                         InstructionSet::Default},
+        AssemblerTestArg{"invalid_abs_ind_mode", "INC ($1234)", std::nullopt,
+                         InstructionSet::Default},
     }),
     [](auto &info) { return std::get<0>(info.param); });
 

@@ -18,7 +18,7 @@ struct InstructionVariantSelector {
 
     AddressMode DispatchSelect(const ArgumentValueVariant &arg_variant) const;
 
-    std::set<AddressMode> Select(const std::string &label) const;
+    std::set<AddressMode> Select(const std::string &symbol) const;
     std::set<AddressMode> Select(std::nullptr_t) const;
     std::set<AddressMode> Select(const ByteVector &bv) const;
 };
@@ -33,14 +33,14 @@ struct InstructionArgumentDataProcessor {
 
         std::optional<RelocationMode> relocation_mode = std::nullopt;
         Address_t relocation_position = 0;
-        std::string relocation_label{};
+        std::string relocation_symbol{};
     };
 
     Result DispatchProcess(const ArgumentValueVariant &arg_variant) const;
 
     Result Process(std::nullptr_t) const;
     Result Process(const ByteVector &data) const;
-    Result Process(const std::string &label) const;
+    Result Process(const std::string &symbol) const;
 };
 
 } // namespace emu::emu6502::assembler

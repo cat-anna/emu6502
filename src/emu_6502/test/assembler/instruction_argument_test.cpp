@@ -19,13 +19,14 @@ const AliasMap kTestAliases = {
     {"word", std::make_shared<ValueAlias>(ValueAlias{"word", {1, 2}})},
 };
 
-const LabelMap kTestLabelMap = {
-    {"L1", std::make_shared<LabelInfo>(LabelInfo{"L1", 1_u8, false, {}})},
-    {"L2", std::make_shared<LabelInfo>(LabelInfo{"L2", 2_u8, false, {}})},
+const SymbolMap kTestSymbolMap = {
+    {"L1", std::make_shared<SymbolInfo>(SymbolInfo{"L1", 1_u8, false, {}})},
+    {"L2", std::make_shared<SymbolInfo>(SymbolInfo{"L2", 2_u8, false, {}})},
 };
 
 using ArgumentParseTestArg = std::tuple<std::string, std::optional<InstructionArgument>>;
-class ArgumentParseTest : public testing::Test, public ::testing::WithParamInterface<ArgumentParseTestArg> {};
+class ArgumentParseTest : public testing::Test,
+                          public ::testing::WithParamInterface<ArgumentParseTestArg> {};
 
 TEST_P(ArgumentParseTest, ) {
     auto &[input, output] = GetParam();
@@ -63,21 +64,25 @@ std::vector<ArgumentParseTestArg> GetTestCases() {
         // +=====================+==========================+
 
         // | Immediate           |          #aa             |
-        ArgumentParseTestArg{"#$FF"s, InstructionArgument{{AM::Immediate}, u8v{0xFF}}},  //
-        ArgumentParseTestArg{"#$FFFF"s, std::nullopt},                                   //
-        ArgumentParseTestArg{"#LABEL"s, InstructionArgument{{AM::Immediate}, "LABEL"s}}, //
-        ArgumentParseTestArg{"#byte"s, InstructionArgument{{AM::Immediate}, u8v{1}}},    //
-        ArgumentParseTestArg{"#word"s, std::nullopt},                                    //
+        ArgumentParseTestArg{"#$FF"s, InstructionArgument{{AM::Immediate}, u8v{0xFF}}}, //
+        ArgumentParseTestArg{"#$FFFF"s, std::nullopt},                                  //
+        ArgumentParseTestArg{"#LABEL"s,
+                             InstructionArgument{{AM::Immediate}, "LABEL"s}},         //
+        ArgumentParseTestArg{"#byte"s, InstructionArgument{{AM::Immediate}, u8v{1}}}, //
+        ArgumentParseTestArg{"#word"s, std::nullopt},                                 //
         // | Indirect Absolute   |          (aaaa)          |
-        ArgumentParseTestArg{"(LABEL)"s, InstructionArgument{{AM::ABS_IND}, "LABEL"s}},        //
-        ArgumentParseTestArg{"($55aa)"s, InstructionArgument{{AM::ABS_IND}, u8v{0xaa, 0x55}}}, //
-        ArgumentParseTestArg{"($55)"s, std::nullopt},                                          //
+        ArgumentParseTestArg{"(LABEL)"s, InstructionArgument{{AM::ABS_IND}, "LABEL"s}}, //
+        ArgumentParseTestArg{"($55aa)"s,
+                             InstructionArgument{{AM::ABS_IND}, u8v{0xaa, 0x55}}}, //
+        ArgumentParseTestArg{"($55)"s, std::nullopt},                              //
 
         // | Absolute Indexed,X  |          aaaa,X          |
-        ArgumentParseTestArg{"$55aa,X"s, InstructionArgument{{AM::ABSX}, u8v{0xaa, 0x55}}}, //
+        ArgumentParseTestArg{"$55aa,X"s,
+                             InstructionArgument{{AM::ABSX}, u8v{0xaa, 0x55}}}, //
 
         // | Absolute Indexed,Y  |          aaaa,Y          |
-        ArgumentParseTestArg{"$55aa,Y"s, InstructionArgument{{AM::ABSY}, u8v{0xaa, 0x55}}}, //
+        ArgumentParseTestArg{"$55aa,Y"s,
+                             InstructionArgument{{AM::ABSY}, u8v{0xaa, 0x55}}}, //
 
         // | Zero Page Indexed,X |          aa,X            |
         ArgumentParseTestArg{"$55,X"s, InstructionArgument{{AM::ZPX}, u8v{0x55}}}, //
@@ -87,24 +92,28 @@ std::vector<ArgumentParseTestArg> GetTestCases() {
 
         // | Zero Page Indexed,X |          aa,X            |
         // | Absolute Indexed,X  |          aaaa,X          |
-        ArgumentParseTestArg{"LABEL,X"s, InstructionArgument{{AM::ZPX, AM::ABSX}, "LABEL"s}}, //
-        ArgumentParseTestArg{"byte,X"s, InstructionArgument{{AM::ZPX}, u8v{1}}},              //
-        ArgumentParseTestArg{"word,X"s, InstructionArgument{{AM::ABSX}, u8v{1, 2}}},          //
+        ArgumentParseTestArg{"LABEL,X"s,
+                             InstructionArgument{{AM::ZPX, AM::ABSX}, "LABEL"s}},    //
+        ArgumentParseTestArg{"byte,X"s, InstructionArgument{{AM::ZPX}, u8v{1}}},     //
+        ArgumentParseTestArg{"word,X"s, InstructionArgument{{AM::ABSX}, u8v{1, 2}}}, //
 
         // | Zero Page Indexed,Y |          aa,Y            |
         // | Absolute Indexed,Y  |          aaaa,Y          |
-        ArgumentParseTestArg{"LABEL,Y"s, InstructionArgument{{AM::ZPY, AM::ABSY}, "LABEL"s}}, //
-        ArgumentParseTestArg{"byte,Y"s, InstructionArgument{{AM::ZPY}, u8v{1}}},              //
-        ArgumentParseTestArg{"word,Y"s, InstructionArgument{{AM::ABSY}, u8v{1, 2}}},          //
+        ArgumentParseTestArg{"LABEL,Y"s,
+                             InstructionArgument{{AM::ZPY, AM::ABSY}, "LABEL"s}},    //
+        ArgumentParseTestArg{"byte,Y"s, InstructionArgument{{AM::ZPY}, u8v{1}}},     //
+        ArgumentParseTestArg{"word,Y"s, InstructionArgument{{AM::ABSY}, u8v{1, 2}}}, //
 
         // | Zero Page           |          aa              |
         // | Absolute            |          aaaa            |
         // | Relative            |          aaaa            |
-        ArgumentParseTestArg{"LABEL"s, InstructionArgument{{AM::ABS, AM::ZP, AM::REL}, "LABEL"s}}, //
-        ArgumentParseTestArg{"$12"s, InstructionArgument{{AM::ZP}, u8v{0x12}}},                    //
-        ArgumentParseTestArg{"$55aa"s, InstructionArgument{{AM::ABS}, u8v{0xaa, 0x55}}},           //
-        ArgumentParseTestArg{"byte"s, InstructionArgument{{AM::ZP}, u8v{1}}},                      //
-        ArgumentParseTestArg{"word"s, InstructionArgument{{AM::ABS}, u8v{1, 2}}},                  //
+        ArgumentParseTestArg{
+            "LABEL"s, InstructionArgument{{AM::ABS, AM::ZP, AM::REL}, "LABEL"s}}, //
+        ArgumentParseTestArg{"$12"s, InstructionArgument{{AM::ZP}, u8v{0x12}}},   //
+        ArgumentParseTestArg{"$55aa"s,
+                             InstructionArgument{{AM::ABS}, u8v{0xaa, 0x55}}},    //
+        ArgumentParseTestArg{"byte"s, InstructionArgument{{AM::ZP}, u8v{1}}},     //
+        ArgumentParseTestArg{"word"s, InstructionArgument{{AM::ABS}, u8v{1, 2}}}, //
 
         // | Indexed Indirect    |          (aa,X)          |
         ArgumentParseTestArg{"($FF,X)"s, InstructionArgument{{AM::INDX}, u8v{0xFF}}},  //
@@ -128,12 +137,13 @@ std::vector<ArgumentParseTestArg> GetTestCases() {
 INSTANTIATE_TEST_SUITE_P(, ArgumentParseTest, ::testing::ValuesIn(GetTestCases()));
 
 using GetTokenTypeTestArg = std::tuple<std::string, TokenType>;
-class GetTokenTypeTest : public testing::Test, public ::testing::WithParamInterface<GetTokenTypeTestArg> {};
+class GetTokenTypeTest : public testing::Test,
+                         public ::testing::WithParamInterface<GetTokenTypeTestArg> {};
 
 TEST_P(GetTokenTypeTest, ) {
     auto [input, output] = GetParam();
     Token tok{nullptr, {}, input};
-    EXPECT_EQ(GetTokenType(tok, &kTestAliases, &kTestLabelMap), output);
+    EXPECT_EQ(GetTokenType(tok, &kTestAliases, &kTestSymbolMap), output);
 }
 
 std::vector<GetTokenTypeTestArg> GetTokenTypeTestCases() {
@@ -145,13 +155,14 @@ std::vector<GetTokenTypeTestArg> GetTokenTypeTestCases() {
         {"$AA55"s, TokenType::kValue},     //
         {"byte"s, TokenType::kAlias},      //
         {"word"s, TokenType::kAlias},      //
-        {"L1"s, TokenType::kLabel},        //
-        {"L2"s, TokenType::kLabel},        //
+        {"L1"s, TokenType::kSymbol},       //
+        {"L2"s, TokenType::kSymbol},       //
         {"1595"s, TokenType::kValue},      //
     };
 }
 
-INSTANTIATE_TEST_SUITE_P(, GetTokenTypeTest, ::testing::ValuesIn(GetTokenTypeTestCases()));
+INSTANTIATE_TEST_SUITE_P(, GetTokenTypeTest,
+                         ::testing::ValuesIn(GetTokenTypeTestCases()));
 
 } // namespace
 } // namespace emu::emu6502::test

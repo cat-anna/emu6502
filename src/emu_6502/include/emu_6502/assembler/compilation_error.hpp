@@ -17,13 +17,13 @@ enum class CompilationError {
     UnexpectedEndOfInput,
     InvalidToken,
 
-    LabelRedefinition,
+    SymbolRedefinition,
     AliasRedefinition,
 
     UnknownIsr,
     InvalidIsrArgument,
 
-    LabelIsNotAllowed,
+    SymbolIsNotAllowed,
     AliasIsNotAllowed,
 
     InvalidOperandSize,
@@ -48,7 +48,8 @@ public:
     virtual const char *what() const noexcept { return message.c_str(); }
 
     template <typename... ARGS>
-    static std::string FormatMessage(CompilationError err, const Token &t, const char *fmt = nullptr, ARGS &&... args) {
+    static std::string FormatMessage(CompilationError err, const Token &t,
+                                     const char *fmt = nullptr, ARGS &&... args) {
         if (fmt != nullptr) {
             return to_string(err) + ": " + fmt::format(fmt, std::forward<ARGS>(args)...);
         } else {
@@ -63,9 +64,11 @@ private:
 };
 
 template <typename... ARGS>
-[[noreturn]] inline void ThrowCompilationError(CompilationError err, Token t, const char *fmt = nullptr,
+[[noreturn]] inline void ThrowCompilationError(CompilationError err, Token t,
+                                               const char *fmt = nullptr,
                                                ARGS &&... args) {
-    auto msg = CompilationException::FormatMessage(err, t, fmt, std::forward<ARGS>(args)...);
+    auto msg =
+        CompilationException::FormatMessage(err, t, fmt, std::forward<ARGS>(args)...);
     throw CompilationException(msg, err, std::move(t));
 }
 

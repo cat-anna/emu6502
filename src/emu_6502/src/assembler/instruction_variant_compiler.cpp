@@ -1,14 +1,16 @@
-#include "instrution_variant_compiler.hpp"
+#include "instruction_variant_compiler.hpp"
 #include "emu_6502/assembler/compilation_error.hpp"
 
 namespace emu::emu6502::assembler {
 
-AddressMode InstructionVariantSelector::DispatchSelect(const ArgumentValueVariant &arg_variant) const {
+AddressMode InstructionVariantSelector::DispatchSelect(
+    const ArgumentValueVariant &arg_variant) const {
     if (possible_address_modes.empty()) {
         ThrowCompilationError(CompilationError::InvalidOperandArgument, token);
     }
 
-    auto modes = std::visit([&](auto &arg_value) { return Select(arg_value); }, arg_variant);
+    auto modes =
+        std::visit([&](auto &arg_value) { return Select(arg_value); }, arg_variant);
 
     if (modes.size() != 1) {
         ThrowCompilationError(CompilationError::InvalidOperandSize, token);
@@ -25,14 +27,16 @@ std::set<AddressMode> InstructionVariantSelector::Select(std::nullptr_t) const {
     ThrowCompilationError(CompilationError::OperandModeNotSupported, token);
 }
 
-std::set<AddressMode> InstructionVariantSelector::Select(const std::string &label) const {
-    if (const auto it = aliases.find(label); it != aliases.end()) {
+std::set<AddressMode>
+InstructionVariantSelector::Select(const std::string &symbol) const {
+    if (const auto it = aliases.find(symbol); it != aliases.end()) {
         return FilterPossibleModes(possible_address_modes, it->second->value.size());
     } else {
         if (possible_address_modes.contains(AddressMode::REL)) {
             return possible_address_modes;
         } else {
-            return FilterPossibleModes(possible_address_modes, RelocationSize(RelocationMode::Absolute));
+            return FilterPossibleModes(possible_address_modes,
+                                       RelocationSize(RelocationMode::Absolute));
         }
     }
 }
@@ -45,7 +49,8 @@ std::set<AddressMode> InstructionVariantSelector::Select(const ByteVector &bv) c
 
 using Result = InstructionArgumentDataProcessor::Result;
 
-Result InstructionArgumentDataProcessor::DispatchProcess(const ArgumentValueVariant &arg_variant) const {
+Result InstructionArgumentDataProcessor::DispatchProcess(
+    const ArgumentValueVariant &arg_variant) const {
     return std::visit([&](auto &arg_value) { return Process(arg_value); }, arg_variant);
 }
 
@@ -67,15 +72,16 @@ Result InstructionArgumentDataProcessor::Process(const std::vector<uint8_t> &dat
     };
 }
 
-Result InstructionArgumentDataProcessor::Process(const std::string &label) const {
+Result InstructionArgumentDataProcessor::Process(const std::string &symbol) const {
     ByteVector r{opcode.opcode};
-    auto mode = opcode.addres_mode == AddressMode::REL ? RelocationMode::Relative : RelocationMode::Absolute;
+    auto mode = opcode.addres_mode == AddressMode::REL ? RelocationMode::Relative
+                                                       : RelocationMode::Absolute;
     r.resize(1 + RelocationSize(mode), 0);
     return Result{
         .bytes = r,
         .relocation_mode = mode,
         .relocation_position = current_position + 1u,
-        .relocation_label = label,
+        .relocation_symbol = symbol,
     };
 }
 
