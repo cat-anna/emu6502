@@ -1,9 +1,9 @@
 #pragma once
 
 #include "emu_6502/cpu/cpu.hpp"
+#include "emu_core/memory.hpp"
 #include "memory_addressing.hpp"
 #include <emu_core/clock.hpp>
-#include <emu_core/memory.hpp>
 
 namespace emu::emu6502::cpu::instructions {
 
@@ -124,10 +124,12 @@ struct Operation {
         return std::make_tuple(static_cast<uint8_t>(v >> 1), (v & kLSB) != 0);
     }
     static std::tuple<uint8_t, bool> ROL(uint8_t v, bool carry) {
-        return std::make_tuple(static_cast<uint8_t>((v << 1) | (carry ? kLSB : 0)), (v & kMSB) != 0);
+        return std::make_tuple(static_cast<uint8_t>((v << 1) | (carry ? kLSB : 0)),
+                               (v & kMSB) != 0);
     }
     static std::tuple<uint8_t, bool> ROR(uint8_t v, bool carry) {
-        return std::make_tuple(static_cast<uint8_t>((v >> 1) | (carry ? kMSB : 0)), (v & kLSB) != 0);
+        return std::make_tuple(static_cast<uint8_t>((v >> 1) | (carry ? kMSB : 0)),
+                               (v & kLSB) != 0);
     }
 };
 
@@ -189,7 +191,8 @@ void ArithmeticOperation(Cpu *cpu) {
         cpu->reg.a = result & 0xFF;
         cpu->reg.SetNegativeZeroFlag(cpu->reg.a);
         cpu->reg.SetFlag(Flags::Carry, result > 0xFF);
-        cpu->reg.SetFlag(Flags::Overflow, SignBitsAreEqual && ((cpu->reg.a ^ operand) & kNegativeBit) != 0);
+        cpu->reg.SetFlag(Flags::Overflow, SignBitsAreEqual && ((cpu->reg.a ^ operand) &
+                                                               kNegativeBit) != 0);
     }
 }
 
@@ -236,7 +239,8 @@ void StackPull(Cpu *cpu) {
 }
 
 void PushFlags(Cpu *cpu) {
-    uint8_t operand = cpu->reg.flags | static_cast<uint8_t>(Flags::Brk) | static_cast<uint8_t>(Flags::NotUsed);
+    uint8_t operand = cpu->reg.flags | static_cast<uint8_t>(Flags::Brk) |
+                      static_cast<uint8_t>(Flags::NotUsed);
     StackPushByte(cpu, operand);
 }
 

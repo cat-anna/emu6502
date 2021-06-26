@@ -1,6 +1,6 @@
 #pragma once
 
-#include "clock.hpp"
+#include "emu_core/clock.hpp"
 #include <chrono>
 #include <cstdint>
 #include <fmt/format.h>
@@ -9,7 +9,8 @@
 
 namespace emu {
 
-constexpr uint64_t kNesFrequency = 1'789'773llu; //TODO: check which frequency it is and name it correctly
+constexpr uint64_t kNesFrequency =
+    1'789'773llu; //TODO: check which frequency it is and name it correctly
 
 constexpr uint64_t k1MhzFrequency = 1'000'000llu;
 constexpr uint64_t k1KhzFrequency = 1'000llu;

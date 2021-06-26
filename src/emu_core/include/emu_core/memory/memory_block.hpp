@@ -1,7 +1,7 @@
 #pragma once
 
-#include "clock.hpp"
-#include "memory.hpp"
+#include "emu_core/clock.hpp"
+#include "emu_core/memory.hpp"
 #include <algorithm>
 #include <array>
 #include <concepts>
@@ -12,7 +12,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace emu {
+namespace emu::memory {
 
 template <std::unsigned_integral _Address_t>
 struct MemoryBlock : public MemoryInterface<_Address_t> {
@@ -32,7 +32,7 @@ struct MemoryBlock : public MemoryInterface<_Address_t> {
           name(std::move(name)) {}
 
     uint8_t Load(Address_t address) const override {
-        if (address > block.size()) {
+        if (address >= block.size()) {
             throw MemoryOutOfBoundAccessException(address, block.size(), "MemoryBlock");
         }
         WaitForNextCycle();
@@ -51,7 +51,7 @@ struct MemoryBlock : public MemoryInterface<_Address_t> {
 
 private:
     [[nodiscard]] bool CanWrite(Address_t address) {
-        if (address > block.size()) {
+        if (address >= block.size()) {
             throw MemoryOutOfBoundAccessException(address, block.size(), "MemoryBlock");
         }
 
@@ -83,4 +83,4 @@ private:
 
 using MemoryBlock16 = MemoryBlock<uint16_t>;
 
-} // namespace emu
+} // namespace emu::memory

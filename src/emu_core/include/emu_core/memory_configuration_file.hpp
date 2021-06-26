@@ -27,7 +27,6 @@ struct MemoryConfigEntry {
     };
 
     struct MappedDevice {
-
         std::string class_name;
         std::map<std::string, ValueVariant> config;
         bool operator==(const MappedDevice &o) const = default;

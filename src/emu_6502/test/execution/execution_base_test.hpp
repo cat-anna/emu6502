@@ -1,15 +1,17 @@
+#pragma once
+#include <gtest/gtest.h>
+
 #include "emu_6502/assembler/compiler.hpp"
 #include "emu_6502/cpu/cpu.hpp"
+#include "emu_core/base16.hpp"
+#include "emu_core/build_config.hpp"
+#include "emu_core/clock.hpp"
+#include "emu_core/clock_steady.hpp"
+#include "emu_core/memory.hpp"
+#include "emu_core/memory/memory_sparse.hpp"
+#include "emu_core/program.hpp"
 #include <array>
 #include <chrono>
-#include <emu_core/base16.hpp>
-#include <emu_core/build_config.hpp>
-#include <emu_core/clock.hpp>
-#include <emu_core/clock_steady.hpp>
-#include <emu_core/memory.hpp>
-#include <emu_core/memory_sparse.hpp>
-#include <emu_core/program.hpp>
-#include <gtest/gtest.h>
 
 namespace emu::emu6502::test {
 
@@ -17,7 +19,7 @@ class ExecutionTest : public ::testing::Test {
 public:
     using ClockType = std::conditional_t<kOptimizedBuild, ClockSteady, ClockSimple>;
     ClockType clock;
-    MemorySparse16 memory{&clock, true, kDebugBuild};
+    memory::MemorySparse16 memory{&clock, true, kDebugBuild};
     cpu::Cpu cpu{&clock, &memory, kDebugBuild, InstructionSet::NMOS6502Emu};
 
     std::vector<uint8_t> test_data;
@@ -38,10 +40,13 @@ public:
 
     static uint8_t RandomByte() { return rand() & 0xFF; }
 
-    auto RunCode(const std::string &code, std::chrono::milliseconds timeout = std::chrono::seconds{60}) {
+    auto RunCode(const std::string &code,
+                 std::chrono::milliseconds timeout = std::chrono::seconds{60}) {
         std::cout << "-----------CODE---------------------\n" << code << "\n";
-        auto program = emu::emu6502::assembler::CompileString(code, InstructionSet::NMOS6502Emu);
-        std::cout << "-----------PROGRAM---------------------\n" << to_string(*program) << "\n";
+        auto program =
+            emu::emu6502::assembler::CompileString(code, InstructionSet::NMOS6502Emu);
+        std::cout << "-----------PROGRAM---------------------\n"
+                  << to_string(*program) << "\n";
         memory.WriteSparse(program->sparse_binary_code.sparse_map);
         std::cout << "-----------EXECUTION---------------------\n";
         auto start = std::chrono::steady_clock::now();

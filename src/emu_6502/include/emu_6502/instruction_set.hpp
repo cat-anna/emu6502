@@ -1,7 +1,7 @@
 #pragma once
 
+#include "emu_core/memory.hpp"
 #include <cstdint>
-#include <emu_core/memory.hpp>
 #include <string_view>
 #include <unordered_map>
 

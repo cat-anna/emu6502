@@ -1,8 +1,8 @@
 #pragma once
 
+#include "emu_core/memory.hpp"
 #include <cstdint>
 #include <emu_core/clock.hpp>
-#include <emu_core/memory.hpp>
 #include <iostream>
 #include <list>
 #include <queue>
@@ -45,8 +45,12 @@ public:
     uint8_t Load(Address_t address) const override;
     void Store(Address_t address, uint8_t value) override;
 
-    [[nodiscard]] uint8_t Load(Register address) const { return Load(static_cast<Address_t>(address)); }
-    void Store(Register address, uint8_t value) { Store(static_cast<Address_t>(address), value); }
+    [[nodiscard]] uint8_t Load(Register address) const {
+        return Load(static_cast<Address_t>(address));
+    }
+    void Store(Register address, uint8_t value) {
+        Store(static_cast<Address_t>(address), value);
+    }
 
     [[nodiscard]] static uint64_t BaudRateToByteRate(BaudRate br);
     [[nodiscard]] static BaudRate CustomBaudRate(uint64_t value);

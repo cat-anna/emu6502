@@ -1,7 +1,6 @@
 #pragma once
 
-#include "clock.hpp"
-#include "memory.hpp"
+#include "emu_core/clock.hpp"
 #include <algorithm>
 #include <array>
 #include <concepts>
@@ -12,7 +11,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace emu {
+namespace emu::memory {
 
 template <std::unsigned_integral _Address_t>
 struct MemorySparse : public MemoryInterface<_Address_t> {
@@ -107,4 +106,4 @@ private:
 
 using MemorySparse16 = MemorySparse<uint16_t>;
 
-} // namespace emu
+} // namespace emu::memory

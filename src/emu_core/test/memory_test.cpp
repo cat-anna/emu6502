@@ -3,8 +3,8 @@
 
 #include "emu_core/byte_utils.hpp"
 #include "emu_core/clock.hpp"
-#include "emu_core/memory/memory_linear.hpp"
-#include "emu_core/memory_mapper.hpp"
+#include "emu_core/memory/memory_block.hpp"
+#include "emu_core/memory/memory_mapper.hpp"
 #include "emu_core/program.hpp"
 #include <sstream>
 
@@ -14,7 +14,7 @@ namespace {
 using namespace emu::memory;
 using namespace ::testing;
 
-using Address_t = MemoryLinear16::Address_t;
+using Address_t = MemoryBlock16::Address_t;
 
 using namespace std::string_view_literals;
 using namespace std::string_literals;
@@ -27,8 +27,10 @@ public:
     MemoryMock16 mock_b;
 };
 
-TEST_F(MemoryTest, MemoryLinear16) {
-    MemoryLinear16 mem{&clock, 128, {1, 2, 3}, true};
+TEST_F(MemoryTest, MemoryBlock16) {
+    MemoryBlock16::VectorType content{1_u8, 2_u8, 3_u8};
+    content.resize(128);
+    MemoryBlock16 mem{&clock, content, MemoryMode::kReadWrite, true, "ut"};
 
     EXPECT_EQ(mem.Load(0_addr), 1);
     EXPECT_EQ(mem.Load(2_addr), 3);

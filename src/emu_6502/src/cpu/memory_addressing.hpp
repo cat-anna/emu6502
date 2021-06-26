@@ -1,8 +1,8 @@
 #pragma once
 
 #include "emu_6502/cpu/cpu.hpp"
+#include "emu_core/memory.hpp"
 #include <emu_core/clock.hpp>
-#include <emu_core/memory.hpp>
 
 namespace emu::emu6502::cpu::instructions {
 

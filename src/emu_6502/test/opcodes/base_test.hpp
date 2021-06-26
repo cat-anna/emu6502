@@ -1,13 +1,13 @@
 #pragma once
-
-#include <emu_6502/cpu/cpu.hpp>
-#include <emu_6502/cpu/opcode.hpp>
-#include <emu_core/base16.hpp>
-#include <emu_core/byte_utils.hpp>
-#include <emu_core/clock.hpp>
-#include <emu_core/memory.hpp>
-#include <emu_core/memory_sparse.hpp>
 #include <gtest/gtest.h>
+
+#include "emu_6502/cpu/cpu.hpp"
+#include "emu_6502/cpu/opcode.hpp"
+#include "emu_core/base16.hpp"
+#include "emu_core/byte_utils.hpp"
+#include "emu_core/clock.hpp"
+#include "emu_core/memory.hpp"
+#include "emu_core/memory/memory_sparse.hpp"
 #include <optional>
 #include <string>
 #include <vector>
@@ -25,7 +25,7 @@ public:
     using Flags = Registers::Flags;
 
     ClockSimple clock;
-    MemorySparse16 memory{&clock, true, true};
+    memory::MemorySparse16 memory{&clock, true, true};
 
     Cpu cpu;
     Registers expected_regs;
@@ -45,7 +45,8 @@ public:
     bool is_testing_jumps = false;
     bool random_reg_values = false;
 
-    BaseTest(InstructionSet instruction_set = InstructionSet::Default) : cpu{&clock, &memory, true, instruction_set} {}
+    BaseTest(InstructionSet instruction_set = InstructionSet::Default)
+        : cpu{&clock, &memory, true, instruction_set} {}
 
     void SetUp() override {
         if (random_reg_values) {
@@ -81,10 +82,11 @@ public:
             expected_regs.program_counter += static_cast<MemPtr>(code.size());
         }
 
-        std::cout << fmt::format(
-            "SETUP target_byte=0x{:02x}; target_address={:04x} zero_page_address=0x{:02x}; indirect_address=0x{:02x}; "
-            "test_address=0x{:04x};\n",
-            target_byte, target_address, zero_page_address, indirect_address, test_address);
+        std::cout << fmt::format("SETUP target_byte=0x{:02x}; target_address={:04x} "
+                                 "zero_page_address=0x{:02x}; indirect_address=0x{:02x}; "
+                                 "test_address=0x{:04x};\n",
+                                 target_byte, target_address, zero_page_address,
+                                 indirect_address, test_address);
         std::cout << "CPU STATE 0: " << cpu.reg.Dump() << "\n";
 
         EXPECT_EQ(code.size(), expected_code_length.value_or(0));
@@ -112,11 +114,12 @@ public:
     }
 
     void TearDown() override {
-        EXPECT_EQ(cpu.reg.flags, expected_regs.flags)
-            << fmt::format("Expected:{} Actual:{}", expected_regs.DumpFlags(), cpu.reg.DumpFlags());
+        EXPECT_EQ(cpu.reg.flags, expected_regs.flags) << fmt::format(
+            "Expected:{} Actual:{}", expected_regs.DumpFlags(), cpu.reg.DumpFlags());
 
         EXPECT_EQ(expected_regs.stack_pointer, cpu.reg.stack_pointer)
-            << fmt::format("Expected:{:02x} Actual:{:02x}", expected_regs.stack_pointer, cpu.reg.stack_pointer);
+            << fmt::format("Expected:{:02x} Actual:{:02x}", expected_regs.stack_pointer,
+                           cpu.reg.stack_pointer);
         EXPECT_EQ(expected_regs.x, cpu.reg.x)
             << fmt::format("Expected:{:02x} Actual:{:02x}", expected_regs.x, cpu.reg.x);
         EXPECT_EQ(expected_regs.y, cpu.reg.y)
@@ -125,14 +128,17 @@ public:
             << fmt::format("Expected:{:02x} Actual:{:02x}", expected_regs.a, cpu.reg.a);
 
         EXPECT_EQ(expected_regs.program_counter, cpu.reg.program_counter)
-            << fmt::format("Expected:{:02x} Actual:{:02x}", expected_regs.program_counter, cpu.reg.program_counter);
+            << fmt::format("Expected:{:02x} Actual:{:02x}", expected_regs.program_counter,
+                           cpu.reg.program_counter);
     }
 
     static std::vector<uint8_t> MakeCode(uint8_t opcode, uint16_t arg) {
         return {opcode, static_cast<uint8_t>(arg & 0xFF), static_cast<uint8_t>(arg >> 8)};
     }
     static std::vector<uint8_t> MakeCode(uint8_t opcode) { return {opcode}; }
-    static std::vector<uint8_t> MakeCode(uint8_t opcode, uint8_t arg) { return {opcode, arg}; }
+    static std::vector<uint8_t> MakeCode(uint8_t opcode, uint8_t arg) {
+        return {opcode, arg};
+    }
 
     std::vector<uint8_t> MakeCode(uint8_t opcode, AddressMode mode) {
         WriteTestData(mode);
@@ -197,7 +203,8 @@ public:
             target_address = test_address + expected_regs.y;
             break;
         case AddressMode::INDX:
-            WriteMemory(static_cast<MemPtr>(zero_page_address) + expected_regs.x, {indirect_address});
+            WriteMemory(static_cast<MemPtr>(zero_page_address) + expected_regs.x,
+                        {indirect_address});
             target_address = indirect_address;
             break;
         case AddressMode::INDY:

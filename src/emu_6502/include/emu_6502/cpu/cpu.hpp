@@ -1,11 +1,11 @@
 #pragma once
 
 #include "emu_6502/instruction_set.hpp"
+#include "emu_core/memory.hpp"
 #include <array>
 #include <chrono>
 #include <cstdint>
 #include <emu_core/clock.hpp>
-#include <emu_core/memory.hpp>
 #include <string>
 
 namespace emu::emu6502::cpu {
@@ -39,7 +39,9 @@ struct Registers {
     std::string DumpFlags() const;
     std::string Dump() const;
 
-    bool TestFlag(Flags f) const { return (flags & static_cast<Reg8>(f)) == static_cast<Reg8>(f); }
+    bool TestFlag(Flags f) const {
+        return (flags & static_cast<Reg8>(f)) == static_cast<Reg8>(f);
+    }
     void SetFlag(Flags f, bool value) {
         if (value) {
             flags |= static_cast<Reg8>(f);
@@ -78,9 +80,11 @@ struct Cpu {
     Memory16 *const memory;
     const InstructionHandlerArray *instruction_handlers;
 
-    Cpu(Clock *clock, Memory16 *memory, bool verbose, InstructionSet instruction_set = InstructionSet::NMOS6502);
+    Cpu(Clock *clock, Memory16 *memory, bool verbose,
+        InstructionSet instruction_set = InstructionSet::NMOS6502);
 
-    static const InstructionHandlerArray &GetInstructionHandlerArray(InstructionSet instruction_set);
+    static const InstructionHandlerArray &
+    GetInstructionHandlerArray(InstructionSet instruction_set);
 
     void Execute();
     void ExecuteFor(std::chrono::nanoseconds timeout);

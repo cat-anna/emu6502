@@ -1,10 +1,10 @@
 #pragma once
 
 #include "args.hpp"
-#include <emu_6502/cpu/cpu.hpp>
-#include <emu_core/clock.hpp>
-#include <emu_core/memory.hpp>
-#include <emu_core/memory_mapper.hpp>
+#include "emu_6502/cpu/cpu.hpp"
+#include "emu_core/clock.hpp"
+#include "emu_core/memory/memory_mapper.hpp"
+#include "emu_core/memory_configuration_file.hpp"
 #include <memory>
 #include <string>
 #include <string_view>
@@ -20,7 +20,7 @@ struct Runner {
 
 protected:
     std::unique_ptr<Clock> clock;
-    std::unique_ptr<MemoryMapper16> memory;
+    std::unique_ptr<memory::MemoryMapper16> memory;
     std::unique_ptr<emu6502::cpu::Cpu> cpu;
 
     bool verbose = false;
@@ -28,11 +28,14 @@ protected:
     std::vector<std::unique_ptr<Memory16>> mapped_memory_devices;
 
     void InitCpu(const ExecArguments::CpuOptions &opts);
-    void InitMemory(const ExecArguments::MemoryOptions &opts);
+    void InitMemory(const MemoryConfig &opts);
 
-    using MappedDevice = std::tuple<std::unique_ptr<Memory16>, uint16_t>;
+    using MappedDevice = std::tuple<std::unique_ptr<Memory16>, size_t>;
 
-    MappedDevice CreateMemoryDevice(const ExecArguments::MemoryArea::MemoryBlock &block);
+    MappedDevice CreateMemoryDevice(std::string name,
+                                    const MemoryConfigEntry::RamArea &ra);
+    MappedDevice CreateMemoryDevice(std::string name,
+                                    const MemoryConfigEntry::MappedDevice &md);
 };
 
 } // namespace emu::runner
