@@ -7,6 +7,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 namespace emu {
@@ -41,6 +42,8 @@ enum class Segment {
     AbsoluteAddress,
 };
 std::string to_string(Segment mode);
+
+using SymbolAddress = std::variant<std::monostate, uint8_t, uint16_t>;
 
 struct SymbolInfo {
     std::string name;
