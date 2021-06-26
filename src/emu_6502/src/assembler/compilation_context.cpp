@@ -312,13 +312,12 @@ void CompilationContext::PutSymbolReference(RelocationMode mode,
     relocation->mode = mode;
     relocation->target_symbol = symbol_ptr;
     program.relocations.insert(relocation);
-    // program.sparse_binary_code.PutBytes(position, ByteVector(RelocationSize(mode), 0));
 }
 
 void CompilationContext::AddDefinition(const Token &name_token,
                                        const Token &value_token) {
     auto data = ParsePackedIntegral(value_token.View());
-    Log("Adding alias '{}' = '{}'", name_token.String(), ToHex(data, ""));
+    Log("Adding definition '{}' = '{}'", name_token.String(), ToHex(data, ""));
     if (program.FindAlias(name_token.String()) != nullptr) {
         ThrowCompilationError(CompilationError::AliasRedefinition, name_token);
     }

@@ -20,18 +20,24 @@ class Compiler6502 {
 public:
     Compiler6502(InstructionSet cpu_instruction_set = InstructionSet::Default,
                  bool verbose = true);
+    ~Compiler6502();
 
-    std::unique_ptr<Program> Compile(Tokenizer &tokenizer);
-    std::unique_ptr<Program> Compile(std::istream &stream, const std::string &name);
+    void Compile(Tokenizer &tokenizer);
+    void Compile(std::istream &stream, const std::string &name);
+    void CompileString(std::string text, const std::string &name = "{string}");
+    void CompileFile(const std::string &file);
 
-    std::unique_ptr<Program> CompileString(std::string text);
-    std::unique_ptr<Program> CompileFile(const std::string &file);
+    std::unique_ptr<Program> GetProgram();
 
 private:
     std::unordered_map<std::string_view, InstructionParsingInfo> instruction_set;
     bool verbose = true;
 
-    void ProcessLine(CompilationContext &context, LineTokenizer &line);
+    std::unique_ptr<Program> program;
+    std::unique_ptr<CompilationContext> context;
+
+    void ProcessLine(LineTokenizer &line);
+    bool TryDefinition(const Token &first_token, LineTokenizer &line);
 };
 
 std::unique_ptr<Program>

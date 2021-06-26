@@ -9,13 +9,15 @@ namespace emu::emu6502::assembler {
 std::unique_ptr<Program> CompileString(std::string text,
                                        InstructionSet cpu_instruction_set) {
     Compiler6502 c{cpu_instruction_set};
-    return c.CompileString(std::move(text));
+    c.CompileString(std::move(text));
+    return c.GetProgram();
 }
 
 std::unique_ptr<Program> CompileFile(const std::string &file,
                                      InstructionSet cpu_instruction_set) {
     Compiler6502 c{cpu_instruction_set};
-    return c.CompileFile(file);
+    c.CompileFile(file);
+    return c.GetProgram();
 }
 
 //-----------------------------------------------------------------------------
@@ -27,38 +29,49 @@ Compiler6502::Compiler6502(InstructionSet cpu_instruction_set, bool verbose)
     }
 }
 
-std::unique_ptr<Program> Compiler6502::Compile(Tokenizer &tokenizer) {
-    std::unique_ptr<Program> program = std::make_unique<Program>();
-    CompilationContext context{*program, verbose};
+Compiler6502::~Compiler6502() = default;
+
+std::unique_ptr<Program> Compiler6502::GetProgram() {
+    if (!program) {
+        throw std::runtime_error("No compiled program available");
+    }
+
+    context->UpdateRelocations();
+
+    context.reset();
+    return std::move(program);
+}
+
+void Compiler6502::Compile(Tokenizer &tokenizer) {
+    if (!program) {
+        program = std::make_unique<Program>();
+        context = std::make_unique<CompilationContext>(*program, verbose);
+    }
 
     while (tokenizer.HasInput()) {
         auto line = tokenizer.NextLine();
-        ProcessLine(context, line);
+        ProcessLine(line);
     }
-
-    context.UpdateRelocations();
-    return program;
 }
 
-std::unique_ptr<Program> Compiler6502::Compile(std::istream &stream,
-                                               const std::string &name) {
+void Compiler6502::Compile(std::istream &stream, const std::string &name) {
     auto tokenizer = Tokenizer(stream, name);
-    return Compile(tokenizer);
+    Compile(tokenizer);
 }
 
-std::unique_ptr<Program> Compiler6502::CompileString(std::string text) {
+void Compiler6502::CompileString(std::string text, const std::string &name) {
     std::istringstream ss(text);
     ss.exceptions(std::ifstream::badbit);
-    return Compile(ss, "string");
+    Compile(ss, name);
 }
 
-std::unique_ptr<Program> Compiler6502::CompileFile(const std::string &file) {
+void Compiler6502::CompileFile(const std::string &file) {
     std::ifstream ss(file, std::ios::in);
     ss.exceptions(std::ifstream::badbit);
-    return Compile(ss, file);
+    Compile(ss, file);
 }
 
-void Compiler6502::ProcessLine(CompilationContext &context, LineTokenizer &line) {
+void Compiler6502::ProcessLine(LineTokenizer &line) {
     while (line.HasInput()) {
         auto first_token = line.NextToken();
         if (!first_token) {
@@ -68,40 +81,27 @@ void Compiler6502::ProcessLine(CompilationContext &context, LineTokenizer &line)
         {
             auto first_token_view = first_token.View();
             if (first_token_view.ends_with(":")) {
-                context.BeginSymbol(first_token);
+                context->BeginSymbol(first_token);
                 continue;
             }
-
             if (first_token_view.starts_with(".")) {
-                context.HandleCommand(first_token, line);
+                context->HandleCommand(first_token, line);
                 continue;
             }
         }
-
-        auto op_handler = instruction_set.find(first_token.Upper());
-        if (op_handler != instruction_set.end()) {
-            context.EmitInstruction(line, op_handler->second);
-            continue;
+        {
+            auto op_handler = instruction_set.find(first_token.Upper());
+            if (op_handler != instruction_set.end()) {
+                context->EmitInstruction(line, op_handler->second);
+                continue;
+            }
         }
 
         if (!line.HasInput()) {
             ThrowCompilationError(CompilationError::InvalidToken, first_token);
         }
 
-        auto second_token = line.NextToken();
-        if (second_token == "=" || second_token.Lower() == "equ") {
-            if (!line.HasInput()) {
-                ThrowCompilationError(CompilationError::UnexpectedEndOfInput,
-                                      second_token);
-            }
-            auto alias_value = line.NextToken();
-
-            if (line.HasInput()) {
-                ThrowCompilationError(CompilationError::UnexpectedInput,
-                                      line.NextToken());
-            }
-
-            context.AddDefinition(first_token, alias_value);
+        if (TryDefinition(first_token, line)) {
             continue;
         }
 
@@ -112,6 +112,24 @@ void Compiler6502::ProcessLine(CompilationContext &context, LineTokenizer &line)
         auto t = line.NextToken();
         ThrowCompilationError(CompilationError::UnexpectedInput, t);
     }
+}
+
+bool Compiler6502::TryDefinition(const Token &first_token, LineTokenizer &line) {
+    auto second_token = line.NextToken();
+    if (second_token == "=" || second_token.Lower() == "equ") {
+        if (!line.HasInput()) {
+            ThrowCompilationError(CompilationError::UnexpectedEndOfInput, second_token);
+        }
+        auto alias_value = line.NextToken();
+
+        if (line.HasInput()) {
+            ThrowCompilationError(CompilationError::UnexpectedInput, line.NextToken());
+        }
+
+        context->AddDefinition(first_token, alias_value);
+        return true;
+    }
+    return false;
 }
 
 } // namespace emu::emu6502::assembler
