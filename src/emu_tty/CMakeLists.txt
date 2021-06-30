@@ -1,2 +1,2 @@
-define_static_lib_with_ut(emu_tty)
-target_link_libraries(${TARGET} PUBLIC emu_core)
+define_module_with_ut(tty)
+target_link_libraries(${TARGET} PUBLIC emu_core emu_module_core)

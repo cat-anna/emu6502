@@ -1,6 +1,7 @@
 add_custom_target(build_all_libs)
 add_custom_target(build_all_test)
 add_custom_target(build_all_executables)
+add_custom_target(build_all_modules)
 add_custom_target(execute_all_test)
 
 function(define_static_lib target_name)
@@ -15,6 +16,34 @@ function(define_static_lib target_name)
 
   set(TARGET
       ${target_name}
+      PARENT_SCOPE)
+  set(LIB_TARGET
+      ${target_name}
+      PARENT_SCOPE)
+endfunction()
+
+function(define_module target_name)
+  set(MODULE_NAME "emu.module.${target_name}")
+  set(LIB_NAME "emu_${target_name}")
+
+  define_static_lib(${LIB_NAME})
+  file(GLOB_RECURSE SRC module/*)
+  # TARGET_DESTINATTION
+  message("* Adding module ${MODULE_NAME}")
+  add_library(${MODULE_NAME} SHARED ${SRC})
+  target_include_directories(${MODULE_NAME} PUBLIC include)
+  target_include_directories(${MODULE_NAME} PRIVATE src)
+  target_link_libraries(${MODULE_NAME} PUBLIC fmt::fmt ${LIB_NAME})
+  add_dependencies(build_all_modules ${MODULE_NAME})
+
+  set(TARGET
+      ${LIB_NAME}
+      PARENT_SCOPE)
+  set(MODULE_TARGET
+      ${MODULE_NAME}
+      PARENT_SCOPE)
+  set(LIB_TARGET
+      ${LIB_NAME}
       PARENT_SCOPE)
 endfunction()
 
@@ -84,5 +113,14 @@ function(define_static_lib_with_ut target_name)
   define_ut_multi_target(${target_name} test)
   set(TARGET
       ${target_name}
+      PARENT_SCOPE)
+endfunction()
+
+function(define_module_with_ut target_name)
+  define_module(${target_name})
+  define_ut_multi_target(${LIB_TARGET} test)
+
+  set(TARGET
+      ${LIB_TARGET}
       PARENT_SCOPE)
 endfunction()
