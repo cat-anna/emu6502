@@ -8,21 +8,23 @@
 #include <vector>
 
 namespace emu {
+struct SymbolDefinition {
+    std::string name;
+    SymbolAddress value;
+    // Segment segment = Segment::Unknown;
+};
+
+using SymbolDefVector = std::vector<SymbolDefinition>;
 
 struct SymbolFactory {
     virtual ~SymbolFactory() = default;
 
-    struct SymbolDetails {
-        std::string name;
-        SymbolAddress value;
-        // Segment segment = Segment::Unknown;
-    };
+    virtual SymbolDefVector GetSymbols(const MemoryConfigEntry &entry,
+                                       const MemoryConfigEntry::MappedDevice &md) = 0;
 
-    virtual std::vector<SymbolDetails>
-    GetSymbols(const MemoryConfigEntry &config_entry) = 0;
-
-    static std::vector<SymbolDetails> GetSymbols(const MemoryConfig &memory_config,
-                                                 SymbolFactory *symbol_factory = nullptr);
+    virtual SymbolDefVector GetSymbols(const MemoryConfig &memory_config);
 };
+
+SymbolAddress GetSymbolAddress(uint32_t v);
 
 } // namespace emu

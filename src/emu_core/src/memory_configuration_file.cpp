@@ -153,7 +153,7 @@ template <>
 struct convert<emu::MemoryConfigEntry::MappedDevice> {
     static Node encode(const emu::MemoryConfigEntry::MappedDevice &rhs) {
         Node node;
-        node["class"] = rhs.class_name;
+        node["class"] = rhs.module_name + "." + rhs.class_name;
         node["config"] = rhs.config;
         node["device"] = {};
         return node;
@@ -163,7 +163,14 @@ struct convert<emu::MemoryConfigEntry::MappedDevice> {
             return false;
         }
 
-        rhs.class_name = ReadString("class", node);
+        auto cl = ReadString("class", node);
+        if (auto pos = cl.find("."); pos == std::string::npos) {
+            rhs.module_name = cl;
+            rhs.class_name = "default";
+        } else {
+            rhs.module_name = cl.substr(0, pos);
+            rhs.class_name = cl.substr(pos + 1);
+        }
 
         if (auto config = node["config"]; config) {
             rhs.config = config.as<decltype(rhs.config)>();

@@ -18,7 +18,7 @@ public:
         std::make_shared<StrictMock<emu::FileSearchMock>>();
 };
 
-TEST_F(MemoryConfigFileTest, test) {
+TEST_F(MemoryConfigFileTest, simple_test) {
     auto t = R"==(
 memory:
 - ram:
@@ -33,7 +33,7 @@ memory:
 - device:
   offset: 0xF000
   name: tty
-  class: tty
+  class: tty.simple
   config:
     a: b
     i: 5
@@ -88,7 +88,8 @@ memory:
             .offset = 0xf000,
             .entry_variant =
                 MemoryConfigEntry::MappedDevice{
-                    .class_name = "tty",
+                    .module_name = "tty",
+                    .class_name = "simple",
                     .config = {{"a", "b"}, {"i", 5}, {"b", false}},
                 },
         };
