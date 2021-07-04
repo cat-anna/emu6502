@@ -14,12 +14,14 @@ SymbolDefVector GetSymbolDefs(SymbolFactory *symbol_factory,
     r.emplace_back(SymbolDefinition{
         .name = ToUpper(entry.name) + "_ADDRESS",
         .value = GetSymbolAddress(entry.offset),
+        .segment = Segment::AbsoluteAddress,
     });
 
     if (ra.size.has_value()) {
         r.emplace_back(SymbolDefinition{
             .name = ToUpper(entry.name) + "_SIZE",
             .value = GetSymbolAddress(ra.size.value()),
+            .segment = std::nullopt,
         });
     }
     return r;

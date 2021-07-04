@@ -80,8 +80,8 @@ RESULT_VALUE:
     const uint8_t kTestValue = static_cast<uint8_t>(GetParam());
 
     auto program = RunCode(fmt::format(code, kTestValue));
-    auto emulated_result =
-        memory.ReadRange(program->symbols["RESULT_VALUE"]->offset.value(), 1);
+    auto emulated_result = ByteVector{halt_code.value()};
+
     auto raw_Result = static_cast<uint8_t>(fibonacci(kTestValue));
     auto result = ToBytes(raw_Result);
 

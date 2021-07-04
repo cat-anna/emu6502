@@ -33,6 +33,8 @@ enum class BaudRate : uint64_t {
     bDefault = b9600,
 };
 
+constexpr uint8_t kBaudRageCr0BitOffset = 4;
+
 class TtyDevice : public Memory16 {
 public:
     TtyDevice(std::istream *_input_stream,                         //

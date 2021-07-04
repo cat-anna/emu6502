@@ -20,8 +20,8 @@ const AliasMap kTestAliases = {
 };
 
 const SymbolMap kTestSymbolMap = {
-    {"L1", std::make_shared<SymbolInfo>(SymbolInfo{"L1", 1_u8, false, {}})},
-    {"L2", std::make_shared<SymbolInfo>(SymbolInfo{"L2", 2_u8, false, {}})},
+    {"L1", std::make_shared<SymbolInfo>(SymbolInfo{"L1", 1_u8, std::nullopt, false})},
+    {"L2", std::make_shared<SymbolInfo>(SymbolInfo{"L2", 2_u8, std::nullopt, false})},
 };
 
 using ArgumentParseTestArg = std::tuple<std::string, std::optional<InstructionArgument>>;

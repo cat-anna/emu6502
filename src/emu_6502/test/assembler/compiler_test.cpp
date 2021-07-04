@@ -55,7 +55,8 @@ TEST_P(CompilerTest, ) {
 }
 
 AssemblerTestArg GetJumpTest() {
-    auto LABEL = std::make_shared<SymbolInfo>(SymbolInfo{"LABEL", 10_addr, false});
+    auto LABEL =
+        std::make_shared<SymbolInfo>(SymbolInfo{"LABEL", 10_addr, std::nullopt, false});
     Program expected = {
         .sparse_binary_code =
             SparseBinaryCode(1_addr, {0xaa, INS_JMP_ABS, 0x0a, 0x00, 0x55, INS_JMP_IND,
@@ -167,8 +168,8 @@ AssemblerTestArg GetPageAlignCommandTest() {
 }
 
 AssemblerTestArg GetBranchTest() {
-    auto L1 = std::make_shared<SymbolInfo>(SymbolInfo{"L1", 1_addr, false});
-    auto L2 = std::make_shared<SymbolInfo>(SymbolInfo{"L2", 6_addr, false});
+    auto L1 = std::make_shared<SymbolInfo>(SymbolInfo{"L1", 1_addr, std::nullopt, false});
+    auto L2 = std::make_shared<SymbolInfo>(SymbolInfo{"L2", 6_addr, std::nullopt, false});
     Program expected = {
         .sparse_binary_code = SparseBinaryCode(
             {INS_NOP, INS_BEQ, 0x03_u8, INS_NOP, INS_BPL, 0xfb_u8, INS_NOP}),

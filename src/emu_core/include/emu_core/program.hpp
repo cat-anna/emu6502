@@ -32,24 +32,37 @@ NearOffset_t RelativeJumpOffset(Address_t position, Address_t target);
 
 struct RelocationInfo;
 
-struct RelocationInfo;
 enum class Segment {
-    Unknown,
-    ZeroPage,
+    ZeroPage = 1,
     Code,
     Data,
     RoData,
     AbsoluteAddress,
 };
+bool Relocable(Segment mode);
 std::string to_string(Segment mode);
 
 using SymbolAddress = std::variant<std::monostate, uint8_t, uint16_t>;
+std::vector<uint8_t> ToBytes(const SymbolAddress &v, std::optional<size_t> expected_size);
+inline bool HasValue(const SymbolAddress &v) {
+    return !std::holds_alternative<std::monostate>(v);
+}
+template <typename T>
+inline T GetOr(const SymbolAddress &v, T t) {
+    if (!HasValue(v)) {
+        return t;
+    }
+    if (!std::holds_alternative<T>(v)) {
+        throw std::runtime_error("TODO !std::holds_alternative<T>(v)");
+    }
+    return std::get<T>(v);
+}
 
 struct SymbolInfo {
     std::string name;
-    std::optional<Address_t> offset;
+    SymbolAddress offset;
+    std::optional<Segment> segment = std::nullopt;
     bool imported = false;
-    Segment segment = Segment::Unknown;
 
     bool operator==(const SymbolInfo &other) const;
 };
@@ -137,9 +150,19 @@ struct Program {
     bool operator==(const Program &other) const;
 
     void AddSymbol(std::shared_ptr<SymbolInfo> symbol);
+    std::shared_ptr<SymbolInfo> AddSymbol(SymbolInfo symbol) {
+        std::shared_ptr<SymbolInfo> r = std::make_shared<SymbolInfo>(symbol);
+        AddSymbol(r);
+        return r;
+    }
     std::shared_ptr<SymbolInfo> FindSymbol(const std::string &name) const;
 
     void AddAlias(std::shared_ptr<ValueAlias> alias);
+    std::shared_ptr<ValueAlias> AddAlias(ValueAlias alias) {
+        std::shared_ptr<ValueAlias> r = std::make_shared<ValueAlias>(alias);
+        AddAlias(r);
+        return r;
+    }
     std::shared_ptr<ValueAlias> FindAlias(const std::string &name) const;
 };
 

@@ -24,6 +24,8 @@ public:
 
     std::vector<uint8_t> test_data;
 
+    std::optional<uint8_t> halt_code;
+
     ExecutionTest() {}
 
     void SetUp() override {
@@ -54,7 +56,8 @@ public:
             clock.Reset();
             cpu.ExecuteFor(timeout);
             throw std::runtime_error("Exception was expected");
-        } catch (const cpu::ExecutionHalted &) {
+        } catch (const cpu::ExecutionHalted &e) {
+            halt_code = e.halt_code;
             std::cout << "-----------HALTED---------------------\n";
             // std::cout << e.what() << "\n";
         }

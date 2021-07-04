@@ -1,8 +1,8 @@
 #pragma once
 
 #include "args.hpp"
-// #include <emu_core/clock.hpp>
-// #include <emu_core/memory.hpp>
+#include "emu_6502/assembler/compiler.hpp"
+#include "emu_core/symbol_factory.hpp"
 #include <memory>
 #include <string>
 #include <string_view>
@@ -12,20 +12,17 @@
 namespace emu::emu6502::assembler {
 
 struct Runner {
-    Runner() = default;
+    Runner(std::shared_ptr<SymbolFactory> _symbol_factory)
+        : symbol_factory(std::move(_symbol_factory)) {}
     int Start(const ExecArguments &exec_args);
 
 protected:
+    const std::shared_ptr<SymbolFactory> symbol_factory;
     bool verbose = false;
 
-    // std::unique_ptr<Clock> clock;
-    // std::unique_ptr<Memory16> memory;
+    std::unique_ptr<Compiler6502> InitCompiler(const ExecArguments &exec_args);
 
-    // std::vector<std::unique_ptr<Memory16>> mapped_memory_devices;
-
-    // void InitClock(const ExecutionOptions &execution_args);
-    // void InitMemory(const MemoryOptions &memory_opts);
-    // void InitCpu(const ExecutionOptions &execution_args);
+    void StoreOutput(const ExecArguments::Output &output_options, Program &program);
 };
 
 } // namespace emu::emu6502::assembler

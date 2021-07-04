@@ -66,6 +66,7 @@ const std::unordered_map<std::string, CompilationContext::CommandParsingInfo>
         //extensions
         {"isr", {&CompilationContext::ParseIsrCommand}},   //
         {"text", {&CompilationContext::ParseTextCommand}}, //
+        // {"symbol", {&CompilationContext::ParseSymbolCommand}}, //
 };
 
 const std::unordered_map<std::string, Address_t> CompilationContext::kIsrMap = {
@@ -199,6 +200,9 @@ void CompilationContext::ParseIsrCommand(LineTokenizer &tokenizer) {
                           "Unknown isr command argument '{}'", tok.String());
 }
 
+void CompilationContext::ParseSymbolCommand(LineTokenizer &tokenizer) {
+}
+
 std::vector<uint8_t> CompilationContext::ParseTokenToBytes(const Token &value_token,
                                                            size_t expected_byte_size) {
     try {
@@ -227,7 +231,7 @@ void CompilationContext::BeginSymbol(const Token &name_token) {
     } else {
         Log("Found symbol '{}' at {:04x}", symbol_name, current_position);
         symbol->imported = false;
-        if (symbol->offset.has_value()) {
+        if (HasValue(symbol->offset)) {
             ThrowCompilationError(CompilationError::SymbolRedefinition, name_token);
         }
 
@@ -299,11 +303,10 @@ void CompilationContext::PutSymbolReference(RelocationMode mode,
     std::shared_ptr<SymbolInfo> symbol_ptr = program.FindSymbol(symbol);
     if (symbol_ptr == nullptr) {
         Log("Adding reference at {:04x} to unknown symbol '{}'", position, symbol);
-        auto l = SymbolInfo{
+        symbol_ptr = program.AddSymbol(SymbolInfo{
             .name = symbol,
             .imported = true,
-        };
-        program.AddSymbol(symbol_ptr = std::make_shared<SymbolInfo>(l));
+        });
     } else {
         Log("Adding reference at {:04x} to symbol '{}'", position, symbol);
     }
@@ -333,20 +336,36 @@ void CompilationContext::UpdateRelocations() {
     for (const auto &relocation : program.relocations) {
         auto symbol = relocation->target_symbol.lock();
         if (!symbol) {
-            //TODO
+            throw std::runtime_error("TODO (!symbol)");
         }
         Log("Relocating reference to symbol '{}' at {}", symbol->name,
             to_string(relocation));
 
         if (relocation->mode == RelocationMode::Absolute) {
-            auto bytes = ToBytes(symbol->offset.value_or(0));
+            auto bytes = ToBytes(symbol->offset, std::nullopt);
             program.sparse_binary_code.PutBytes(relocation->position, bytes, true);
         } else {
             auto jump = RelativeJumpOffset(relocation->position + 1,
-                                           symbol->offset.value_or(relocation->position));
+                                           GetOr(symbol->offset, relocation->position));
             program.sparse_binary_code.PutBytes(relocation->position, ToBytes(jump),
                                                 true);
         }
+    }
+}
+
+void CompilationContext::AddDefinition(const SymbolDefinition &symbol) {
+    if (!symbol.segment.has_value()) {
+        program.AddAlias(ValueAlias{
+            .name = symbol.name,
+            .value = ToBytes(symbol.value, std::nullopt),
+        });
+    } else {
+        program.AddSymbol(SymbolInfo{
+            .name = symbol.name,
+            .offset = symbol.value,
+            .segment = symbol.segment,
+            .imported = true,
+        });
     }
 }
 

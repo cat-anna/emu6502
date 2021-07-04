@@ -85,8 +85,7 @@ TEST_DATA:
     auto final_code =
         fmt::format(code, hex_crc_table, test_data.size(), 0, hex_test_data);
     auto program = RunCode(final_code);
-    auto emulated_crc =
-        memory.ReadRange(program->symbols["RESULT_CRC8_VALUE"]->offset.value(), 1);
+    auto emulated_crc = ByteVector{halt_code.value()};
     auto crc = std::vector<uint8_t>{crc8(test_data)};
 
     std::cout << "R: " << ToHexArray(emulated_crc) << "\n";

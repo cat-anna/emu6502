@@ -5,6 +5,7 @@
 #include "emu_6502/assembler/tokenizer.hpp"
 #include "emu_6502/instruction_set.hpp"
 #include "emu_core/program.hpp"
+#include "emu_core/symbol_factory.hpp"
 #include <fmt/format.h>
 #include <functional>
 #include <iostream>
@@ -30,6 +31,7 @@ struct CompilationContext {
     void BeginSymbol(const Token &name_token);
 
     void AddDefinition(const Token &name_token, const Token &value_token);
+    void AddDefinition(const SymbolDefinition &symbol);
 
     void EmitInstruction(LineTokenizer &tokenizer,
                          const InstructionParsingInfo &instruction);
@@ -53,6 +55,7 @@ private:
     void ParseTextCommand(LineTokenizer &tokenizer);
     void ParseAlignCommand(LineTokenizer &tokenizer);
     void ParseIsrCommand(LineTokenizer &tokenizer);
+    void ParseSymbolCommand(LineTokenizer &tokenizer);
 
     template <Address_t L>
     void ParseDataCommand(LineTokenizer &tokenizer) {

@@ -2,6 +2,7 @@
 
 #include "emu_6502/instruction_set.hpp"
 #include "emu_core/program.hpp"
+#include "emu_core/symbol_factory.hpp"
 #include "tokenizer.hpp"
 #include <functional>
 #include <iostream>
@@ -27,6 +28,7 @@ public:
     void CompileString(std::string text, const std::string &name = "{string}");
     void CompileFile(const std::string &file);
 
+    void AddDefinitions(const SymbolDefVector &symbols);
     std::unique_ptr<Program> GetProgram();
 
 private:
@@ -36,6 +38,8 @@ private:
     std::unique_ptr<Program> program;
     std::unique_ptr<CompilationContext> context;
 
+    void Start();
+
     void ProcessLine(LineTokenizer &line);
     bool TryDefinition(const Token &first_token, LineTokenizer &line);
 };
@@ -43,8 +47,11 @@ private:
 std::unique_ptr<Program>
 CompileString(std::string text,
               InstructionSet cpu_instruction_set = InstructionSet::Default);
+
 std::unique_ptr<Program>
 CompileFile(const std::string &file,
             InstructionSet cpu_instruction_set = InstructionSet::Default);
+
+std::string GenerateSymbolDump(Program &progam);
 
 } // namespace emu::emu6502::assembler

@@ -11,7 +11,7 @@ namespace emu {
 struct SymbolDefinition {
     std::string name;
     SymbolAddress value;
-    // Segment segment = Segment::Unknown;
+    std::optional<Segment> segment = std::nullopt;
 };
 
 using SymbolDefVector = std::vector<SymbolDefinition>;

@@ -8,7 +8,7 @@ namespace {
 
 constexpr BitField<> kCr0EnabledField{0, 1};
 //  constexpr BitField<> kUCr0unused0{1,3};
-constexpr BitField<> kCr0RateField{4, 3};
+constexpr BitField<> kCr0RateField{kBaudRageCr0BitOffset, 3};
 //  constexpr BitField<> kUnused1{7,1};
 
 struct ControlRegister0 {
@@ -51,7 +51,8 @@ uint64_t TtyDevice::BaudRateToByteRate(BaudRate br) {
     case BaudRate::b115200:
         return 115200 / 8;
     default:
-        constexpr auto kCustomFlag = static_cast<std::underlying_type_t<BaudRate>>(BaudRate::bCustom);
+        constexpr auto kCustomFlag =
+            static_cast<std::underlying_type_t<BaudRate>>(BaudRate::bCustom);
         auto raw_value = static_cast<std::underlying_type_t<BaudRate>>(br);
         if ((kCustomFlag & raw_value) != 0) {
             return raw_value & (~kCustomFlag);
@@ -63,7 +64,8 @@ uint64_t TtyDevice::BaudRateToByteRate(BaudRate br) {
 }
 
 BaudRate TtyDevice::CustomBaudRate(uint64_t value) {
-    return static_cast<BaudRate>(value | static_cast<std::underlying_type_t<BaudRate>>(BaudRate::bCustom));
+    return static_cast<BaudRate>(
+        value | static_cast<std::underlying_type_t<BaudRate>>(BaudRate::bCustom));
 }
 
 TtyDevice::TtyDevice(std::istream *_input_stream,  //
@@ -125,7 +127,8 @@ uint8_t TtyDevice::Load(Address_t address) const {
         }
     }
 
-    throw std::runtime_error(fmt::format("TtyDevice: Attempt to read address {:04x}", address));
+    throw std::runtime_error(
+        fmt::format("TtyDevice: Attempt to read address {:04x}", address));
 }
 
 void TtyDevice::Store(Address_t address, uint8_t value) {
@@ -152,7 +155,8 @@ void TtyDevice::Store(Address_t address, uint8_t value) {
     UpdateBuffers();
 
     if (address >= kDeviceMemorySize) {
-        throw std::runtime_error(fmt::format("TtyDevice: Attempt to write address {:04x} with {:02x}", address, value));
+        throw std::runtime_error(fmt::format(
+            "TtyDevice: Attempt to write address {:04x} with {:02x}", address, value));
     }
 }
 

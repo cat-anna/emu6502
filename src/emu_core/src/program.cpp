@@ -1,5 +1,6 @@
 #include "emu_core/program.hpp"
 #include "emu_core/base16.hpp"
+#include "emu_core/byte_utils.hpp"
 #include <algorithm>
 #include <fmt/format.h>
 #include <limits>
@@ -16,15 +17,20 @@ NearOffset_t RelativeJumpOffset(Address_t position, Address_t target) {
     return static_cast<NearOffset_t>(off);
 }
 
+std::vector<uint8_t> ToBytes(const SymbolAddress &v,
+                             std::optional<size_t> expected_size) {
+    auto r = std::visit([](auto &i) { return ToBytes(i); }, v);
+    if (expected_size.has_value() && expected_size.value() != r.size()) {
+        throw std::runtime_error(
+            "TODO if(expected_size.has_value() && expected_size.value() != r.size())");
+    }
+    return r;
+}
+
 //-----------------------------------------------------------------------------
 
 bool SymbolInfo::operator==(const SymbolInfo &other) const {
-    if (name != other.name || imported != other.imported ||
-        offset.has_value() != other.offset.has_value()) {
-        return false;
-    }
-
-    if (offset.has_value() && offset.value() != other.offset.value()) {
+    if (name != other.name || imported != other.imported || offset != other.offset) {
         return false;
     }
 
@@ -33,11 +39,15 @@ bool SymbolInfo::operator==(const SymbolInfo &other) const {
 
 std::string to_string(const SymbolInfo &symbol) {
     std::string r = "SymbolInfo:{";
-    std::string str_off = symbol.offset.has_value()
-                              ? fmt::format("{:04x}", symbol.offset.value())
-                              : std::string("----");
-    r += fmt::format("offset:{},imported:{},name:'{}',segment:{}", str_off,
-                     symbol.imported, symbol.name, to_string(symbol.segment));
+    r += fmt::format("name:'{}',", symbol.name);
+    if (HasValue(symbol.offset)) {
+        r += fmt::format(",offset:{},",
+                         FormatHex(ToBytes(symbol.offset, std::nullopt), ""));
+    }
+    if (symbol.segment.has_value()) {
+        r += fmt::format(",segment:{}", to_string(symbol.segment.value()));
+    }
+    r += fmt::format(",imported:{}", symbol.imported);
     r += "}";
     return r;
 }
@@ -51,7 +61,33 @@ std::string to_string(std::weak_ptr<SymbolInfo> symbol) {
 }
 
 std::string to_string(Segment mode) {
-    return "todo";
+    switch (mode) {
+    case Segment::ZeroPage:
+        return "ZeroPage";
+    case Segment::Code:
+        return "Code";
+    case Segment::Data:
+        return "Data";
+    case Segment::RoData:
+        return "RoData";
+    case Segment::AbsoluteAddress:
+        return "AbsoluteAddress";
+    }
+
+    throw std::runtime_error(fmt::format("Unknown Segment {}", static_cast<int>(mode)));
+}
+
+bool Relocable(Segment mode) {
+    switch (mode) {
+    case Segment::ZeroPage:
+    case Segment::Code:
+    case Segment::Data:
+    case Segment::RoData:
+        return true;
+    case Segment::AbsoluteAddress:
+        return false;
+    }
+    throw std::runtime_error(fmt::format("Unknown Segment {}", static_cast<int>(mode)));
 }
 
 //-----------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "emu_6502/instruction_set.hpp"
+#include "emu_core/memory_configuration_file.hpp"
 #include <emu_core/stream_container.hpp>
 #include <iostream>
 #include <memory>
@@ -17,20 +18,22 @@ struct ExecArguments {
     };
 
     struct Input {
-        std::string input_name;
-        std::istream *input = nullptr;
+        std::string name;
+        std::istream *stream = nullptr;
     };
 
     struct Output {
         std::ostream *binary_output = nullptr;
         std::ostream *hex_dump = nullptr;
+        std::ostream *symbol_dump = nullptr;
     };
 
     bool verbose = false;
 
     Cpu cpu_options;
-    Input input_options;
+    std::vector<Input> input_options;
     Output output_options;
+    MemoryConfig memory_options;
 
     StreamContainer streams;
 };

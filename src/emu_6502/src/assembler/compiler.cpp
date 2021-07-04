@@ -1,6 +1,8 @@
 #include "emu_6502/assembler/compiler.hpp"
 #include "compilation_context.hpp"
 #include "emu_6502/assembler/compilation_error.hpp"
+#include "emu_core/base16.hpp"
+#include "emu_core/container_utils.hpp"
 #include <fstream>
 #include <sstream>
 
@@ -18,6 +20,23 @@ std::unique_ptr<Program> CompileFile(const std::string &file,
     Compiler6502 c{cpu_instruction_set};
     c.CompileFile(file);
     return c.GetProgram();
+}
+
+std::string GenerateSymbolDump(Program &program) {
+    std::stringstream ss;
+    ss << ";Aliases:\n";
+    for (auto &name : SortedKeys(program.aliases)) {
+        auto ptr = program.aliases.at(name);
+        ss << fmt::format("{} = {}\n", name, FormatHex(ptr->value, ""));
+    }
+    ss << ";Symbols:\n";
+    for (auto &name : SortedKeys(program.symbols)) {
+        auto ptr = program.symbols.at(name);
+        auto hex = FormatHex(ToBytes(ptr->offset, std::nullopt), "");
+        ss << fmt::format(".symbol {}, {}, {}\n", name, hex,
+                          (ptr->imported ? "true" : "false"));
+    }
+    return ss.str();
 }
 
 //-----------------------------------------------------------------------------
@@ -43,10 +62,7 @@ std::unique_ptr<Program> Compiler6502::GetProgram() {
 }
 
 void Compiler6502::Compile(Tokenizer &tokenizer) {
-    if (!program) {
-        program = std::make_unique<Program>();
-        context = std::make_unique<CompilationContext>(*program, verbose);
-    }
+    Start();
 
     while (tokenizer.HasInput()) {
         auto line = tokenizer.NextLine();
@@ -130,6 +146,22 @@ bool Compiler6502::TryDefinition(const Token &first_token, LineTokenizer &line) 
         return true;
     }
     return false;
+}
+
+//-----------------------------------------------------------------------------
+
+void Compiler6502::Start() {
+    if (!program) {
+        program = std::make_unique<Program>();
+        context = std::make_unique<CompilationContext>(*program, verbose);
+    }
+}
+
+void Compiler6502::AddDefinitions(const SymbolDefVector &symbols) {
+    Start();
+    for (auto &item : symbols) {
+        context->AddDefinition(item);
+    }
 }
 
 } // namespace emu::emu6502::assembler

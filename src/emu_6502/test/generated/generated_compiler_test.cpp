@@ -178,12 +178,12 @@ std::vector<AssemblerTestArg> GenTestCases(AddressMode filter) {
             if (variant.mode != filter) {
                 continue;
             }
-            auto LABEL_BEFORE =
-                std::make_shared<SymbolInfo>(SymbolInfo{"LABEL_BEFORE", 1_addr, false});
-            auto LABEL =
-                std::make_shared<SymbolInfo>(SymbolInfo{"LABEL", 0x0010_addr, false});
+            auto LABEL_BEFORE = std::make_shared<SymbolInfo>(
+                SymbolInfo{"LABEL_BEFORE", 1_addr, std::nullopt, false});
+            auto LABEL = std::make_shared<SymbolInfo>(
+                SymbolInfo{"LABEL", 0x0010_addr, std::nullopt, false});
             auto LABEL_AFTER = std::make_shared<SymbolInfo>(
-                SymbolInfo{"LABEL_AFTER", 0x0020_addr, false});
+                SymbolInfo{"LABEL_AFTER", 0x0020_addr, std::nullopt, false});
 
             auto ALIAS_BEFORE =
                 std::make_shared<ValueAlias>(ValueAlias{"ALIAS_BEFORE", {0x55}});
