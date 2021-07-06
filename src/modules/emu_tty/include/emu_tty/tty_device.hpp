@@ -56,6 +56,7 @@ public:
 
     [[nodiscard]] static uint64_t BaudRateToByteRate(BaudRate br);
     [[nodiscard]] static BaudRate CustomBaudRate(uint64_t value);
+    [[nodiscard]] static BaudRate BaudRateFromInteger(int64_t v);
 
     void SetEnabled(bool value);
     void SetRate(BaudRate baud);

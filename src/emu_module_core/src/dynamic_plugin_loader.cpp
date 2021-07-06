@@ -16,6 +16,10 @@ PluginLoader::CreateDynamic(std::filesystem::path _module_dir) {
     return std::make_shared<DynamicPluginLoader>(std::move(_module_dir));
 }
 
+std::shared_ptr<DeviceFactory> DynamicPluginLoader::GetDeviceFactory() {
+    return std::static_pointer_cast<DeviceFactory>(shared_from_this());
+}
+
 std::shared_ptr<SymbolFactory> DynamicPluginLoader::GetSymbolFactory() {
     return std::static_pointer_cast<SymbolFactory>(shared_from_this());
 }
@@ -23,7 +27,6 @@ std::shared_ptr<SymbolFactory> DynamicPluginLoader::GetSymbolFactory() {
 SymbolDefVector
 DynamicPluginLoader::GetSymbols(const MemoryConfigEntry &entry,
                                 const MemoryConfigEntry::MappedDevice &md) {
-
     if (auto it = symbol_factories.find(md.module_name); it != symbol_factories.end()) {
         return it->second->GetSymbols(entry, md);
     } else {
@@ -37,7 +40,28 @@ DynamicPluginLoader::GetSymbols(const MemoryConfigEntry &entry,
             symbol_factories[md.module_name] = factory;
             return factory->GetSymbols(entry, md);
         } catch (const std::exception &e) {
-            throw std::runtime_error(fmt::format("Failed to get symbols from {}.{}: {}",
+            throw std::runtime_error(fmt::format("Failed to create symbol from {}.{}: {}",
+                                                 md.module_name, md.class_name,
+                                                 e.what()));
+        }
+    }
+}
+
+std::shared_ptr<Device> DynamicPluginLoader::CreateDevice(
+    const std::string &name, const MemoryConfigEntry::MappedDevice &md, Clock *clock) {
+    if (auto it = device_factories.find(md.module_name); it != device_factories.end()) {
+        return it->second->CreateDevice(name, md, clock);
+    } else {
+        try {
+            const auto method_name = fmt::format(kGetDeviceFactoryNameFmt, md.class_name);
+            auto mod = LoadOrGetModule(md.module_name);
+            auto factory_getter =
+                dll::experimental::import_mangled<GetDeviceFactory_t>(*mod, method_name);
+            auto factory = factory_getter();
+            device_factories[md.module_name] = factory;
+            return factory->CreateDevice(name, md, clock);
+        } catch (const std::exception &e) {
+            throw std::runtime_error(fmt::format("Failed to create device from {}.{}: {}",
                                                  md.module_name, md.class_name,
                                                  e.what()));
         }

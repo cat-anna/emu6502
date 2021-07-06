@@ -63,6 +63,28 @@ uint64_t TtyDevice::BaudRateToByteRate(BaudRate br) {
     throw std::runtime_error(fmt::format("TtyDevice: Invalid baudrate {:x}", br));
 }
 
+BaudRate TtyDevice::BaudRateFromInteger(int64_t v) {
+    switch (v) {
+    case 1200:
+        return BaudRate::b1200;
+    case 2400:
+        return BaudRate::b2400;
+    case 4800:
+        return BaudRate::b4800;
+    case 9600:
+        return BaudRate::b9600;
+    case 19200:
+        return BaudRate::b19200;
+    case 38400:
+        return BaudRate::b38400;
+    case 57600:
+        return BaudRate::b57600;
+    case 115200:
+        return BaudRate::b115200;
+    }
+    throw std::runtime_error(fmt::format("TtyDevice: Invalid baudrate {:x}", v));
+}
+
 BaudRate TtyDevice::CustomBaudRate(uint64_t value) {
     return static_cast<BaudRate>(
         value | static_cast<std::underlying_type_t<BaudRate>>(BaudRate::bCustom));

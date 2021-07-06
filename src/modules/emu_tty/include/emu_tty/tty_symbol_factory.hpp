@@ -2,6 +2,7 @@
 
 #include "emu_core/symbol_factory.hpp"
 #include <cstdint>
+#include <memory>
 
 namespace emu::tty {
 

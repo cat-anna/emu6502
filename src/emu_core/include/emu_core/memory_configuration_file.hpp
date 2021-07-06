@@ -2,6 +2,7 @@
 
 #include "file_search.hpp"
 #include <cstdint>
+#include <fmt/format.h>
 #include <map>
 #include <optional>
 #include <string>
@@ -12,6 +13,25 @@ namespace emu {
 
 struct MemoryConfigEntry {
     using ValueVariant = std::variant<std::monostate, std::string, int64_t, bool, double>;
+
+    template <typename T>
+    static T GetValueVariant(const ValueVariant &vv, T &&t) {
+        if (std::holds_alternative<std::monostate>(vv)) {
+            return t;
+        }
+        if (std::holds_alternative<T>(vv)) {
+            return std::get<std::decay_t<T>>(vv);
+        }
+
+        std::visit(
+            [](auto &item) {
+                throw std::runtime_error(
+                    fmt::format("Failed to convert config paramter from '{}' to '{}'",
+                                typeid(item).name(), typeid(T).name()));
+            },
+            vv);
+        abort();
+    }
 
     struct RamArea {
         struct Image {
@@ -31,6 +51,15 @@ struct MemoryConfigEntry {
         std::string class_name;
         std::map<std::string, ValueVariant> config;
         bool operator==(const MappedDevice &o) const = default;
+
+        template <typename T>
+        T GetConfigItem(const std::string &key, T t) const {
+            if (auto it = config.find(key); it != config.end()) {
+                return GetValueVariant<T>(it->second, std::move(t));
+            } else {
+                return std::move(t);
+            }
+        }
     };
 
     std::string name;

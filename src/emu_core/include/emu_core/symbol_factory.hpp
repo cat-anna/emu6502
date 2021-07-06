@@ -8,6 +8,7 @@
 #include <vector>
 
 namespace emu {
+
 struct SymbolDefinition {
     std::string name;
     SymbolAddress value;
