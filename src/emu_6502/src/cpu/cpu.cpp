@@ -271,24 +271,28 @@ void Registers::Reset() {
 //-----------------------------------------------------------------------------
 
 Cpu::Cpu(Clock *clock, Memory16 *memory, bool verbose, InstructionSet instruction_set)
-    : clock(clock), memory(memory), verbose(verbose),
-      instruction_handlers(&GetInstructionHandlerArray(instruction_set)) {
+    : memory(memory), instruction_handlers(&GetInstructionHandlerArray(instruction_set)),
+      clock(clock), verbose(verbose) {
 }
 
-const InstructionHandlerArray &Cpu::GetInstructionHandlerArray(InstructionSet instruction_set) {
+const InstructionHandlerArray &
+Cpu::GetInstructionHandlerArray(InstructionSet instruction_set) {
     switch (instruction_set) {
     case InstructionSet::NMOS6502: {
-        static const InstructionHandlerArray array = GenInstructionHandlerArray(instruction_set);
+        static const InstructionHandlerArray array =
+            GenInstructionHandlerArray(instruction_set);
         return array;
     }
     case InstructionSet::NMOS6502Emu: {
-        static const InstructionHandlerArray array = GenInstructionHandlerArray(instruction_set);
+        static const InstructionHandlerArray array =
+            GenInstructionHandlerArray(instruction_set);
         return array;
     }
     case InstructionSet::Unknown:
         break;
     }
-    throw std::runtime_error(fmt::format("Invalid instruction set: {}", static_cast<int>(instruction_set)));
+    throw std::runtime_error(
+        fmt::format("Invalid instruction set: {}", static_cast<int>(instruction_set)));
 }
 
 void Cpu::Reset() {
@@ -323,7 +327,8 @@ void Cpu::ExecuteNextInstruction() {
     auto opcode = instructions::FetchNextByte(this);
     auto handler = (*instruction_handlers)[opcode];
     if (handler == nullptr) {
-        throw std::runtime_error(fmt::format("Invalid opcode {:02x} at address {:04x}", opcode, reg.program_counter));
+        throw std::runtime_error(fmt::format("Invalid opcode {:02x} at address {:04x}",
+                                             opcode, reg.program_counter));
     }
     handler(this);
 }

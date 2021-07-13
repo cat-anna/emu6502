@@ -99,8 +99,8 @@ TtyDevice::TtyDevice(std::istream *_input_stream,  //
     : input_stream(_input_stream),                 //
       output_stream(_output_stream),               //
       clock(_clock),                               //
-      enabled(!_enabled),                          //
-      fifo_buffer_size(_fifo_buffer_size) {        //
+      fifo_buffer_size(_fifo_buffer_size),         //
+      enabled(!_enabled) {                         //
     if (fifo_buffer_size > 255) {
         throw std::runtime_error("TtyDevice: Fifo buffer size must fit in 8 bits");
     }
@@ -155,12 +155,13 @@ uint8_t TtyDevice::Load(Address_t address) const {
 
 void TtyDevice::Store(Address_t address, uint8_t value) {
     switch (static_cast<Register>(address)) {
-    case Register::kControl:
+    case Register::kControl: {
         UpdateBuffers(); //enabled might change so update buffers before
         auto cr0 = ControlRegister0::Deserialize(value);
         SetEnabled(cr0.enabled != 0);
         SetRate(static_cast<BaudRate>(cr0.rate));
         return;
+    }
     case Register::kFifo:
         output_queue.push(value);
         if (output_queue.size() >= fifo_buffer_size) {

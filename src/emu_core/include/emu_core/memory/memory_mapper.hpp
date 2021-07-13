@@ -63,9 +63,10 @@ struct MemoryMapper : public MemoryInterface<_Address_t> {
         if (mem_iface == nullptr) {
             //TODO
         }
-        if (range.first < range.second) {
+        if (range.first > range.second) {
             //TODO
         }
+        //TODO: verify overlapping ranges
         areas.emplace(range, std::move(mem_iface));
     }
 

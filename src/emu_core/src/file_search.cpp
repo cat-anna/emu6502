@@ -1,11 +1,13 @@
 #include "emu_core/file_search.hpp"
 #include <algorithm>
+#include <boost/algorithm/string.hpp>
 #include <cstdlib>
 #include <filesystem>
 #include <fmt/format.h>
 #include <fstream>
 #include <optional>
 #include <ranges>
+#include <string>
 #include <string_view>
 
 namespace emu {
@@ -72,31 +74,27 @@ struct PathListSearcher : public FileSearch,
     }
 
 private:
-    std::ostream *log;
     std::vector<std::filesystem::path> path_list;
+    std::ostream *log;
 };
 
 } // namespace
 
 std::shared_ptr<FileSearch> FileSearch::CreateFromEnv(const std::string &env_var_name,
                                                       std::ostream *log) {
-    size_t len = 0;
-    getenv_s(&len, nullptr, 0, env_var_name.c_str());
+    auto v = getenv(env_var_name.c_str());
     std::string s;
-    if (len > 0) {
-        s.resize(len + 1);
-        getenv_s(&len, &s[0], s.size() - 1, env_var_name.c_str());
+    if (v != nullptr) {
+        s = v;
     }
     return Create(std::move(s), log);
 }
 
 std::shared_ptr<FileSearch> FileSearch::Create(const std::string &colon_separated_list,
                                                std::ostream *log) {
-    auto list = colon_separated_list | std::ranges::views::split(':') |
-                std::ranges::views::transform([](auto &&rng) {
-                    return std::string(&*rng.begin(), std::ranges::distance(rng));
-                });
-    return Create(std::vector<std::string>{list.begin(), list.end()}, log);
+    std::vector<std::string> r;
+    boost::split(r, colon_separated_list, boost::is_any_of(":"));
+    return Create(r);
 }
 
 std::shared_ptr<FileSearch> FileSearch::Create(std::vector<std::string> list,
@@ -109,7 +107,7 @@ std::shared_ptr<std::istream> FileSearch::OpenFile(const std::string &name,
     auto path = SearchPath(name);
     auto f = std::make_shared<std::ifstream>();
     f->exceptions(std::ifstream::badbit);
-    f->open(path, std::ios::out | (binary ? std::ios::binary : 0));
+    f->open(path, (binary ? std::ios::out | std::ios::binary : std::ios::out));
     return f;
 }
 

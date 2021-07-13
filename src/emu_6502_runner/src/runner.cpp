@@ -8,13 +8,10 @@
 
 namespace emu::runner {
 
-Runner &Runner::Setup(const ExecArguments &exec_args) {
+void Runner::Setup(const ExecArguments &exec_args) {
     verbose = exec_args.verbose;
-
     InitCpu(exec_args.cpu_options);
     InitMemory(exec_args.memory_options);
-
-    return *this;
 }
 
 int Runner::Start() {
@@ -40,12 +37,16 @@ int Runner::Start() {
     return code;
 }
 
-void Runner::InitMemory(const ExecArguments::MemoryOptions &opts) {
-    for (auto &dev : opts) {
-        auto [device_ptr, size] = std::visit(
-            [this](auto &item) { return CreateMemoryDevice(item); }, dev.block);
-        memory->MapArea(dev.offset, size, device_ptr.get());
-        mapped_memory_devices.emplace_back(std::move(device_ptr));
+void Runner::InitMemory(const MemoryConfig &opts) {
+    for (auto &dev : opts.entries) {
+        auto [device_ptr, size] =
+            std::visit([&](auto &item) { return CreateMemoryDevice(dev.name, item); },
+                       dev.entry_variant);
+        if (device_ptr != nullptr) {
+            memory->MapArea(static_cast<uint16_t>(dev.offset),
+                            static_cast<uint16_t>(size), device_ptr.get());
+            mapped_devices.emplace_back(std::move(device_ptr));
+        }
     }
 }
 
@@ -56,18 +57,37 @@ void Runner::InitCpu(const ExecArguments::CpuOptions &opts) {
         clock = std::make_unique<ClockSteady>(opts.frequency);
     }
 
-    memory = std::make_unique<MemoryMapper16>(clock.get(), false, verbose);
+    memory = std::make_unique<memory::MemoryMapper16>(clock.get(), false, verbose);
 
     cpu = std::make_unique<emu6502::cpu::Cpu>(clock.get(), memory.get(), verbose,
                                               opts.instruction_set);
 }
 
 Runner::MappedDevice
-Runner::CreateMemoryDevice(const ExecArguments::MemoryArea::MemoryBlock &block) {
-    auto mode = block.rw ? MemoryMode::kReadWrite : MemoryMode::kReadOnly;
+Runner::CreateMemoryDevice(std::string name, const MemoryConfigEntry::MappedDevice &md) {
+    auto device = device_factory->CreateDevice(name, md, clock.get());
+    devices.emplace_back(device);
+    return {device->GetMemory(), device->GetMemorySize()};
+}
+
+Runner::MappedDevice Runner::CreateMemoryDevice(std::string name,
+                                                const MemoryConfigEntry::RamArea &ra) {
+    auto mode = ra.writable ? MemoryMode::kReadWrite : MemoryMode::kReadOnly;
+    std::vector<uint8_t> bytes;
+    if (ra.image.has_value()) {
+        auto data = load_file<std::vector<uint8_t>>(ra.image->file);
+        if (auto offset = ra.image->offset.value_or(0); offset == 0) {
+            bytes.swap(data);
+        } else {
+            bytes.insert(bytes.end(), data.begin() + offset, data.end());
+        }
+    }
+    bytes.resize(ra.size.value_or(bytes.size()), 0);
+    auto size = bytes.size();
     return {
-        std::make_unique<MemoryBlock16>(clock.get(), block.bytes, mode, verbose),
-        static_cast<uint16_t>(block.bytes.size() - 1), //TODO: this is awful
+        std::make_shared<memory::MemoryBlock16>(clock.get(), std::move(bytes), mode,
+                                                verbose),
+        size,
     };
 }
 

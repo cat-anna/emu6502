@@ -11,6 +11,7 @@ struct DeviceInstance : public Device, std::enable_shared_from_this<DeviceInstan
     ~DeviceInstance() override = default;
 
     std::shared_ptr<Memory16> GetMemory() override { return device; }
+    size_t GetMemorySize() override { return kDeviceMemorySize; };
     StreamContainer stream_container;
     std::shared_ptr<TtyDevice> device;
 };

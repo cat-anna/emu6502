@@ -17,7 +17,7 @@ struct MemoryConfigEntry {
     template <typename T>
     static T GetValueVariant(const ValueVariant &vv, T &&t) {
         if (std::holds_alternative<std::monostate>(vv)) {
-            return t;
+            return std::move(t);
         }
         if (std::holds_alternative<T>(vv)) {
             return std::get<std::decay_t<T>>(vv);

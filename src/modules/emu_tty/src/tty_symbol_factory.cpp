@@ -1,4 +1,3 @@
-#pragma once
 
 #include "emu_tty/tty_symbol_factory.hpp"
 #include "emu_core/text_utils.hpp"

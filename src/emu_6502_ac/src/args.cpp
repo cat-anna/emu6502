@@ -12,6 +12,7 @@ namespace fs = std::filesystem;
 
 namespace po = boost::program_options;
 using namespace emu::program_options;
+using namespace std::string_literals;
 
 namespace {
 
@@ -105,9 +106,9 @@ protected:
         opts.clear();
         if (vm.count("input") > 0) {
             for (auto input_file : vm["input"].as<std::vector<std::string>>()) {
-                auto input_name = input_file == "-" ? std::string("stdin") : input_file;
+                auto input_name = input_file == "-" ? "stdin"s : input_file;
                 auto input = streams.OpenTextInput(input_file);
-                opts.emplace_back(input_name, input);
+                opts.emplace_back(ExecArguments::Input{input_name, input});
             }
         }
     }

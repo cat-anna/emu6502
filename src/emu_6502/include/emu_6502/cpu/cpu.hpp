@@ -61,16 +61,16 @@ struct Registers {
     MemPtr StackPointerMemoryAddress() const { return kStackBase | stack_pointer; }
 };
 
-struct ExecutionHalted : public std::exception {
+struct ExecutionHalted : public std::runtime_error {
     ExecutionHalted(Registers regs, Reg8 halt_code)
-        : std::exception("Execution halted"), regs(regs), halt_code(halt_code) {}
+        : std::runtime_error("Execution halted"), regs(regs), halt_code(halt_code) {}
     const Registers regs;
     const Reg8 halt_code;
 };
 
-struct InvalidOpcodeException : public std::exception {
+struct InvalidOpcodeException : public std::runtime_error {
     InvalidOpcodeException(Registers regs, Reg8 opcode)
-        : std::exception("Invalid opcode"), regs(regs), opcode(opcode) {}
+        : std::runtime_error("Invalid opcode"), regs(regs), opcode(opcode) {}
     const Registers regs;
     const Reg8 opcode;
 };

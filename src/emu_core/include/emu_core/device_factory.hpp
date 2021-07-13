@@ -11,6 +11,7 @@ namespace emu {
 struct Device {
     virtual ~Device() = default;
     virtual std::shared_ptr<Memory16> GetMemory() = 0;
+    virtual size_t GetMemorySize() = 0;
 };
 
 struct DeviceFactory {

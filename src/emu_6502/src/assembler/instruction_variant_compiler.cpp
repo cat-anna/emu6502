@@ -80,7 +80,7 @@ Result InstructionArgumentDataProcessor::Process(const std::string &symbol) cons
     return Result{
         .bytes = r,
         .relocation_mode = mode,
-        .relocation_position = current_position + 1u,
+        .relocation_position = static_cast<Address_t>(current_position + 1u),
         .relocation_symbol = symbol,
     };
 }

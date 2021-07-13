@@ -75,7 +75,7 @@ struct Token {
     Token(Token &&) = default;
 
     Token(LineTokenizer *line, TokenLocation location, std::string input)
-        : line(line), location(location), value(input) {}
+        : line(line), value(input), location(location) {}
     Token(LineTokenizer *line, TokenLocation location, std::string_view input)
         : line(line), value(input), location(location) {}
 

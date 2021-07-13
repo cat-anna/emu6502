@@ -1,4 +1,3 @@
-#pragma once
 
 #include "emu_core/plugins/dynamic_plugin_loader.hpp"
 #include "emu_core/text_utils.hpp"

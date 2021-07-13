@@ -1,4 +1,3 @@
-#pragma once
 
 #include "emu_tty/tty_device_factory.hpp"
 #include <cstdint>
@@ -16,23 +15,24 @@ TtyDeviceFactory::CreateDevice(const std::string &name,
 
     auto instance = std::make_shared<DeviceInstance>();
 
-    //
+    std::istream *input_stream = nullptr;
+    if (auto input = md.GetConfigItem("input", ""s); !input.empty()) {
+        input_stream = instance->stream_container.OpenBinaryInput(input);
+    }
 
-    instance->device = std::make_shared<TtyDevice>(
-        // input_stream
-        instance->stream_container.OpenBinaryInput(md.GetConfigItem("input", ""s)),
-        // output_stream
-        instance->stream_container.OpenBinaryOutput(md.GetConfigItem("input", ""s)),
-        // clock
-        clock,
-        // baudrate
-        TtyDevice::BaudRateFromInteger(md.GetConfigItem<int64_t>("baudrate", 9600)),
-        // fifo_buffer_size
-        md.GetConfigItem<int64_t>("buffer_size", kDefaultFifoBufferSize),
-        // enabled
-        md.GetConfigItem("enabled", false)
-        //
-    );
+    std::ostream *output_stream = nullptr;
+    if (auto output = md.GetConfigItem("output", ""s); !output.empty()) {
+        output_stream = instance->stream_container.OpenBinaryOutput(output);
+    }
+
+    auto baudrate =
+        TtyDevice::BaudRateFromInteger(md.GetConfigItem<int64_t>("baudrate", 9600));
+    auto fifo_buffer_size =
+        md.GetConfigItem<int64_t>("buffer_size", kDefaultFifoBufferSize);
+    auto enabled = md.GetConfigItem("enabled", false);
+
+    instance->device = std::make_shared<TtyDevice>(input_stream, output_stream, clock,
+                                                   baudrate, fifo_buffer_size, enabled);
 
     return instance;
 }
