@@ -124,6 +124,31 @@ void TtyDevice::SetRate(BaudRate baud) {
     byte_rate_per_second = BaudRateToByteRate(baud);
 }
 
+std::optional<uint8_t> TtyDevice::DebugRead(Address_t address) const {
+    switch (static_cast<Register>(address)) {
+    case Register::kControl:
+        return ControlRegister0{
+            .enabled = static_cast<uint8_t>(enabled ? 1u : 0u),
+            .rate = static_cast<uint8_t>(current_baudrate),
+        }
+            .Serialize();
+    case Register::kInSize:
+        return static_cast<uint8_t>(input_queue.size());
+    case Register::kOutSize:
+        return static_cast<uint8_t>(output_queue.size());
+    case Register::kFifo:
+        if (input_queue.empty()) {
+            return static_cast<uint8_t>(0);
+        } else {
+            auto item = input_queue.front();
+            input_queue.pop();
+            return item;
+        }
+    }
+
+    return std::nullopt;
+}
+
 uint8_t TtyDevice::Load(Address_t address) const {
 
     const_cast<TtyDevice *>(this)->UpdateBuffers();

@@ -21,15 +21,15 @@ struct MemoryBlock : public MemoryInterface<_Address_t> {
     using VectorType = std::vector<uint8_t>;
 
     Clock *const clock;
-    const bool verbose;
+    std::ostream *const verbose_stream;
     const MemoryMode mode;
     VectorType block;
     std::string name;
 
     MemoryBlock(Clock *clock, VectorType memory, MemoryMode mode = MemoryMode::kReadWrite,
-                bool verbose = false, std::string name = "")
-        : clock(clock), verbose(verbose), mode(mode), block(std::move(memory)),
-          name(std::move(name)) {}
+                std::ostream *verbose_stream = nullptr, std::string name = "")
+        : clock(clock), verbose_stream(verbose_stream), mode(mode),
+          block(std::move(memory)), name(std::move(name)) {}
 
     uint8_t Load(Address_t address) const override {
         if (address >= block.size()) {
@@ -47,6 +47,13 @@ struct MemoryBlock : public MemoryInterface<_Address_t> {
         if (CanWrite(address)) {
             block[address] = value;
         }
+    }
+
+    [[nodiscard]] std::optional<uint8_t> DebugRead(Address_t address) const override {
+        if (address >= block.size()) {
+            return std::nullopt;
+        }
+        return block[address];
     }
 
 private:
@@ -67,10 +74,10 @@ private:
     }
 
     void AccessLog(Address_t address, uint8_t value, bool write) const {
-        if (verbose) {
-            std::cout << fmt::format("MEM-BLOCK[{}] {:5} [{:04x}] {} {:02x}\n", name,
-                                     (write ? "W" : "R"), address, (write ? "<-" : "->"),
-                                     value);
+        if (verbose_stream != nullptr) {
+            (*verbose_stream) << fmt::format("MEM-BLOCK[{}] {:5} [{:04x}] {} {:02x}\n",
+                                             name, (write ? "W" : "R"), address,
+                                             (write ? "<-" : "->"), value);
         }
     }
 

@@ -23,24 +23,23 @@ struct Runner {
 
 protected:
     const std::shared_ptr<DeviceFactory> device_factory;
+    std::ostream *result_verbose = nullptr;
 
     std::unique_ptr<Clock> clock;
     std::unique_ptr<memory::MemoryMapper16> memory;
     std::unique_ptr<emu6502::cpu::Cpu> cpu;
 
-    bool verbose = false;
-
     std::vector<std::shared_ptr<Device>> devices;
     std::vector<std::shared_ptr<Memory16>> mapped_devices;
 
-    void InitCpu(const ExecArguments::CpuOptions &opts);
-    void InitMemory(const MemoryConfig &opts);
+    void InitCpu(const ExecArguments &exec_args);
+    void InitMemory(const ExecArguments &exec_args);
 
     using MappedDevice = std::tuple<std::shared_ptr<Memory16>, size_t>;
 
-    MappedDevice CreateMemoryDevice(std::string name,
+    MappedDevice CreateMemoryDevice(const ExecArguments &opts, std::string name,
                                     const MemoryConfigEntry::RamArea &ra);
-    MappedDevice CreateMemoryDevice(std::string name,
+    MappedDevice CreateMemoryDevice(const ExecArguments &opts, std::string name,
                                     const MemoryConfigEntry::MappedDevice &md);
 };
 

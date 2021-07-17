@@ -46,10 +46,12 @@ DynamicPluginLoader::GetSymbols(const MemoryConfigEntry &entry,
     }
 }
 
-std::shared_ptr<Device> DynamicPluginLoader::CreateDevice(
-    const std::string &name, const MemoryConfigEntry::MappedDevice &md, Clock *clock) {
+std::shared_ptr<Device>
+DynamicPluginLoader::CreateDevice(const std::string &name,
+                                  const MemoryConfigEntry::MappedDevice &md, Clock *clock,
+                                  std::ostream *verbose_output) {
     if (auto it = device_factories.find(md.module_name); it != device_factories.end()) {
-        return it->second->CreateDevice(name, md, clock);
+        return it->second->CreateDevice(name, md, clock, verbose_output);
     } else {
         try {
             const auto method_name = fmt::format(kGetDeviceFactoryNameFmt, md.class_name);
@@ -58,7 +60,7 @@ std::shared_ptr<Device> DynamicPluginLoader::CreateDevice(
                 dll::experimental::import_mangled<GetDeviceFactory_t>(*mod, method_name);
             auto factory = factory_getter();
             device_factories[md.module_name] = factory;
-            return factory->CreateDevice(name, md, clock);
+            return factory->CreateDevice(name, md, clock, verbose_output);
         } catch (const std::exception &e) {
             throw std::runtime_error(fmt::format("Failed to create device from {}.{}: {}",
                                                  md.module_name, md.class_name,

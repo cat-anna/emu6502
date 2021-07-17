@@ -25,7 +25,7 @@ public:
     using Flags = Registers::Flags;
 
     ClockSimple clock;
-    memory::MemorySparse16 memory{&clock, true, true};
+    memory::MemorySparse16 memory{&clock, true, &std::cout};
 
     Cpu cpu;
     Registers expected_regs;
@@ -46,7 +46,7 @@ public:
     bool random_reg_values = false;
 
     BaseTest(InstructionSet instruction_set = InstructionSet::Default)
-        : cpu{&clock, &memory, true, instruction_set} {}
+        : cpu{&clock, &memory, &std::cout, instruction_set} {}
 
     void SetUp() override {
         if (random_reg_values) {

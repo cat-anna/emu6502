@@ -80,7 +80,7 @@ struct Cpu {
     Memory16 *const memory;
     const InstructionHandlerArray *instruction_handlers;
 
-    Cpu(Clock *clock, Memory16 *memory, bool verbose,
+    Cpu(Clock *clock, Memory16 *memory, std::ostream *verbose_stream = nullptr,
         InstructionSet instruction_set = InstructionSet::NMOS6502);
 
     static const InstructionHandlerArray &
@@ -97,7 +97,7 @@ struct Cpu {
 
 private:
     Clock *const clock;
-    const bool verbose;
+    std::ostream *const verbose_stream;
 };
 
 } // namespace emu::emu6502::cpu

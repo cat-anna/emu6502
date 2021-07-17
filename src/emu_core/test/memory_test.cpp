@@ -30,7 +30,7 @@ public:
 TEST_F(MemoryTest, MemoryBlock16) {
     MemoryBlock16::VectorType content{1_u8, 2_u8, 3_u8};
     content.resize(128);
-    MemoryBlock16 mem{&clock, content, MemoryMode::kReadWrite, true, "ut"};
+    MemoryBlock16 mem{&clock, content, MemoryMode::kReadWrite, &std::cout, "ut"};
 
     EXPECT_EQ(mem.Load(0_addr), 1);
     EXPECT_EQ(mem.Load(2_addr), 3);
@@ -46,7 +46,7 @@ TEST_F(MemoryTest, MemoryBlock16) {
 }
 
 TEST_F(MemoryTest, MemoryMapper16) {
-    MemoryMapper16 mapper{&clock, {}, true, true};
+    MemoryMapper16 mapper{&clock, {}, true, &std::cout};
 
     mapper.MapArea({0x00_addr, 0x10_addr}, &mock_a);
     mapper.MapArea({0x20_addr, 0x30_addr}, &mock_b);

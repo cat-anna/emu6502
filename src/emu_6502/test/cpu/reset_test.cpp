@@ -14,8 +14,8 @@ namespace {
 class ResetTest : public ::testing::Test {
 public:
     ClockSimple clock;
-    memory::MemorySparse16 memory{&clock, true, true};
-    cpu::Cpu cpu{&clock, &memory, true, InstructionSet::NMOS6502Emu};
+    memory::MemorySparse16 memory{&clock, true, &std::cout};
+    cpu::Cpu cpu{&clock, &memory, &std::cout, InstructionSet::NMOS6502Emu};
 
     ResetTest() {}
 };

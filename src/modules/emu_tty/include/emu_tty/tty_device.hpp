@@ -53,6 +53,7 @@ public:
     void Store(Register address, uint8_t value) {
         Store(static_cast<Address_t>(address), value);
     }
+    [[nodiscard]] std::optional<uint8_t> DebugRead(Address_t address) const override;
 
     [[nodiscard]] static uint64_t BaudRateToByteRate(BaudRate br);
     [[nodiscard]] static BaudRate CustomBaudRate(uint64_t value);

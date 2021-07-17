@@ -11,7 +11,8 @@ namespace {} // namespace
 
 std::shared_ptr<Device>
 TtyDeviceFactory::CreateDevice(const std::string &name,
-                               const MemoryConfigEntry::MappedDevice &md, Clock *clock) {
+                               const MemoryConfigEntry::MappedDevice &md, Clock *clock,
+                               std::ostream *verbose_output) {
 
     auto instance = std::make_shared<DeviceInstance>();
 

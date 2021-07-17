@@ -3,6 +3,7 @@
 #include <concepts>
 #include <cstdint>
 #include <fmt/format.h>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
@@ -43,9 +44,22 @@ public:
     [[nodiscard]] virtual MemoryMode Mode() const {
         throw std::runtime_error("MemoryInterface::Mode() is not implemented");
     }
+
+    [[nodiscard]] virtual std::optional<uint8_t> DebugRead(Address_t address) const = 0;
+
+    [[nodiscard]] virtual std::vector<std::optional<uint8_t>>
+    DebugReadRange(Address_t address, size_t len) const {
+        std::vector<std::optional<uint8_t>> r;
+        r.reserve(len);
+        for (size_t beg = address, end = beg + len; beg < end; ++beg) {
+            r.emplace_back(DebugRead(static_cast<Address_t>(beg)));
+        }
+        return r;
+    }
 };
 
 using Memory16 = MemoryInterface<uint16_t>;
+
 } // namespace emu
 
 #ifdef WANTS_GTEST_MOCKS
@@ -57,6 +71,9 @@ struct MemoryInterfaceMock : public MemoryInterface<_Address_t> {
     using Address_t = _Address_t;
     MOCK_METHOD(uint8_t, Load, (Address_t), (const));
     MOCK_METHOD(void, Store, (Address_t, uint8_t));
+    MOCK_METHOD(std::optional<uint8_t>, DebugRead, (Address_t), (const));
+    MOCK_METHOD(std::vector<std::optional<uint8_t>>, DebugReadRange, (Address_t, size_t),
+                (const));
 };
 
 using MemoryMock16 = MemoryInterfaceMock<uint16_t>;

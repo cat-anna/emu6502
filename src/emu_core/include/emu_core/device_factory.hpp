@@ -3,6 +3,7 @@
 #include "clock.hpp"
 #include "memory.hpp"
 #include "memory_configuration_file.hpp"
+#include <iostream>
 #include <memory>
 #include <string>
 
@@ -19,7 +20,7 @@ struct DeviceFactory {
 
     virtual std::shared_ptr<Device>
     CreateDevice(const std::string &name, const MemoryConfigEntry::MappedDevice &md,
-                 Clock *clock) = 0;
+                 Clock *clock, std::ostream *verbose_output = nullptr) = 0;
 };
 
 } // namespace emu

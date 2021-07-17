@@ -9,9 +9,9 @@
 namespace emu::runner {
 
 void Runner::Setup(const ExecArguments &exec_args) {
-    verbose = exec_args.verbose;
-    InitCpu(exec_args.cpu_options);
-    InitMemory(exec_args.memory_options);
+    result_verbose = exec_args.GetVerboseStream(Verbose::Result);
+    InitCpu(exec_args);
+    InitMemory(exec_args);
 }
 
 int Runner::Start() {
@@ -22,26 +22,27 @@ int Runner::Start() {
         cpu->Execute();
     } catch (const emu6502::cpu::ExecutionHalted &e) {
         code = e.halt_code;
-        if (verbose) {
-            std::cout << "HALT code: " << std::hex << code << "\n";
+        if (result_verbose != nullptr) {
+            (*result_verbose) << "HALT code: " << std::hex << code << "\n";
         }
     } catch (const std::exception &e) {
         std::cerr << "Run error: " << e.what() << "\n";
         code = -1;
     }
-    if (verbose) {
+    if (result_verbose != nullptr) {
         auto end = std::chrono::steady_clock::now();
         auto delta = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        std::cout << fmt::format("Took {} seconds\n", delta.count() / (1024.0 * 1024.0));
+        (*result_verbose) << fmt::format("Took {} seconds\n",
+                                         delta.count() / (1024.0 * 1024.0));
     }
     return code;
 }
 
-void Runner::InitMemory(const MemoryConfig &opts) {
-    for (auto &dev : opts.entries) {
-        auto [device_ptr, size] =
-            std::visit([&](auto &item) { return CreateMemoryDevice(dev.name, item); },
-                       dev.entry_variant);
+void Runner::InitMemory(const ExecArguments &opts) {
+    for (auto &dev : opts.memory_options.entries) {
+        auto [device_ptr, size] = std::visit(
+            [&](auto &item) { return CreateMemoryDevice(opts, dev.name, item); },
+            dev.entry_variant);
         if (device_ptr != nullptr) {
             memory->MapArea(static_cast<uint16_t>(dev.offset),
                             static_cast<uint16_t>(size), device_ptr.get());
@@ -50,27 +51,32 @@ void Runner::InitMemory(const MemoryConfig &opts) {
     }
 }
 
-void Runner::InitCpu(const ExecArguments::CpuOptions &opts) {
-    if (opts.frequency == 0) {
+void Runner::InitCpu(const ExecArguments &opts) {
+    if (opts.cpu_options.frequency == 0) {
         clock = std::make_unique<ClockSimple>();
     } else {
-        clock = std::make_unique<ClockSteady>(opts.frequency);
+        clock = std::make_unique<ClockSteady>(opts.cpu_options.frequency);
     }
 
-    memory = std::make_unique<memory::MemoryMapper16>(clock.get(), false, verbose);
+    memory = std::make_unique<memory::MemoryMapper16>(
+        clock.get(), false, opts.GetVerboseStream(Verbose::MemoryMapper));
 
-    cpu = std::make_unique<emu6502::cpu::Cpu>(clock.get(), memory.get(), verbose,
-                                              opts.instruction_set);
+    cpu = std::make_unique<emu6502::cpu::Cpu>(clock.get(), memory.get(),
+                                              opts.GetVerboseStream(Verbose::Cpu),
+                                              opts.cpu_options.instruction_set);
 }
 
 Runner::MappedDevice
-Runner::CreateMemoryDevice(std::string name, const MemoryConfigEntry::MappedDevice &md) {
-    auto device = device_factory->CreateDevice(name, md, clock.get());
+Runner::CreateMemoryDevice(const ExecArguments &opts, std::string name,
+                           const MemoryConfigEntry::MappedDevice &md) {
+    auto device = device_factory->CreateDevice(name, md, clock.get(),
+                                               opts.GetVerboseStream(Verbose::Device));
     devices.emplace_back(device);
     return {device->GetMemory(), device->GetMemorySize()};
 }
 
-Runner::MappedDevice Runner::CreateMemoryDevice(std::string name,
+Runner::MappedDevice Runner::CreateMemoryDevice(const ExecArguments &opts,
+                                                std::string name,
                                                 const MemoryConfigEntry::RamArea &ra) {
     auto mode = ra.writable ? MemoryMode::kReadWrite : MemoryMode::kReadOnly;
     std::vector<uint8_t> bytes;
@@ -86,7 +92,7 @@ Runner::MappedDevice Runner::CreateMemoryDevice(std::string name,
     auto size = bytes.size();
     return {
         std::make_shared<memory::MemoryBlock16>(clock.get(), std::move(bytes), mode,
-                                                verbose),
+                                                opts.GetVerboseStream(Verbose::Memory)),
         size,
     };
 }

@@ -42,17 +42,19 @@ struct MemoryMapper : public MemoryInterface<_Address_t> {
 
     Clock *const clock;
     const bool strict_access;
-    const bool verbose;
+    std::ostream *const verbose_stream;
 
     MemoryMapper(Clock *clock, const AreaSet &area = {}, bool strict_access = false,
-                 bool verbose = false)
-        : clock(clock), strict_access(strict_access), verbose(verbose), areas() {
+                 std::ostream *verbose_stream = nullptr)
+        : clock(clock), strict_access(strict_access), verbose_stream(verbose_stream),
+          areas() {
         for (auto [range, ptr] : area) {
             MapArea(range, ptr);
         }
     }
-    MemoryMapper(Clock *clock, bool strict_access = false, bool verbose = false)
-        : MemoryMapper(clock, {}, strict_access, verbose) {}
+    MemoryMapper(Clock *clock, bool strict_access = false,
+                 std::ostream *verbose_stream = nullptr)
+        : MemoryMapper(clock, {}, strict_access, verbose_stream) {}
 
     void MapArea(Address_t offset, Address_t size, AreaInterface mem_iface) {
         auto end_addr = static_cast<Address_t>(offset + size - 1);
@@ -100,6 +102,17 @@ struct MemoryMapper : public MemoryInterface<_Address_t> {
             "MemoryMapper: Attempt to write unmapped address {:04x}", address));
     }
 
+    [[nodiscard]] std::optional<uint8_t> DebugRead(Address_t address) const override {
+        auto area = LookupAddress(address);
+        if (!area.has_value()) {
+            return std::nullopt;
+        }
+
+        auto [min, max] = area->first;
+        Address_t relative = address - min;
+        return area->second->DebugRead(relative);
+    }
+
 private:
     AreaSet areas;
 
@@ -118,10 +131,10 @@ private:
 
     void AccessLog(Address_t address, uint8_t value, bool write,
                    bool not_mapped = false) const {
-        if (verbose) {
-            std::cout << fmt::format("MEM-MAPPER {:5} [{:04x}] {} {:02x} {}\n",
-                                     (write ? "W" : "R"), address, (write ? "<-" : "->"),
-                                     value, (not_mapped ? "NOT MAPPED" : ""));
+        if (verbose_stream != nullptr) {
+            (*verbose_stream) << fmt::format(
+                "MEM-MAPPER {:5} [{:04x}] {} {:02x} {}\n", (write ? "W" : "R"), address,
+                (write ? "<-" : "->"), value, (not_mapped ? "NOT MAPPED" : ""));
         }
     }
 

@@ -1,4 +1,5 @@
 #include "args.hpp"
+#include <boost/algorithm/string.hpp>
 #include <boost/filesystem/string_file.hpp>
 #include <boost/program_options.hpp>
 #include <emu_core/boost_po_utils.hpp>
@@ -18,6 +19,34 @@ using namespace emu::program_options;
 
 namespace {
 
+const std::unordered_map<std::string, std::set<Verbose>> kVerboseAreas = {
+    {
+        "all",
+        {
+            Verbose::Memory,
+            Verbose::MemoryMapper,
+            Verbose::Result,
+            Verbose::Cpu,
+            Verbose::Device,
+        },
+    },
+    {
+        "base",
+        {
+            Verbose::Memory,
+            Verbose::Result,
+            Verbose::Cpu,
+            Verbose::Device,
+        },
+    },
+
+    {"device", {Verbose::Device}},
+    {"result", {Verbose::Result}},
+    {"cpu", {Verbose::Cpu}},
+    {"memory", {Verbose::Memory}},
+    {"memorymapper", {Verbose::MemoryMapper}},
+};
+
 const ConflictingOptionsVec kConflictingOptions = {};
 
 struct Options {
@@ -34,7 +63,9 @@ struct Options {
 
         all_options.add_options()
             ("help", "Produce help message")
-            ("verbose,v", "Print diagnostic logs during execution")
+            ("verbose", po::value<std::string>(), "Print some diagnostic messages")
+            ("v", "Print base diagnostic logs during execution")
+            ("verbose-out", "Verbose output. Default is stdout")
             ;
 
         cpu_options.add_options()
@@ -80,7 +111,28 @@ struct Options {
 
 protected:
     void ReadVariableMap(const po::variables_map &vm, ExecArguments &args) {
-        args.verbose = vm.count("verbose") > 0;
+        std::set<std::string> verbose_areas;
+        if (vm.count("verbose-out")) {
+            args.verbose_stream =
+                args.streams.OpenTextOutput(vm["verbose-out"].as<std::string>());
+        }
+        if (vm.count("v") > 0) {
+            verbose_areas.insert("base");
+        }
+        if (vm.count("verbose") > 0) {
+            boost::split(verbose_areas,
+                         boost::to_lower_copy(vm["verbose"].as<std::string>()),
+                         boost::is_any_of(","));
+        }
+
+        for (const auto &item : verbose_areas) {
+            if (!kVerboseAreas.contains(item)) {
+                throw std::runtime_error(fmt::format("{} is not valid verbose area"));
+            }
+            for (auto i : kVerboseAreas.at(item)) {
+                args.verbose.insert(i);
+            }
+        }
 
         ReadCpuOptions(args.streams, args.cpu_options, vm);
         ReadMemoryOptions(args.streams, args.memory_options, vm);
@@ -151,11 +203,25 @@ protected:
         std::cout << "Emu 6502 runner";
         std::cout << "\n";
         std::cout << all_options;
+        std::cout << "\n";
+        std::cout << "Verbose areas: ";
+        for (auto &[key, m] : kVerboseAreas) {
+            std::cout << key << ",";
+        }
+        std::cout << "\n";
         exit(exit_code);
     }
 };
 
 } // namespace
+
+std::ostream *ExecArguments::GetVerboseStream(Verbose v) const {
+    if (verbose.contains(v)) {
+        return verbose_stream;
+    } else {
+        return nullptr;
+    }
+}
 
 ExecArguments ParseComandline(int argc, char **argv) {
     return Options().ParseComandline(argc, argv);

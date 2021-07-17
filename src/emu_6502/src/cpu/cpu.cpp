@@ -270,9 +270,10 @@ void Registers::Reset() {
 
 //-----------------------------------------------------------------------------
 
-Cpu::Cpu(Clock *clock, Memory16 *memory, bool verbose, InstructionSet instruction_set)
+Cpu::Cpu(Clock *clock, Memory16 *memory, std::ostream *verbose_stream,
+         InstructionSet instruction_set)
     : memory(memory), instruction_handlers(&GetInstructionHandlerArray(instruction_set)),
-      clock(clock), verbose(verbose) {
+      clock(clock), verbose_stream(verbose_stream) {
 }
 
 const InstructionHandlerArray &
@@ -321,7 +322,7 @@ void Cpu::ExecuteFor(std::chrono::nanoseconds timeout) {
 }
 
 void Cpu::ExecuteNextInstruction() {
-    if (verbose) {
+    if (verbose_stream != nullptr) {
         //TODO
     }
     auto opcode = instructions::FetchNextByte(this);

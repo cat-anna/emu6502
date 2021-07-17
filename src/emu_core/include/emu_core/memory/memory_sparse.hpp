@@ -1,12 +1,14 @@
 #pragma once
 
 #include "emu_core/clock.hpp"
+#include "emu_core/memory.hpp"
 #include <algorithm>
 #include <array>
 #include <concepts>
 #include <cstdint>
 #include <fmt/format.h>
 #include <iostream>
+#include <optional>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
@@ -22,14 +24,14 @@ struct MemorySparse : public MemoryInterface<_Address_t> {
 
     Clock *const clock;
     const bool strict_access;
-    const bool verbose;
-
+    std::ostream *const verbose_stream;
     MapType memory_map;
 
     static uint8_t RandomByte() { return rand() & 0xFF; }
 
-    MemorySparse(Clock *clock, bool strict_access = false, bool verbose = false)
-        : clock(clock), strict_access(strict_access), verbose(verbose) {}
+    MemorySparse(Clock *clock, bool strict_access = false,
+                 std::ostream *verbose_stream = nullptr)
+        : clock(clock), strict_access(strict_access), verbose_stream(verbose_stream) {}
 
     uint8_t Load(Address_t address) const override {
         WaitForNextCycle();
@@ -86,14 +88,22 @@ struct MemorySparse : public MemoryInterface<_Address_t> {
         }
     }
 
+    [[nodiscard]] std::optional<uint8_t> DebugRead(Address_t address) const override {
+        if (auto it = memory_map.find(address); it == memory_map.end()) {
+            return std::nullopt;
+        } else {
+            return it->second;
+        }
+    }
+
 private:
     void AccessLog(Address_t address, uint8_t value, bool write,
                    bool not_init = false) const {
-        if (verbose) {
-            std::cout << fmt::format("MEM-SPARSE {:5} [{:04x}] {} {:02x} {}\n",
-                                     (write ? "WRITE" : "READ"), address,
-                                     (write ? "<-" : "->"), value,
-                                     (not_init ? "NOT INITIALIZED" : ""));
+        if (verbose_stream != nullptr) {
+            (*verbose_stream) << fmt::format("MEM-SPARSE {:5} [{:04x}] {} {:02x} {}\n",
+                                             (write ? "WRITE" : "READ"), address,
+                                             (write ? "<-" : "->"), value,
+                                             (not_init ? "NOT INITIALIZED" : ""));
         }
     }
 
