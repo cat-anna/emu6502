@@ -58,17 +58,19 @@ TEST_F(StackTest, PHP) {
     expected_regs.flags = cpu.reg.flags = target_byte;
     expected_cycles = 3;
     Execute(MakeCode(INS_PHP));
-    uint8_t expected = target_byte | static_cast<uint8_t>(Flags::Brk) | static_cast<uint8_t>(Flags::NotUsed);
+    uint8_t expected = target_byte | static_cast<uint8_t>(Flags::Brk) |
+                       static_cast<uint8_t>(Flags::NotUsed);
     VerifyMemory(target_address, {expected});
 }
 
 TEST_F(StackTest, PLP) {
     // MNEMONIC                        HEX TIM
     // PLP (PuLl Processor status)     $28  4
-    target_address = expected_regs.StackPointerMemoryAddress();
     expected_regs.stack_pointer++;
+    target_address = expected_regs.StackPointerMemoryAddress();
 
-    expected_regs.flags = target_byte & ~(static_cast<uint8_t>(Flags::Brk) | static_cast<uint8_t>(Flags::NotUsed));
+    expected_regs.flags = target_byte & ~(static_cast<uint8_t>(Flags::Brk) |
+                                          static_cast<uint8_t>(Flags::NotUsed));
     WriteMemory(target_address, {target_byte});
 
     expected_cycles = 4;

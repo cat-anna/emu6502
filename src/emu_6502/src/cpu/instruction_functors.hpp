@@ -245,13 +245,11 @@ void PushFlags(Cpu *cpu) {
 }
 
 void PullFlags(Cpu *cpu) {
-    auto operand = cpu->memory->Load(cpu->reg.StackPointerMemoryAddress());
-    cpu->WaitForNextCycle();
+    auto operand = StackPullByte(cpu);
     cpu->reg.flags = operand;
     cpu->reg.SetFlag(Flags::Brk, false);
     cpu->reg.SetFlag(Flags::NotUsed, false);
     cpu->WaitForNextCycle();
-    cpu->reg.stack_pointer++;
 }
 
 //-----------------------------------------------------------------------------
