@@ -12,7 +12,7 @@ macro(SUBDIRLIST result curdir)
   set(${result} ${dirlist})
 endmacro()
 
-macro(add_all_subdirecties)
+macro(add_all_subdirectories)
   subdirlist(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
   foreach(subdir ${SUBDIRS})

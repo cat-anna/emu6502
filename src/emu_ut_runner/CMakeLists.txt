@@ -1,0 +1,1 @@
+define_static_lib(emu_ut_runner)
