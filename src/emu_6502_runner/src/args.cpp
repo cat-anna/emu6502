@@ -33,7 +33,8 @@ const std::unordered_map<std::string, std::set<Verbose>> kVerboseAreas = {
     {
         "base",
         {
-            Verbose::Memory,
+            // Verbose::Memory,
+            // Verbose::MemoryMapper,
             Verbose::Result,
             Verbose::Cpu,
             Verbose::Device,
@@ -63,9 +64,9 @@ struct Options {
 
         all_options.add_options()
             ("help", "Produce help message")
+            ("verbose-base,v", "Print base diagnostic logs during execution")
             ("verbose", po::value<std::string>(), "Print some diagnostic messages")
-            ("v", "Print base diagnostic logs during execution")
-            ("verbose-out", "Verbose output. Default is stdout")
+            ("verbose-out", po::value<std::string>(), "Verbose output. Default is stdout")
             ;
 
         cpu_options.add_options()
@@ -116,7 +117,7 @@ protected:
             args.verbose_stream =
                 args.streams.OpenTextOutput(vm["verbose-out"].as<std::string>());
         }
-        if (vm.count("v") > 0) {
+        if (vm.count("verbose-base") > 0) {
             verbose_areas.insert("base");
         }
         if (vm.count("verbose") > 0) {

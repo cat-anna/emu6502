@@ -1,10 +1,8 @@
 #include "runner.hpp"
+#include "emu_6502/cpu/verbose_debugger.hpp"
 #include "emu_core/clock_steady.hpp"
 #include "emu_core/memory/memory_block.hpp"
 #include "emu_core/string_file.hpp"
-// #include <emu_core/build_config.hpp>
-// #include "emu_core/memory/memory_sparse.hpp"
-// #include <emu_core/program.hpp>
 
 namespace emu::runner {
 
@@ -61,9 +59,15 @@ void Runner::InitCpu(const ExecArguments &opts) {
     memory = std::make_unique<memory::MemoryMapper16>(
         clock.get(), false, opts.GetVerboseStream(Verbose::MemoryMapper));
 
-    cpu = std::make_unique<emu6502::cpu::Cpu>(clock.get(), memory.get(),
-                                              opts.GetVerboseStream(Verbose::Cpu),
-                                              opts.cpu_options.instruction_set);
+    auto debug_stream = opts.GetVerboseStream(Verbose::Cpu);
+    if (debug_stream != nullptr) {
+        debugger = std::make_unique<emu6502::cpu::VerboseDebugger>(
+            opts.cpu_options.instruction_set, memory.get(), debug_stream);
+    }
+
+    cpu = std::make_unique<emu6502::cpu::Cpu>(clock.get(), memory.get(), debug_stream,
+                                              opts.cpu_options.instruction_set,
+                                              debugger.get());
 }
 
 Runner::MappedDevice

@@ -234,46 +234,10 @@ InstructionHandlerArray GenInstructionHandlerArray(InstructionSet instruction_se
 
 //-----------------------------------------------------------------------------
 
-std::string Registers::DumpFlags() const {
-    std::string r;
-    r += fmt::format("{:02x}[", flags);
-    r += TestFlag(Flags::Negative) ? "N" : "-";
-    r += TestFlag(Flags::Overflow) ? "V" : "-";
-    r += TestFlag(Flags::NotUsed) ? "?" : "-";
-    r += TestFlag(Flags::Brk) ? "B" : "-";
-    r += TestFlag(Flags::DecimalMode) ? "D" : "-";
-    r += TestFlag(Flags::IRQB) ? "I" : "-";
-    r += TestFlag(Flags::Zero) ? "Z" : "-";
-    r += TestFlag(Flags::Carry) ? "C" : "-";
-    r += "]";
-    return r;
-}
-
-std::string Registers::Dump() const {
-    std::string r;
-    r += fmt::format("pc:{:04x}", program_counter);
-    r += fmt::format(" s:{:02x}", stack_pointer);
-    r += fmt::format(" a:{:02x}", a);
-    r += fmt::format(" x:{:02x}", x);
-    r += fmt::format(" y:{:02x}", y);
-    r += " f:";
-    r += DumpFlags();
-    return r;
-}
-
-void Registers::Reset() {
-    program_counter = 0;
-    a = x = y = 0;
-    stack_pointer = kStackResetValue;
-    flags = 0;
-}
-
-//-----------------------------------------------------------------------------
-
 Cpu::Cpu(Clock *clock, Memory16 *memory, std::ostream *verbose_stream,
-         InstructionSet instruction_set)
+         InstructionSet instruction_set, Debugger *external_debugger)
     : memory(memory), instruction_handlers(&GetInstructionHandlerArray(instruction_set)),
-      clock(clock), verbose_stream(verbose_stream) {
+      clock(clock), verbose_stream(verbose_stream), debugger(external_debugger) {
 }
 
 const InstructionHandlerArray &
@@ -297,6 +261,9 @@ Cpu::GetInstructionHandlerArray(InstructionSet instruction_set) {
 }
 
 void Cpu::Reset() {
+    // if (debugger != nullptr) {
+    // debugger->OnReset();
+    // }
     reg.Reset();
     reg.program_counter = kResetVector;
     auto handler = (*instruction_handlers)[opcode::INS_JMP_ABS];
@@ -322,14 +289,18 @@ void Cpu::ExecuteFor(std::chrono::nanoseconds timeout) {
 }
 
 void Cpu::ExecuteNextInstruction() {
-    if (verbose_stream != nullptr) {
-        //TODO
+    if (debugger != nullptr) {
+        debugger->OnNextInstruction(reg);
     }
     auto opcode = instructions::FetchNextByte(this);
     auto handler = (*instruction_handlers)[opcode];
     if (handler == nullptr) {
+        // if (debugger != nullptr) {
+        // debugger->OnUnknownOpcode();
+        // } else {
         throw std::runtime_error(fmt::format("Invalid opcode {:02x} at address {:04x}",
                                              opcode, reg.program_counter));
+        // }
     }
     handler(this);
 }

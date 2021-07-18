@@ -17,7 +17,8 @@ int main(int argc, char **argv) {
         auto plugin_loader =
             PluginLoader::CreateDynamic(fs::absolute(fs::path(argv[0])).parent_path());
         auto runner = std::make_shared<Runner>(plugin_loader->GetDeviceFactory());
-        runner->Setup(ParseComandline(argc, argv));
+        auto args = ParseComandline(argc, argv);
+        runner->Setup(args);
         return runner->Start();
     } catch (const std::exception &e) {
         std::cerr << "ERROR: " << e.what() << "\n";

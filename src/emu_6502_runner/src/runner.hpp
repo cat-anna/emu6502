@@ -2,6 +2,7 @@
 
 #include "args.hpp"
 #include "emu_6502/cpu/cpu.hpp"
+#include "emu_6502/cpu/debugger.hpp"
 #include "emu_core/clock.hpp"
 #include "emu_core/device_factory.hpp"
 #include "emu_core/memory/memory_mapper.hpp"
@@ -28,6 +29,7 @@ protected:
     std::unique_ptr<Clock> clock;
     std::unique_ptr<memory::MemoryMapper16> memory;
     std::unique_ptr<emu6502::cpu::Cpu> cpu;
+    std::unique_ptr<emu6502::cpu::Debugger> debugger;
 
     std::vector<std::shared_ptr<Device>> devices;
     std::vector<std::shared_ptr<Memory16>> mapped_devices;
