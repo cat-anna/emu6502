@@ -124,3 +124,30 @@ function(define_module_with_ut target_name)
       ${LIB_TARGET}
       PARENT_SCOPE)
 endfunction()
+
+function(define_functional_test)
+  set(options)
+  set(oneValueArgs NAME IMAGE CONFIG)
+  set(multiValueArgs DEPENDS)
+  cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME})
+  message("* Adding functional test ${ARG_NAME}")
+
+  set(TEST_IMAGE ${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}/test_image.bin)
+  add_custom_command(
+    OUTPUT ${TEST_IMAGE}
+    COMMENT "Preparing test image for ${ARG_NAME}"
+    COMMAND ${CMAKE_COMMAND} -E copy ${ARG_IMAGE} ${TEST_IMAGE}
+    DEPENDS ${ARG_IMAGE})
+
+  add_custom_target(
+    ${ARG_NAME}
+    COMMENT "Running functional test ${ARG_NAME}"
+    COMMAND emu_6502_runner -v --config ${ARG_CONFIG} --verbose-out verbose_out.txt
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}
+    DEPENDS emu_6502_runner ${ARG_DEPENDS} ${ARG_CONFIG} ${ARG_IMAGE} ${TEST_IMAGE})
+
+  add_dependencies(execute_all_test ${ARG_NAME})
+
+endfunction()
