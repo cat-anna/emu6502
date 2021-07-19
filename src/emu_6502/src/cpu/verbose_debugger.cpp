@@ -28,7 +28,7 @@ std::string FormatAddressMode(AddressMode addres_mode, const Registers &regs,
     case AddressMode::INDX:
         return fmt::format("(${:02x},X)", byte_low.value());
     case AddressMode::INDY:
-        return fmt::format("(${:02x}),X", byte_low.value());
+        return fmt::format("(${:02x}),Y", byte_low.value());
     case AddressMode::ACC:
         return "A";
     case AddressMode::REL: {

@@ -295,6 +295,10 @@ void Cpu::ExecuteNextInstruction() {
     auto opcode = instructions::FetchNextByte(this);
     auto handler = (*instruction_handlers)[opcode];
     if (handler == nullptr) {
+        if (verbose_stream != nullptr) {
+            (*verbose_stream) << fmt::format("Unknown opcode {:02x} at {:04x}\n", opcode,
+                                             reg.program_counter - 1);
+        }
         // if (debugger != nullptr) {
         // debugger->OnUnknownOpcode();
         // } else {
@@ -306,6 +310,10 @@ void Cpu::ExecuteNextInstruction() {
     handler(this);
 
     if (pending_interrupt != Interrupt::None) {
+        if (verbose_stream != nullptr) {
+            (*verbose_stream) << fmt::format("{} is pending: {}\n",
+                                             to_string(pending_interrupt), reg.Dump());
+        }
         // if (debugger != nullptr) {
         // debugger->OnInterrupt(pending_interrupt);
         // }

@@ -381,6 +381,20 @@ const OpcodeInstructionMap &Get6502EmuInstructionSet() {
     return instruction_set;
 }
 
+std::string to_string(Interrupt interrupt) {
+    switch (interrupt) {
+    case Interrupt::Nmi:
+        return "NMI";
+    case Interrupt::Irq:
+        return "IRQ";
+    case Interrupt::Brk:
+        return "BRK";
+    case Interrupt::None:
+        return "NONE";
+    }
+    return fmt::format("[Invalid irq {}]", static_cast<int>(interrupt));
+}
+
 MemPtr InterruptHandlerAddress(Interrupt interrupt) {
     switch (interrupt) {
     case Interrupt::Nmi:
