@@ -326,6 +326,7 @@ void HandleInterrupt(Cpu *cpu, const Interrupt &interrupt) {
     StackPushByte<true>(cpu, operand);
     auto addr = InterruptHandlerAddress(mode);
 
+    cpu->reg.SetFlag(Flags::IRQB, true);
     cpu->reg.program_counter = addr;
     JumpABS(cpu);
 }

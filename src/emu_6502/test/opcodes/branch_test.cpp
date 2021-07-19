@@ -253,6 +253,7 @@ TEST_F(JumpTest, BRK) {
     WriteMemory(kIrqVector, ToBytes(test_address));
 
     expected_regs.program_counter = test_address;
+    expected_regs.SetFlag(Flags::IRQB, true);
     ExpectStackWrite(3);
 
     Execute(MakeCode(INS_BRK, (uint8_t)1));
