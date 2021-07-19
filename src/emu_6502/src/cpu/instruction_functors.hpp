@@ -146,7 +146,9 @@ void BitOperation(Cpu *cpu) {
     auto operand = read_func(cpu);
     auto result = op(cpu->reg.a, operand);
     cpu->reg.SetNegativeZeroFlag(result);
-    cpu->reg.SetFlag(Registers::Flags::Overflow, (result & 0x40) > 0);
+    cpu->reg.SetFlag(Registers::Flags::Zero, result == 0);
+    cpu->reg.SetFlag(Registers::Flags::Negative, (operand & 0x80) > 0);
+    cpu->reg.SetFlag(Registers::Flags::Overflow, (operand & 0x40) > 0);
 }
 
 template <Reg8Ptr source, ShiftFunc op>

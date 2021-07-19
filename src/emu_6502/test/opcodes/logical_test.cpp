@@ -7,9 +7,11 @@ namespace emu::emu6502::test {
 namespace {
 
 using OpFunctor = std::function<uint8_t(uint8_t, uint8_t)>;
-using LogicalTestArg = std::tuple<Opcode, const char *, AddressMode, uint8_t, uint8_t, OpFunctor>;
+using LogicalTestArg =
+    std::tuple<Opcode, const char *, AddressMode, uint8_t, uint8_t, OpFunctor>;
 
-class LogicalTest : public BaseTest, public ::testing::WithParamInterface<LogicalTestArg> {
+class LogicalTest : public BaseTest,
+                    public ::testing::WithParamInterface<LogicalTestArg> {
 public:
     // Affects Flags: N Z
     // AND (bitwise AND with accumulator)
@@ -99,7 +101,8 @@ std::vector<LogicalTestArg> GetLogicalTestCases() {
     };
 }
 
-INSTANTIATE_TEST_SUITE_P(, LogicalTest, ::testing::ValuesIn(GetLogicalTestCases()), GenTestNameFunc());
+INSTANTIATE_TEST_SUITE_P(, LogicalTest, ::testing::ValuesIn(GetLogicalTestCases()),
+                         GenTestNameFunc());
 
 class BitTest : public BaseTest, public ::testing::WithParamInterface<LogicalTestArg> {
 public:
@@ -122,8 +125,8 @@ public:
         uint8_t result = func(expected_regs.a, target_byte);
 
         expected_regs.SetFlag(Flags::Zero, result == 0);
-        expected_regs.SetFlag(Flags::Negative, (result & 0x80) > 0);
-        expected_regs.SetFlag(Flags::Overflow, (result & 0x40) > 0);
+        expected_regs.SetFlag(Flags::Negative, (target_byte & 0x80) > 0);
+        expected_regs.SetFlag(Flags::Overflow, (target_byte & 0x40) > 0);
 
         BaseTest::Execute(data);
     }
@@ -146,7 +149,8 @@ std::vector<LogicalTestArg> GetBITTestCases() {
     };
 }
 
-INSTANTIATE_TEST_SUITE_P(, BitTest, ::testing::ValuesIn(GetBITTestCases()), GenTestNameFunc());
+INSTANTIATE_TEST_SUITE_P(, BitTest, ::testing::ValuesIn(GetBITTestCases()),
+                         GenTestNameFunc());
 
 } // namespace
 } // namespace emu::emu6502::test
