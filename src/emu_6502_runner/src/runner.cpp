@@ -30,9 +30,13 @@ int Runner::Start() {
     if (result_verbose != nullptr) {
         auto end = std::chrono::steady_clock::now();
         auto delta = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        (*result_verbose) << fmt::format("Took {} seconds\n",
-                                         delta.count() / (1024.0 * 1024.0));
+        auto seconds = delta.count() / 1.0e6;
+        (*result_verbose) << fmt::format("Took {:.6f} seconds\n", seconds);
+        (*result_verbose) << fmt::format(
+            "Cpu cycles: {} ({:.3f} Hz) Lost: {}\n", clock->CurrentCycle(),
+            static_cast<double>(clock->CurrentCycle()) / seconds, clock->LostCycles());
     }
+
     return code;
 }
 
@@ -53,7 +57,8 @@ void Runner::InitCpu(const ExecArguments &opts) {
     if (opts.cpu_options.frequency == 0) {
         clock = std::make_unique<ClockSimple>();
     } else {
-        clock = std::make_unique<ClockSteady>(opts.cpu_options.frequency);
+        clock = std::make_unique<ClockSteady>(opts.cpu_options.frequency,
+                                              opts.GetVerboseStream(Verbose::Clock));
     }
 
     memory = std::make_unique<memory::MemoryMapper16>(

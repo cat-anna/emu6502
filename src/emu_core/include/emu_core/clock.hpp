@@ -1,8 +1,15 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 
 namespace emu {
+
+constexpr uint64_t kNesFrequency =
+    1'789'773llu; //TODO: check which frequency it is and name it correctly
+
+constexpr uint64_t k1MhzFrequency = 1'000'000llu;
+constexpr uint64_t k1KhzFrequency = 1'000llu;
 
 struct Clock {
     virtual ~Clock() = default;
@@ -17,15 +24,15 @@ struct Clock {
 };
 
 struct ClockSimple : public Clock {
-    using Clock_t = uint64_t;
-
     void WaitForNextCycle() override { ++current_cycle; }
     void Reset() override { current_cycle = 0; }
-
-    [[nodiscard]] Clock_t CurrentCycle() const override { return current_cycle; }
+    [[nodiscard]] uint64_t CurrentCycle() const override { return current_cycle; }
+    [[nodiscard]] double Time() const override {
+        return static_cast<double>(current_cycle);
+    };
 
 private:
-    Clock_t current_cycle = 0;
+    uint64_t current_cycle = 0;
 };
 
 } // namespace emu

@@ -9,39 +9,41 @@
 
 namespace emu {
 
-constexpr uint64_t kNesFrequency =
-    1'789'773llu; //TODO: check which frequency it is and name it correctly
-
-constexpr uint64_t k1MhzFrequency = 1'000'000llu;
-constexpr uint64_t k1KhzFrequency = 1'000llu;
-
 struct ClockSteadyException : public std::runtime_error {
     ClockSteadyException(const std::string &msg) : runtime_error(msg) {}
 };
 
 //Single thread only
-struct ClockSteady : public ClockSimple {
-    using steady_clock = std::chrono::steady_clock;
+struct ClockSteady : public Clock {
     static constexpr uint64_t kMaxFrequency = 100'000'000llu;
     static constexpr uint64_t kNanosecondsPerSecond = 1'000'000'000llu;
 
-    ClockSteady(uint64_t frequency = k1MhzFrequency)
-        : frequency{frequency}, tick{kNanosecondsPerSecond / frequency}, next_cycle{} {
+    using steady_clock = std::chrono::steady_clock;
+
+    ClockSteady(uint64_t frequency = k1MhzFrequency,
+                std::ostream *verbose_stream = nullptr)
+        : frequency{frequency}, tick{kNanosecondsPerSecond / frequency}, next_cycle{},
+          verbose_stream(verbose_stream) {
         if (frequency > kMaxFrequency) {
             throw ClockSteadyException("ClockSteady: frequency > kMaxFrequency");
         }
         Reset();
     }
 
+    [[nodiscard]] uint64_t CurrentCycle() const override { return current_cycle; }
+
     void WaitForNextCycle() override {
         if (steady_clock::now() > next_cycle) {
-            next_cycle = steady_clock::now() + tick;
+            // if (verbose_stream != nullptr) {
+            //     (*verbose_stream) << fmt::format("Lost cycle at {}\n", current_cycle);
+            // }
+            next_cycle += tick;
             ++lost_cycles;
-            ClockSimple::WaitForNextCycle();
+            ++current_cycle;
             return;
         }
 
-        ClockSimple::WaitForNextCycle();
+        ++current_cycle;
 
         while (next_cycle > steady_clock::now()) {
             // busy loop
@@ -52,7 +54,7 @@ struct ClockSteady : public ClockSimple {
     }
 
     void Reset() override {
-        ClockSimple::Reset();
+        current_cycle = 0;
         start_time = steady_clock::now();
         next_cycle = start_time + tick;
     }
@@ -66,11 +68,13 @@ struct ClockSteady : public ClockSimple {
     };
 
 private:
+    uint64_t current_cycle = 0;
     const uint64_t frequency;
     std::chrono::nanoseconds const tick;
     steady_clock::time_point next_cycle;
     steady_clock::time_point start_time;
     uint64_t lost_cycles = 0;
+    std::ostream *const verbose_stream;
 };
 
 } // namespace emu

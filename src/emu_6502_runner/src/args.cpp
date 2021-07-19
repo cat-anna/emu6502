@@ -1,10 +1,11 @@
 #include "args.hpp"
+#include "emu_core/boost_po_utils.hpp"
+#include "emu_core/clock.hpp"
+#include "emu_core/file_search.hpp"
+#include "emu_core/string_file.hpp"
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/string_file.hpp>
 #include <boost/program_options.hpp>
-#include <emu_core/boost_po_utils.hpp>
-#include <emu_core/file_search.hpp>
-#include <emu_core/string_file.hpp>
 #include <filesystem>
 #include <fmt/format.h>
 #include <iostream>
@@ -27,6 +28,7 @@ const std::unordered_map<std::string, std::set<Verbose>> kVerboseAreas = {
             Verbose::MemoryMapper,
             Verbose::Result,
             Verbose::Cpu,
+            Verbose::Clock,
             Verbose::Device,
         },
     },
@@ -37,6 +39,7 @@ const std::unordered_map<std::string, std::set<Verbose>> kVerboseAreas = {
             // Verbose::MemoryMapper,
             Verbose::Result,
             Verbose::Cpu,
+            Verbose::Clock,
             Verbose::Device,
         },
     },
@@ -44,6 +47,7 @@ const std::unordered_map<std::string, std::set<Verbose>> kVerboseAreas = {
     {"device", {Verbose::Device}},
     {"result", {Verbose::Result}},
     {"cpu", {Verbose::Cpu}},
+    {"clock", {Verbose::Clock}},
     {"memory", {Verbose::Memory}},
     {"memorymapper", {Verbose::MemoryMapper}},
 };
@@ -70,7 +74,7 @@ struct Options {
             ;
 
         cpu_options.add_options()
-            ("frequency", po::value<uint64_t>()->default_value(1'000'000), "CPU clock speed in Hz. Use 0 for unlimited.")
+            ("frequency", po::value<uint64_t>()->default_value(emu::k1MhzFrequency), "CPU clock speed in Hz. Use 0 for unlimited.")
             // ("cpu", po::value<uint64_t>()->default_value(1'000'000), "CPU clock speed in Hz. Use 0 for unlimited.")
             ;
 

@@ -14,6 +14,7 @@ namespace emu::runner {
 enum class Verbose {
     Result,
     Cpu,
+    Clock,
     Device,
     Memory,
     MemoryMapper,
