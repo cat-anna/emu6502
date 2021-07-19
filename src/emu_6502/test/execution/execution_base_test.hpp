@@ -3,6 +3,7 @@
 
 #include "emu_6502/assembler/compiler.hpp"
 #include "emu_6502/cpu/cpu.hpp"
+#include "emu_6502/cpu/verbose_debugger.hpp"
 #include "emu_core/base16.hpp"
 #include "emu_core/build_config.hpp"
 #include "emu_core/clock.hpp"
@@ -20,8 +21,9 @@ public:
     using ClockType = std::conditional_t<kOptimizedBuild, ClockSteady, ClockSimple>;
     ClockType clock;
     memory::MemorySparse16 memory{&clock, true, kDebugBuild ? &std::cout : nullptr};
+    cpu::VerboseDebugger debugger{InstructionSet::NMOS6502Emu, &memory, &std::cout};
     cpu::Cpu cpu{&clock, &memory, kDebugBuild ? &std::cout : nullptr,
-                 InstructionSet::NMOS6502Emu};
+                 InstructionSet::NMOS6502Emu, &debugger};
 
     std::vector<uint8_t> test_data;
 

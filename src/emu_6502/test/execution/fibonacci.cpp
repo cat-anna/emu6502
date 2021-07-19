@@ -44,7 +44,6 @@ FIBONACCI:
     CPX #$01
     BEQ FIBONACCI_1
 
-
     DEX            ; X=INPUT-1
     TXA            ; X=INPUT-1      A=INPUT-1
     PHA            ; X=INPUT-1      A=INPUT-1        [stack]=INPUT-1

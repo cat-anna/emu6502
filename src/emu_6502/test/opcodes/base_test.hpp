@@ -221,6 +221,15 @@ public:
 
         WriteMemory(target_address, {target_byte});
     }
+
+    void ExpectStackWrite(uint8_t bytes) {
+        auto stack = expected_regs.StackPointerMemoryAddress();
+        std::vector<uint8_t> data;
+        data.resize(bytes);
+        expected_regs.stack_pointer -= bytes;
+        --bytes;
+        memory.WriteRange(stack - bytes, data);
+    }
 };
 
 inline auto GenTestNameFunc(std::string caption = "") {

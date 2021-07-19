@@ -53,10 +53,14 @@ struct Cpu {
 
     void WaitForNextCycle() const;
 
+    void SetInterruptPending(Interrupt interrupt) { pending_interrupt = interrupt; }
+
 private:
     Clock *const clock;
     std::ostream *const verbose_stream;
     Debugger *const debugger;
+
+    Interrupt pending_interrupt = Interrupt::None;
 };
 
 } // namespace emu::emu6502::cpu

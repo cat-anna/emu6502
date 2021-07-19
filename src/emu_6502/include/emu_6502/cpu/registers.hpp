@@ -27,7 +27,7 @@ struct Registers {
         IRQB = 0x04,
         DecimalMode = 0x08,
         Brk = 0x10,
-        NotUsed = 0x20,
+        NotUsed = 0x20, //rename to irq?
         Overflow = 0x40,
         Negative = 0x80,
     };

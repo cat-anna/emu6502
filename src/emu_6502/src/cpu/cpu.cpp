@@ -302,7 +302,16 @@ void Cpu::ExecuteNextInstruction() {
                                              opcode, reg.program_counter));
         // }
     }
+
     handler(this);
+
+    if (pending_interrupt != Interrupt::None) {
+        // if (debugger != nullptr) {
+        // debugger->OnInterrupt(pending_interrupt);
+        // }
+        instructions::HandleInterrupt(this, pending_interrupt);
+        pending_interrupt = Interrupt::None;
+    }
 }
 
 void Cpu::WaitForNextCycle() const {

@@ -207,7 +207,7 @@ void SparseBinaryCode::PutBytes(Address_t address, const std::vector<uint8_t> &b
     for (size_t i = 0; i < bytes.size(); i++) {
         size_t a = address;
         a += i;
-        if (a >= std::numeric_limits<Address_t>::max()) {
+        if (a > std::numeric_limits<Address_t>::max()) {
             throw std::runtime_error(fmt::format("Program::PutBytes address overflow!"));
         }
         PutByte(static_cast<Address_t>(a), bytes[i], overwrite);

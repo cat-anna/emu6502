@@ -331,7 +331,8 @@ std::string to_string(AddressMode mode) {
     case AddressMode::ABS_IND:
         return "ABS_IND";
     }
-    throw std::runtime_error(fmt::format("Invalid address mode: {}", static_cast<int>(mode)));
+    throw std::runtime_error(
+        fmt::format("Invalid address mode: {}", static_cast<int>(mode)));
 }
 
 size_t ArgumentByteSize(AddressMode mode) {
@@ -353,7 +354,8 @@ size_t ArgumentByteSize(AddressMode mode) {
     case AddressMode::ABS_IND:
         return 2;
     }
-    throw std::runtime_error(fmt::format("Invalid address mode: {}", static_cast<int>(mode)));
+    throw std::runtime_error(
+        fmt::format("Invalid address mode: {}", static_cast<int>(mode)));
 }
 
 const OpcodeInstructionMap &GetInstructionSet(InstructionSet instruction_set) {
@@ -365,7 +367,8 @@ const OpcodeInstructionMap &GetInstructionSet(InstructionSet instruction_set) {
     case InstructionSet::Unknown:
         break;
     }
-    throw std::runtime_error(fmt::format("Invalid instruction set: {}", static_cast<int>(instruction_set)));
+    throw std::runtime_error(
+        fmt::format("Invalid instruction set: {}", static_cast<int>(instruction_set)));
 }
 
 const OpcodeInstructionMap &Get6502InstructionSet() {
@@ -376,6 +379,22 @@ const OpcodeInstructionMap &Get6502InstructionSet() {
 const OpcodeInstructionMap &Get6502EmuInstructionSet() {
     static auto instruction_set = GenerateInstructionSet(InstructionSet::NMOS6502Emu);
     return instruction_set;
+}
+
+MemPtr InterruptHandlerAddress(Interrupt interrupt) {
+    switch (interrupt) {
+    case Interrupt::Nmi:
+        return kNmibVector;
+
+    case Interrupt::Irq:
+    case Interrupt::Brk:
+        return kIrqVector;
+
+    case Interrupt::None:
+        break;
+    }
+    throw std::runtime_error(
+        fmt::format("Invalid irq {} to get address", static_cast<int>(interrupt)));
 }
 
 } // namespace emu::emu6502

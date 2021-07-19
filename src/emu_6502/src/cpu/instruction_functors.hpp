@@ -206,7 +206,8 @@ void SetFlag(Cpu *cpu) {
 
 //-----------------------------------------------------------------------------
 
-void StackPushByte(Cpu *cpu, uint8_t v, bool reuse_cycle = false) {
+template <bool reuse_cycle = false>
+void StackPushByte(Cpu *cpu, uint8_t v) {
     cpu->memory->Store(cpu->reg.StackPointerMemoryAddress(), v);
     if (!reuse_cycle) {
         cpu->WaitForNextCycle();
@@ -214,7 +215,8 @@ void StackPushByte(Cpu *cpu, uint8_t v, bool reuse_cycle = false) {
     cpu->reg.stack_pointer--;
 }
 
-uint8_t StackPullByte(Cpu *cpu, bool reuse_cycle = false) {
+template <bool reuse_cycle = false>
+uint8_t StackPullByte(Cpu *cpu) {
     cpu->reg.stack_pointer++;
     auto operand = cpu->memory->Load(cpu->reg.StackPointerMemoryAddress());
     if (!reuse_cycle) {
@@ -244,12 +246,15 @@ void PushFlags(Cpu *cpu) {
     StackPushByte(cpu, operand);
 }
 
+template <bool reuse_cycle = false>
 void PullFlags(Cpu *cpu) {
     auto operand = StackPullByte(cpu);
     cpu->reg.flags = operand;
     cpu->reg.SetFlag(Flags::Brk, false);
     cpu->reg.SetFlag(Flags::NotUsed, false);
-    cpu->WaitForNextCycle();
+    if (!reuse_cycle) {
+        cpu->WaitForNextCycle();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -279,36 +284,48 @@ void JumpIND(Cpu *cpu) {
     cpu->reg.program_counter = fetched_address;
 }
 
-void JSR(Cpu *cpu) { //
+void JSR(Cpu *cpu) {
     auto addr = GetAbsoluteAddress(cpu);
     cpu->reg.program_counter -= 1;
-    StackPushByte(cpu, cpu->reg.program_counter >> 8);
-    StackPushByte(cpu, cpu->reg.program_counter & 0xff, true);
+    StackPushByte<false>(cpu, cpu->reg.program_counter >> 8);
+    StackPushByte<true>(cpu, cpu->reg.program_counter & 0xff);
     cpu->reg.program_counter = addr;
 }
 
-void RTS(Cpu *cpu) { //
-    uint16_t low = StackPullByte(cpu);
-    uint16_t hi = StackPullByte(cpu);
+template <bool inc_pc = true, bool reuse_cycle = false>
+void RTS(Cpu *cpu) {
+    uint16_t low = StackPullByte<reuse_cycle>(cpu);
+    uint16_t hi = StackPullByte<reuse_cycle>(cpu);
     cpu->WaitForNextCycle();
-    cpu->reg.program_counter = (hi << 8 | low) + 1;
+    cpu->reg.program_counter = (hi << 8 | low);
+    if (inc_pc) {
+        ++cpu->reg.program_counter;
+    }
 }
 
 void RTI(Cpu *cpu) {
-    uint16_t low = StackPullByte(cpu);
-    uint16_t hi = StackPullByte(cpu, true);
-    cpu->reg.program_counter = (hi << 8 | low);
-    cpu->reg.flags = StackPullByte(cpu);
+    PullFlags<true>(cpu);
+    RTS<false, true>(cpu);
 }
 
 void BRK(Cpu *cpu) {
-    for (int i = 0; i < 6; ++i) {
-        cpu->WaitForNextCycle();
-    }
+    auto discard = FetchNextByte(cpu);
+    cpu->SetInterruptPending(Interrupt::Brk);
+}
 
-    ++cpu->reg.program_counter;
-    cpu->reg.SetFlag(Flags::Brk, true);
-    //TODO: do correct implementation
+void HandleInterrupt(Cpu *cpu, const Interrupt &interrupt) {
+    StackPushByte<true>(cpu, cpu->reg.program_counter >> 8);
+    StackPushByte<true>(cpu, cpu->reg.program_counter & 0xff);
+    auto mode = interrupt;
+    uint8_t operand = cpu->reg.flags | static_cast<uint8_t>(Flags::NotUsed);
+    if (mode == Interrupt::Brk) {
+        operand |= static_cast<uint8_t>(Flags::Brk);
+    }
+    StackPushByte<true>(cpu, operand);
+    auto addr = InterruptHandlerAddress(mode);
+
+    cpu->reg.program_counter = addr;
+    JumpABS(cpu);
 }
 
 //-----------------------------------------------------------------------------

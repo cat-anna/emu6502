@@ -7,7 +7,8 @@ namespace {
 
 class RegisterBaseTest : public BaseTest {
 public:
-    RegisterBaseTest(InstructionSet instruction_set = InstructionSet::Default) : BaseTest(instruction_set) {}
+    RegisterBaseTest(InstructionSet instruction_set = InstructionSet::Default)
+        : BaseTest(instruction_set) {}
 
     void SetUp() override {
         random_reg_values = true;
@@ -16,7 +17,8 @@ public:
 };
 
 using RegIncDecTestArg = std::tuple<Opcode, const char *, Reg8Ptr, bool>;
-class RegIncDecTest : public RegisterBaseTest, public ::testing::WithParamInterface<RegIncDecTestArg> {
+class RegIncDecTest : public RegisterBaseTest,
+                      public ::testing::WithParamInterface<RegIncDecTestArg> {
 public:
     // Affect Flags: N Z
     // These instructions are implied mode, have a length of one byte and require two machine cycles.
@@ -55,10 +57,12 @@ std::vector<RegIncDecTestArg> GetIncDecTestCases() {
     };
 }
 
-INSTANTIATE_TEST_SUITE_P(, RegIncDecTest, ::testing::ValuesIn(GetIncDecTestCases()), GenTestNameFunc());
+INSTANTIATE_TEST_SUITE_P(, RegIncDecTest, ::testing::ValuesIn(GetIncDecTestCases()),
+                         GenTestNameFunc());
 
 using RegTransferTestArg = std::tuple<Opcode, const char *, Reg8Ptr, Reg8Ptr>;
-class RegisterTransferTest : public RegisterBaseTest, public ::testing::WithParamInterface<RegTransferTestArg> {
+class RegisterTransferTest : public RegisterBaseTest,
+                             public ::testing::WithParamInterface<RegTransferTestArg> {
 public:
     // Affect Flags: N Z
     // These instructions are implied mode, have a length of one byte and require two machine cycles.
@@ -97,11 +101,13 @@ std::vector<RegTransferTestArg> GetTransferTestCases() {
     };
 }
 
-INSTANTIATE_TEST_SUITE_P(, RegisterTransferTest, ::testing::ValuesIn(GetTransferTestCases()), GenTestNameFunc());
+INSTANTIATE_TEST_SUITE_P(, RegisterTransferTest,
+                         ::testing::ValuesIn(GetTransferTestCases()), GenTestNameFunc());
 
 using FlagChangeTestArg = std::tuple<Opcode, std::string, Registers::Flags, bool>;
 
-class FlagChangeTest : public RegisterBaseTest, public ::testing::WithParamInterface<FlagChangeTestArg> {
+class FlagChangeTest : public RegisterBaseTest,
+                       public ::testing::WithParamInterface<FlagChangeTestArg> {
 public:
     // Flag (Processor Status) Instructions
     // Affect Flags: as noted
@@ -155,7 +161,8 @@ std::vector<FlagChangeTestArg> GetFlagChangeTestCases() {
     };
 }
 
-INSTANTIATE_TEST_SUITE_P(, FlagChangeTest, ::testing::ValuesIn(GetFlagChangeTestCases()), GenTestNameFunc());
+INSTANTIATE_TEST_SUITE_P(, FlagChangeTest, ::testing::ValuesIn(GetFlagChangeTestCases()),
+                         GenTestNameFunc());
 
 class MiscTest : public RegisterBaseTest {};
 
@@ -163,24 +170,6 @@ TEST_F(MiscTest, NOP) {
     expected_code_length = 1;
     expected_cycles = 2;
     Execute(MakeCode(INS_NOP));
-}
-
-TEST_F(MiscTest, BRK) {
-    // BRK (BReaK)
-    // Affects Flags: B
-
-    // MODE           SYNTAX       HEX LEN TIM
-    // Implied       BRK           $00  1   7
-
-    // BRK causes a non-maskable interrupt and increments the program counter by one.
-    // Therefore an RTI will go to the address of the BRK +2 so that BRK may be used
-    // to replace a two-byte instruction for debugging and the subsequent RTI will be correct.
-
-    expected_regs.SetFlag(Flags::Brk, true);
-    expected_code_length = 2;
-    expected_cycles = 7;
-
-    Execute(MakeCode(INS_BRK, (uint8_t)0));
 }
 
 class EmuTest : public RegisterBaseTest {

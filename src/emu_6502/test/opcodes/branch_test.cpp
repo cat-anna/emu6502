@@ -49,7 +49,7 @@ public:
     static constexpr int8_t kFarJump = static_cast<int8_t>(0x7F);
     static constexpr int8_t kBackwardJump = static_cast<int8_t>(0xC5);
 
-    void ExecuteBranchTest(int8_t jump_offset, uint64_t cycles, bool branch_successful) { //
+    void ExecuteBranchTest(int8_t jump_offset, uint64_t cycles, bool branch_successful) {
         is_testing_jumps = branch_successful;
         expected_cycles = kBranchIntructionDuration + cycles;
         expected_code_length = kBranchIntructionLength;
@@ -106,7 +106,8 @@ std::vector<BranchTestArg> GetBranchTestCases() {
     };
 }
 
-INSTANTIATE_TEST_SUITE_P(, BranchTest, ::testing::ValuesIn(GetBranchTestCases()), GenTestNameFunc());
+INSTANTIATE_TEST_SUITE_P(, BranchTest, ::testing::ValuesIn(GetBranchTestCases()),
+                         GenTestNameFunc());
 
 class JumpTest : public BaseTest {
 public:
@@ -177,7 +178,8 @@ TEST_F(JumpTest, JSR) {
     memory.WriteRange(expected_regs.StackPointerMemoryAddress() + 1, {0, 0});
     Execute(MakeCode(INS_JSR, test_address));
     auto pc = kBaseCodeAddress + 2;
-    VerifyMemory(expected_regs.StackPointerMemoryAddress() + 1, {(uint8_t)(pc & 0xFF), (uint8_t)(pc >> 8)});
+    VerifyMemory(expected_regs.StackPointerMemoryAddress() + 1,
+                 {(uint8_t)(pc & 0xFF), (uint8_t)(pc >> 8)});
 }
 
 // RTS (ReTurn from Subroutine)
@@ -194,7 +196,8 @@ TEST_F(JumpTest, RTS) {
     // Implied       RTS           $60  1   6
     auto pc = test_address - 1;
     expected_regs.stack_pointer += 1;
-    WriteMemory(expected_regs.StackPointerMemoryAddress(), {(uint8_t)(pc & 0xFF), (uint8_t)(pc >> 8)});
+    WriteMemory(expected_regs.StackPointerMemoryAddress(),
+                {(uint8_t)(pc & 0xFF), (uint8_t)(pc >> 8)});
     expected_regs.stack_pointer += 1;
     expected_regs.program_counter = test_address;
     expected_cycles = 6;
@@ -221,12 +224,38 @@ TEST_F(JumpTest, RTI) {
     cpu.reg.flags = RandomByte();
     expected_regs.stack_pointer += 1;
     WriteMemory(expected_regs.StackPointerMemoryAddress(),
-                {(uint8_t)(pc & 0xFF), (uint8_t)(pc >> 8), expected_regs.flags});
+                {expected_regs.flags, (uint8_t)(pc & 0xFF), (uint8_t)(pc >> 8)});
     expected_regs.stack_pointer += 2;
     expected_regs.program_counter = test_address;
+    expected_regs.SetFlag(Flags::Brk, false);
+    expected_regs.SetFlag(Flags::NotUsed, false);
     expected_cycles = 6;
     expected_code_length = 1;
+    is_testing_jumps = true;
     Execute(MakeCode(INS_RTI));
+}
+
+TEST_F(JumpTest, BRK) {
+    // BRK (BReaK)
+    // Affects Flags: B
+
+    // MODE           SYNTAX       HEX LEN TIM
+    // Implied       BRK           $00  1   7
+
+    // BRK causes a non-maskable interrupt and increments the program counter by one.
+    // Therefore an RTI will go to the address of the BRK +2 so that BRK may be used
+    // to replace a two-byte instruction for debugging and the subsequent RTI will be correct.
+
+    expected_code_length = 2;
+    expected_cycles = 7;
+    is_testing_jumps = true;
+
+    WriteMemory(kIrqVector, ToBytes(test_address));
+
+    expected_regs.program_counter = test_address;
+    ExpectStackWrite(3);
+
+    Execute(MakeCode(INS_BRK, (uint8_t)1));
 }
 
 } // namespace

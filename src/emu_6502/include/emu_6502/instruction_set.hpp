@@ -69,4 +69,13 @@ constexpr Reg8 kNegativeBit = 0x80;
 
 constexpr MemPtr kMemoryPageSize = 0x0100;
 
+enum class Interrupt : Reg8 {
+    None = 0,
+    Nmi,
+    Irq,
+    Brk,
+};
+
+MemPtr InterruptHandlerAddress(Interrupt interrupt);
+
 } // namespace emu::emu6502

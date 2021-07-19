@@ -4,6 +4,8 @@ namespace emu::emu6502::assembler {
 
 std::string to_string(CompilationError error) {
     switch (error) {
+    case CompilationError::NoError:
+        return "NoError";
     case CompilationError::Unknown:
         return "Unknown";
     case CompilationError::UnexpectedInput:
@@ -30,6 +32,10 @@ std::string to_string(CompilationError error) {
         return "InvalidCommandArgument";
     case CompilationError::OperandModeNotSupported:
         return "OperandModeNotSupported";
+    case CompilationError::UnknownCommand:
+        return "UnknownCommand";
+    case CompilationError::InvalidOperandArgument:
+        return "InvalidOperandArgument";
     }
 
     return fmt::format("Invalid error id {}", static_cast<int>(error));
