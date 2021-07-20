@@ -17,6 +17,7 @@ namespace emu::memory {
 template <std::unsigned_integral _Address_t>
 struct MemoryBlock : public MemoryInterface<_Address_t> {
     using Address_t = _Address_t;
+    using Iface = MemoryInterface<_Address_t>;
 
     using VectorType = std::vector<uint8_t>;
 
@@ -75,9 +76,8 @@ private:
 
     void AccessLog(Address_t address, uint8_t value, bool write) const {
         if (verbose_stream != nullptr) {
-            (*verbose_stream) << fmt::format("MEM-BLOCK[{}] {:5} [{:04x}] {} {:02x}\n",
-                                             name, (write ? "W" : "R"), address,
-                                             (write ? "<-" : "->"), value);
+            Iface::WriteAccessLog(*verbose_stream, "BLOCK", name, write, address, value,
+                                  "");
         }
     }
 

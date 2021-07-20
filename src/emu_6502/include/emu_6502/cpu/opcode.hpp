@@ -203,7 +203,7 @@ constexpr Opcode INS_ROR_ABSX = 0x7E;
 //misc
 constexpr Opcode INS_NOP = 0xEA;
 constexpr Opcode INS_BRK = 0x00;
-constexpr Opcode INS_RTI = 0x4;
+constexpr Opcode INS_RTI = 0x40;
 
 //Emu
 constexpr Opcode INS_HLT_ACC = 0xFA;

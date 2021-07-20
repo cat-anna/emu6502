@@ -3,6 +3,7 @@
 #include "cpu.hpp"
 #include "debugger.hpp"
 #include "emu_6502/instruction_set.hpp"
+#include "emu_core/clock.hpp"
 #include "emu_core/memory.hpp"
 #include <array>
 #include <chrono>
@@ -12,12 +13,13 @@
 namespace emu::emu6502::cpu {
 
 struct VerboseDebugger : public Debugger {
-    VerboseDebugger(InstructionSet instruction_set, Memory16 *memory,
+    VerboseDebugger(InstructionSet instruction_set, Memory16 *memory, Clock *clock,
                     std::ostream *verbose_stream);
     void OnNextInstruction(const Registers &regs) override;
 
 private:
     Memory16 *const memory;
+    Clock *const clock;
     std::ostream *const verbose_stream;
 
     std::array<const OpcodeInfo *, 256> known_opcodes;

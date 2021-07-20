@@ -45,8 +45,8 @@ std::string FormatAddressMode(AddressMode addres_mode, const Registers &regs,
 } // namespace
 
 VerboseDebugger::VerboseDebugger(InstructionSet instruction_set, Memory16 *memory,
-                                 std::ostream *verbose_stream)
-    : memory(memory), verbose_stream(verbose_stream) {
+                                 Clock *clock, std::ostream *verbose_stream)
+    : memory(memory), clock(clock), verbose_stream(verbose_stream) {
 
     known_opcodes.fill(nullptr);
     for (auto &[opcode, info] : GetInstructionSet(instruction_set)) {
@@ -59,8 +59,8 @@ void VerboseDebugger::OnNextInstruction(const Registers &regs) {
         return;
     }
 
-    std::string debug_line =
-        fmt::format("{} | {:04x}: ", regs.Dump(), regs.program_counter);
+    std::string debug_line = fmt::format("{:016x} | {} | {:04x}: ", clock->CurrentCycle(),
+                                         regs.Dump(), regs.program_counter);
 
     auto opcode = memory->DebugRead(regs.program_counter);
     if (!opcode.has_value()) {

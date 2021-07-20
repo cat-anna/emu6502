@@ -3,8 +3,10 @@
 #include <concepts>
 #include <cstdint>
 #include <fmt/format.h>
+#include <iostream>
 #include <optional>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace emu {
@@ -55,6 +57,13 @@ public:
             r.emplace_back(DebugRead(static_cast<Address_t>(beg)));
         }
         return r;
+    }
+
+    static void WriteAccessLog(std::ostream &out, const char *memtype,
+                               const std::string &name, bool w, Address_t address,
+                               uint8_t value, const char *comment = "") {
+        out << fmt::format("MEM-{:8s} [{:8}] {} [{:04x}] {} {:02x} {}\n", memtype, name,
+                           (w ? "W" : "R"), address, (w ? "<-" : "->"), value, comment);
     }
 };
 

@@ -14,9 +14,6 @@ struct Debugger {
     virtual ~Debugger() = default;
 
     virtual void OnNextInstruction(const Registers &regs) = 0;
-
-    static Debugger *GetVerboseDebugger(InstructionSet instruction_set, Memory16 *memory,
-                                        std::ostream *verbose_stream);
 };
 
 } // namespace emu::emu6502::cpu

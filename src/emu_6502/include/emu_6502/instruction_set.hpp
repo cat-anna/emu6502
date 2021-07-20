@@ -76,6 +76,7 @@ enum class Interrupt : Reg8 {
     Brk,
 };
 
+std::string to_string(Interrupt interrupt);
 MemPtr InterruptHandlerAddress(Interrupt interrupt);
 
 } // namespace emu::emu6502

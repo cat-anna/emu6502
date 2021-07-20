@@ -67,7 +67,7 @@ void Runner::InitCpu(const ExecArguments &opts) {
     auto debug_stream = opts.GetVerboseStream(Verbose::Cpu);
     if (debug_stream != nullptr) {
         debugger = std::make_unique<emu6502::cpu::VerboseDebugger>(
-            opts.cpu_options.instruction_set, memory.get(), debug_stream);
+            opts.cpu_options.instruction_set, memory.get(), clock.get(), debug_stream);
     }
 
     cpu = std::make_unique<emu6502::cpu::Cpu>(clock.get(), memory.get(), debug_stream,

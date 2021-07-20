@@ -21,7 +21,8 @@ public:
     using ClockType = std::conditional_t<kOptimizedBuild, ClockSteady, ClockSimple>;
     ClockType clock;
     memory::MemorySparse16 memory{&clock, true, kDebugBuild ? &std::cout : nullptr};
-    cpu::VerboseDebugger debugger{InstructionSet::NMOS6502Emu, &memory, &std::cout};
+    cpu::VerboseDebugger debugger{InstructionSet::NMOS6502Emu, &memory, &clock,
+                                  &std::cout};
     cpu::Cpu cpu{&clock, &memory, kDebugBuild ? &std::cout : nullptr,
                  InstructionSet::NMOS6502Emu, &debugger};
 

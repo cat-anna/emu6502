@@ -19,6 +19,7 @@ namespace emu::memory {
 template <std::unsigned_integral _Address_t>
 struct MemoryMapper : public MemoryInterface<_Address_t> {
     using Address_t = _Address_t;
+    using Iface = MemoryInterface<_Address_t>;
 
     using RangePair = std::pair<Address_t, Address_t>;
     using AreaInterface = MemoryInterface<Address_t> *;
@@ -132,9 +133,8 @@ private:
     void AccessLog(Address_t address, uint8_t value, bool write,
                    bool not_mapped = false) const {
         if (verbose_stream != nullptr) {
-            (*verbose_stream) << fmt::format(
-                "MEM-MAPPER {:5} [{:04x}] {} {:02x} {}\n", (write ? "W" : "R"), address,
-                (write ? "<-" : "->"), value, (not_mapped ? "NOT MAPPED" : ""));
+            Iface::WriteAccessLog(*verbose_stream, "MAPPER", {}, write, address, value,
+                                  (not_mapped ? "NOT MAPPED" : ""));
         }
     }
 
