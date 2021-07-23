@@ -34,7 +34,8 @@ public:
     static constexpr MemPtr kBaseDataAddress = 0xE000;
 
     uint8_t zero_page_address{0};
-    uint8_t indirect_address{0};
+
+    uint8_t indirect_address{0x0F};
     uint8_t target_byte{0};
     MemPtr test_address{0};
     MemPtr target_address{0};
@@ -44,47 +45,65 @@ public:
 
     bool is_testing_jumps = false;
     bool random_reg_values = false;
+    bool is_cross_page = false;
 
-    BaseTest(InstructionSet instruction_set = InstructionSet::Default)
-        : cpu{&clock, &memory, &std::cout, instruction_set} {}
+    void SetupTestValues(bool cross_page) {
+        is_cross_page = cross_page;
 
-    void SetUp() override {
-        if (random_reg_values) {
+        target_byte = RandomByte();
+        test_address = kBaseDataAddress | (RandomByte() & 0x7f);
+        target_address = test_address;
+        zero_page_address = RandomByte();
+
+        if (random_reg_values || cross_page) {
             expected_regs.a = RandomByte();
             expected_regs.x = RandomByte();
             expected_regs.y = RandomByte();
             expected_regs.stack_pointer = RandomByte();
+
+            if (cross_page) {
+                indirect_address = RandomByte() | 0x80;
+
+                expected_regs.x |= 0x80;
+                expected_regs.y |= 0x80;
+                test_address |= 0x0080;
+            } else {
+                expected_regs.x &= ~0x80;
+                expected_regs.y &= ~0x80;
+            }
         } else {
+            EXPECT_EQ(cross_page, false);
+
             expected_regs.a = 0x10;
             expected_regs.x = 0x20;
             expected_regs.y = 0x30;
             expected_regs.stack_pointer = 0x40;
         }
+
         expected_regs.program_counter = kBaseCodeAddress;
         expected_regs.flags = RandomByte();
         cpu.reg = expected_regs;
-
-        do {
-            zero_page_address = RandomByte();
-            indirect_address = RandomByte();
-            target_byte = RandomByte();
-            test_address = kBaseDataAddress | (RandomByte() & 0xF0);
-            target_address = test_address;
-        } while (indirect_address + expected_regs.y == zero_page_address ||
-                 zero_page_address + expected_regs.x == indirect_address);
-
-        EXPECT_TRUE(zero_page_address + expected_regs.x != indirect_address);
-        EXPECT_TRUE(indirect_address + expected_regs.y != zero_page_address);
     }
+
+    BaseTest(InstructionSet instruction_set = InstructionSet::Default)
+        : cpu{&clock, &memory, &std::cout, instruction_set} {
+        SetupTestValues(false);
+    }
+
+    void SetUp() override {}
 
     virtual void Execute(const std::vector<uint8_t> &code) {
         if (!is_testing_jumps) {
             expected_regs.program_counter += static_cast<MemPtr>(code.size());
         }
 
+        if (is_cross_page) {
+            expected_cycles = expected_cycles.value() + 1;
+        }
+
         std::cout << fmt::format("SETUP target_byte=0x{:02x}; target_address={:04x} "
-                                 "zero_page_address=0x{:02x}; indirect_address=0x{:02x}; "
-                                 "test_address=0x{:04x};\n",
+                                 "zero_page_address=0x{:02x}; "
+                                 "indirect_address=0x{:02x}; test_address=0x{:04x};\n",
                                  target_byte, target_address, zero_page_address,
                                  indirect_address, test_address);
         std::cout << "CPU STATE 0: " << cpu.reg.Dump() << "\n";
@@ -151,7 +170,9 @@ public:
         case AddressMode::ABSY:
             return MakeCode(opcode, test_address);
         case AddressMode::INDY:
+            return MakeCode(opcode, indirect_address);
         case AddressMode::INDX:
+            return MakeCode(opcode, indirect_address);
         case AddressMode::ZP:
         case AddressMode::ZPX:
         case AddressMode::ZPY:
@@ -168,10 +189,20 @@ public:
         throw std::runtime_error("Invalid address mode");
     }
 
+    MemPtr WrapAddress(MemPtr a, uint8_t v) { return (a & 0xFF00) | ((a + v) & 0x00FF); }
+
     void WriteMemory(MemPtr addr, const std::vector<uint8_t> &data) {
         std::cout << fmt::format("MEM WRITE: {:04x} -> {}\n", addr, ToHex(data));
         memory.WriteRange(addr, data);
     }
+
+    void WriteMemoryWithWrap(MemPtr addr, const std::vector<uint8_t> &data) {
+        for (auto b : data) {
+            WriteMemory(addr, {b});
+            addr = WrapAddress(addr, 1);
+        }
+    }
+
     void VerifyMemory(MemPtr addr, const std::vector<uint8_t> &data) {
         auto content = memory.ReadRange(addr, static_cast<MemPtr>(data.size()));
         EXPECT_EQ(data, content) << fmt::format("Base address: {:04x}", addr);
@@ -191,10 +222,10 @@ public:
             target_address = zero_page_address;
             break;
         case AddressMode::ZPX:
-            target_address = zero_page_address + expected_regs.x;
+            target_address = WrapAddress(zero_page_address, expected_regs.x);
             break;
         case AddressMode::ZPY:
-            target_address = zero_page_address + expected_regs.y;
+            target_address = WrapAddress(zero_page_address, expected_regs.y);
             break;
         case AddressMode::ABSX:
             target_address = test_address + expected_regs.x;
@@ -203,13 +234,13 @@ public:
             target_address = test_address + expected_regs.y;
             break;
         case AddressMode::INDX:
-            WriteMemory(static_cast<MemPtr>(zero_page_address) + expected_regs.x,
-                        {indirect_address});
-            target_address = indirect_address;
+            WriteMemoryWithWrap(indirect_address + expected_regs.x,
+                                ToBytes(test_address));
+            target_address = test_address;
             break;
         case AddressMode::INDY:
-            WriteMemory(zero_page_address, {indirect_address});
-            target_address = static_cast<MemPtr>(indirect_address) + expected_regs.y;
+            WriteMemoryWithWrap(indirect_address, ToBytes(test_address));
+            target_address = test_address + expected_regs.y;
             break;
 
         case AddressMode::Implied:

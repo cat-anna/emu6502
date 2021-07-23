@@ -57,7 +57,7 @@ InstructionHandlerArray GenInstructionHandlerArray(InstructionSet instruction_se
     r[INS_STA_ABSX] = &Register8Store<&Registers::a, kAddressABSX>;
     r[INS_STA_ABSY] = &Register8Store<&Registers::a, kAddressABSY>;
     r[INS_STA_INDX] = &Register8Store<&Registers::a, kAddressINDX>;
-    r[INS_STA_INDY] = &Register8Store<&Registers::a, kAddressSlowINDY>;
+    r[INS_STA_INDY] = &Register8Store<&Registers::a, kAddressStoreINDY>;
     // r[INS_STA_INDZP] = &Register8Store<&Registers::a, &Cpu::kAddressGetZeroPageIndirectAddress>;
 
     //STX

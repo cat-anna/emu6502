@@ -144,7 +144,7 @@ function(define_functional_test)
   add_custom_target(
     ${ARG_NAME}
     COMMENT "Running functional test ${ARG_NAME}"
-    COMMAND emu_6502_runner -v --config ${ARG_CONFIG} --verbose-out verbose_out.txt
+    COMMAND emu_6502_runner --frequency 0 --verbose=result --config ${ARG_CONFIG} --verbose-out verbose_out.txt
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}
     DEPENDS emu_6502_runner ${ARG_DEPENDS} ${ARG_CONFIG} ${ARG_IMAGE} ${TEST_IMAGE})
 

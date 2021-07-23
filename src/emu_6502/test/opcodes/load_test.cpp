@@ -5,7 +5,8 @@
 namespace emu::emu6502::test {
 namespace {
 
-using LoadTestArg = std::tuple<Opcode, const char *, AddressMode, uint8_t, uint8_t, Reg8Ptr>;
+using LoadTestArg =
+    std::tuple<Opcode, const char *, AddressMode, uint8_t, uint8_t, Reg8Ptr>;
 class LoadTest : public BaseTest, public ::testing::WithParamInterface<LoadTestArg> {
 public:
     // LDA(LoaD Accumulator)
@@ -73,7 +74,8 @@ std::vector<LoadTestArg> GetLoadTestCases() {
     };
 }
 
-INSTANTIATE_TEST_SUITE_P(, LoadTest, ::testing::ValuesIn(GetLoadTestCases()), GenTestNameFunc());
+INSTANTIATE_TEST_SUITE_P(, LoadTest, ::testing::ValuesIn(GetLoadTestCases()),
+                         GenTestNameFunc());
 
 } // namespace
 } // namespace emu::emu6502::test
