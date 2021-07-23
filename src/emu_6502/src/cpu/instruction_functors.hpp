@@ -178,23 +178,26 @@ template <MemReadFunc read_func, bool subtract = false>
 void ArithmeticOperation(Cpu *cpu) {
     auto operand = read_func(cpu);
     if (cpu->reg.TestFlag(Flags::DecimalMode)) {
-        throw std::runtime_error("Decimal mode is not implemented yet");
+        throw std::runtime_error("Decimal mode is not implemented (yet)");
     } else {
-        const bool SignBitsAreEqual = ((cpu->reg.a ^ operand) & kNegativeBit) == 0;
-
         uint16_t result = cpu->reg.a;
-        result += cpu->reg.CarryValue();
         if constexpr (subtract) {
             result -= operand;
+            result -= (1 - cpu->reg.CarryValue());
+            operand = ~operand;
         } else {
             result += operand;
+            result += cpu->reg.CarryValue();
         }
+
+        bool overflow = ((cpu->reg.a ^ operand) & kNegativeBit) == 0 &&
+                        ((result ^ operand) & kNegativeBit) != 0;
 
         cpu->reg.a = result & 0xFF;
         cpu->reg.SetNegativeZeroFlag(cpu->reg.a);
-        cpu->reg.SetFlag(Flags::Carry, result > 0xFF);
-        cpu->reg.SetFlag(Flags::Overflow, SignBitsAreEqual && ((cpu->reg.a ^ operand) &
-                                                               kNegativeBit) != 0);
+        cpu->reg.SetFlag(Flags::Negative, (result & 0x80) != 0);
+        cpu->reg.SetFlag(Flags::Carry, subtract != (result > 0xFF));
+        cpu->reg.SetFlag(Flags::Overflow, overflow);
     }
 }
 
