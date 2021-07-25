@@ -1,7 +1,7 @@
-add_custom_target(build_all_libs)
-add_custom_target(build_all_test)
-add_custom_target(build_all_executables)
-add_custom_target(build_all_modules)
+add_custom_target(build_all_libs ALL)
+add_custom_target(build_all_test ALL)
+add_custom_target(build_all_executables ALL)
+add_custom_target(build_all_modules ALL)
 add_custom_target(execute_all_test)
 
 function(define_static_lib target_name)

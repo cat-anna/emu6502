@@ -5,7 +5,7 @@ find_program(git_executable git)
 message("* ca65 compiler: ${ca65_EXECUTABLE}")
 message("* ca65 linker: ${ld65_EXECUTABLE}")
 
-add_custom_target(build_all_6502_images)
+add_custom_target(build_all_6502_images ALL)
 
 function(build_6502_image_with_ca65)
   set(options)
