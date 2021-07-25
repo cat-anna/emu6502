@@ -18,9 +18,11 @@ struct PathListSearcher : public FileSearch,
                           public std::enable_shared_from_this<PathListSearcher> {
     PathListSearcher(std::vector<std::string> list, std::ostream *log)
         : path_list(), log(log) {
-        std::transform(
-            list.begin(), list.end(), std::back_inserter(path_list),
-            [](auto i) { return std::filesystem::absolute(std::filesystem::path(i)); });
+        std::transform(list.begin(), list.end(), std::back_inserter(path_list),
+                       [](auto i) {
+                           return std::filesystem::absolute(
+                               std::filesystem::path(i.empty() ? std::string(".") : i));
+                       });
     }
 
     PathListSearcher(std::vector<std::filesystem::path> list,
@@ -31,7 +33,8 @@ struct PathListSearcher : public FileSearch,
     }
 
     std::shared_ptr<FileSearch> PrependPath(const std::string &name) const override {
-        auto path = std::filesystem::absolute(std::filesystem::path(name));
+        auto path = std::filesystem::absolute(
+            std::filesystem::path(name.empty() ? std::string(".") : name));
         if (!std::filesystem::is_directory(path)) {
             path = path.parent_path();
         }

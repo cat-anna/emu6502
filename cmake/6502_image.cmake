@@ -6,6 +6,7 @@ message("* ca65 compiler: ${ca65_EXECUTABLE}")
 message("* ca65 linker: ${ld65_EXECUTABLE}")
 
 add_custom_target(build_all_6502_images ALL)
+add_dependencies(build_all_6502_images build_all_modules)
 
 function(build_6502_image_with_ca65)
   set(options)
@@ -22,12 +23,14 @@ function(build_6502_image_with_ca65)
     set(PATCH_DIR ${IMMEDIATE}/patch)
     set(COMPILE_SOURCE ${PATCH_DIR}/${SRC_NAME})
 
+    file(RELATIVE_PATH PATCH_RELATIVE ${PROJECT_SOURCE_DIR} ${PATCH_DIR})
     add_custom_command(
       OUTPUT ${COMPILE_SOURCE}
       COMMENT "Patching ${ARG_NAME}"
       COMMAND ${CMAKE_COMMAND} -E copy ${ARG_SOURCE} ${PATCH_DIR}
-      COMMAND ${git_executable} apply --no-index --directory=${PATCH_DIR} ${ARG_PATCH}
+      COMMAND ${git_executable} apply --no-index --directory=${PATCH_RELATIVE} ${ARG_PATCH}
       DEPENDS ${ARG_SOURCE} ${ARG_PATCH}
+      WORKING_DIRECTORY ${PATCH_DIR}
       VERBATIM)
   else()
     set(COMPILE_SOURCE ${ARG_SOURCE})
@@ -49,11 +52,11 @@ function(build_6502_image_with_ca65)
     VERBATIM)
 
   add_custom_target(${ARG_NAME} DEPENDS ${IMMEDIATE}.bin)
+  add_dependencies(build_all_6502_images ${ARG_NAME})
+
   set(${ARG_NAME}
       ${IMMEDIATE}.bin
       PARENT_SCOPE)
-
-  add_dependencies(build_all_6502_images ${ARG_NAME})
 
 endfunction()
 
@@ -71,15 +74,14 @@ function(build_6502_image)
     COMMENT "Compiling ${ARG_NAME}"
     COMMAND emu_6502_ac -v --config ${ARG_CONFIG} --input ${ARG_SOURCE} --hex-dump ${IMMEDIATE}.hex --bin-output
             ${IMMEDIATE}.bin
-    DEPENDS ${ARG_SOURCE} ${ARG_DEPENDS} emu_6502_ac
+    DEPENDS ${ARG_SOURCE} ${ARG_DEPENDS} emu_6502_ac build_all_modules
     VERBATIM)
 
-  add_custom_target(${ARG_NAME} DEPENDS ${IMMEDIATE}.bin)
+  add_custom_target(${ARG_NAME} DEPENDS build_all_modules ${IMMEDIATE}.bin)
+  add_dependencies(build_all_6502_images ${ARG_NAME})
 
   set(${ARG_NAME}
       ${IMMEDIATE}.bin
       PARENT_SCOPE)
-
-  add_dependencies(build_all_6502_images ${ARG_NAME})
 
 endfunction()

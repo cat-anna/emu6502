@@ -28,9 +28,9 @@ function(define_module target_name)
 
   define_static_lib(${LIB_NAME})
   file(GLOB_RECURSE SRC module/*)
-  # TARGET_DESTINATTION
+
   message("* Adding module ${MODULE_NAME}")
-  add_library(${MODULE_NAME} SHARED ${SRC})
+  add_library(${MODULE_NAME} MODULE ${SRC})
   target_include_directories(${MODULE_NAME} PUBLIC include)
   target_include_directories(${MODULE_NAME} PRIVATE src)
   target_link_libraries(${MODULE_NAME} PUBLIC fmt::fmt ${LIB_NAME})
@@ -78,10 +78,20 @@ function(define_ut_target target_name ut_name)
 
   add_custom_target(
     run_${target_ut_name}
-    COMMAND ${target_ut_name}
+    COMMAND ${target_ut_name} --gtest_shuffle
     WORKING_DIRECTORY ${TARGET_DESTINATTION}
     COMMENT "Running test ${target_ut_name}"
     DEPENDS ${target_ut_name} ${target_name})
+
+  add_test(
+    NAME test_${target_ut_name}
+    COMMAND ${target_ut_name} --gtest_shuffle --gtest_output=xml:${TARGET_DESTINATTION}/${target_ut_name}.xml
+    WORKING_DIRECTORY ${TARGET_DESTINATTION})
+
+  set_property(
+    TARGET run_${target_ut_name}
+    APPEND
+    PROPERTY ADDITIONAL_CLEAN_FILES ${TARGET_DESTINATTION}/${target_ut_name}.xml)
 
   add_dependencies(execute_all_test run_${target_ut_name})
   add_dependencies(build_all_test ${target_ut_name})
@@ -141,12 +151,26 @@ function(define_functional_test)
     COMMAND ${CMAKE_COMMAND} -E copy ${ARG_IMAGE} ${TEST_IMAGE}
     DEPENDS ${ARG_IMAGE})
 
+  add_custom_target(test_image_${ARG_NAME} DEPENDS ${ARG_IMAGE} ${TEST_IMAGE})
+  add_dependencies(build_all_test test_image_${ARG_NAME})
+
   add_custom_target(
     ${ARG_NAME}
     COMMENT "Running functional test ${ARG_NAME}"
     COMMAND emu_6502_runner --frequency 0 --verbose=result --config ${ARG_CONFIG} --verbose-out verbose_out.txt
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}
-    DEPENDS emu_6502_runner ${ARG_DEPENDS} ${ARG_CONFIG} ${ARG_IMAGE} ${TEST_IMAGE})
+    DEPENDS emu_6502_runner
+            build_all_modules
+            ${ARG_DEPENDS}
+            ${ARG_CONFIG}
+            ${ARG_IMAGE}
+            ${TEST_IMAGE}
+            test_image_${ARG_NAME})
+
+  add_test(
+    NAME test_${ARG_NAME}
+    COMMAND emu_6502_runner --frequency 0 --verbose=result --config ${ARG_CONFIG} --verbose-out verbose_out.txt
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME})
 
   add_dependencies(execute_all_test ${ARG_NAME})
 
