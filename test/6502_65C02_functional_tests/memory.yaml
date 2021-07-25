@@ -1,0 +1,22 @@
+---
+memory:
+- ram:
+  offset: 0x0000
+  size: 0xF000
+  image:
+    file: test_image.bin
+- ram:
+  offset: 0xF100
+  size: 0x0F00
+  image:
+    file: test_image.bin
+    offset: 0xF100
+- device:
+  offset: 0xF000
+  name: ser0
+  class: tty
+  config:
+    output: ser0_out.bin
+    enabled: true
+    buffer_size: 255
+    baud: 115200

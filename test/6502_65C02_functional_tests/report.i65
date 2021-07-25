@@ -1,0 +1,40 @@
+
+.macro flush
+.local loop
+loop:   LDA $F002
+        BNE loop
+.endmacro
+
+.macro halt exit_code
+        flush
+; $FB is custom opcode for halt emulator execution and exit immediate byte as process exit code
+        .byte $FB, exit_code
+.endmacro
+
+.macro print arg
+        ldx #0
+        lda arg
+.local loop
+loop:
+        sta $f003
+        inx
+        lda arg,x
+        bne loop
+        flush
+.endmacro
+
+report_init:
+        print rmsg_start
+        rts
+
+report_error:
+        halt $01
+
+report_success:
+        print rmsg_success
+        halt $00
+
+rmsg_start:
+        .byte  10,13,"Started testing",10,13,0
+rmsg_success:
+        .byte  10,13,"All tests completed",10,13,0
