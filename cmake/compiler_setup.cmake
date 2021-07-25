@@ -8,7 +8,7 @@ if(MSVC)
   message("* MSVC: Enabling c++latest")
 else()
   add_compile_options("-std=c++20")
-  # set (CMAKE_CXX_STANDARD 20)
+  set(CMAKE_CXX_STANDARD 20)
 endif()
 
 if(MSVC)
