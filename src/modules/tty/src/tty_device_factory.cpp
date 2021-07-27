@@ -1,20 +1,18 @@
 
-#include "emu_tty/tty_device_factory.hpp"
+#include "emu/module/tty/tty_device_factory.hpp"
 #include <cstdint>
 #include <string>
 
 using namespace std::string_literals;
 
-namespace emu::tty {
-
-namespace {} // namespace
+namespace emu::module::tty {
 
 std::shared_ptr<Device>
 TtyDeviceFactory::CreateDevice(const std::string &name,
                                const MemoryConfigEntry::MappedDevice &md, Clock *clock,
                                std::ostream *verbose_output) {
 
-    auto instance = std::make_shared<DeviceInstance>();
+    auto instance = std::make_shared<TtyDeviceInstance>();
 
     std::istream *input_stream = nullptr;
     if (auto input = md.GetConfigItem("input", ""s); !input.empty()) {
@@ -38,4 +36,4 @@ TtyDeviceFactory::CreateDevice(const std::string &name,
     return instance;
 }
 
-} // namespace emu::tty
+} // namespace emu::module::tty

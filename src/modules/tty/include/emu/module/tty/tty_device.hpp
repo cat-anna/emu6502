@@ -7,7 +7,7 @@
 #include <list>
 #include <queue>
 
-namespace emu::tty {
+namespace emu::module::tty {
 
 constexpr Memory16::Address_t kDeviceMemorySize = 4;
 
@@ -84,4 +84,4 @@ private:
     [[nodiscard]] uint64_t ByteDelta();
 };
 
-} // namespace emu::tty
+} // namespace emu::module::tty

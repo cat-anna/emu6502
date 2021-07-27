@@ -1,11 +1,11 @@
 
-#include "emu_tty/tty_symbol_factory.hpp"
+#include "emu/module/tty/tty_symbol_factory.hpp"
+#include "emu/module/tty/tty_device.hpp"
 #include "emu_core/text_utils.hpp"
-#include "emu_tty/tty_device.hpp"
 #include <cstdint>
 #include <fmt/format.h>
 
-namespace emu::tty {
+namespace emu::module::tty {
 
 SymbolDefVector
 TtyDeviceSymbolFactory::GetSymbols(const MemoryConfigEntry &entry,
@@ -59,4 +59,4 @@ TtyDeviceSymbolFactory::GetSymbols(const MemoryConfigEntry &entry,
     return r;
 }
 
-} // namespace emu::tty
+} // namespace emu::module::tty

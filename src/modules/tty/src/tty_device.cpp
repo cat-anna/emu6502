@@ -1,8 +1,8 @@
-#include <emu_core/bit_utils.hpp>
-#include <emu_tty/tty_device.hpp>
+#include "emu/module/tty/tty_device.hpp"
+#include "emu_core/bit_utils.hpp"
 #include <fmt/format.h>
 
-namespace emu::tty {
+namespace emu::module::tty {
 
 namespace {
 
@@ -248,4 +248,4 @@ void TtyDevice::UpdateBuffers() {
     }
 }
 
-} // namespace emu::tty
+} // namespace emu::module::tty

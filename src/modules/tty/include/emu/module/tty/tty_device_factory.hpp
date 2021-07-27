@@ -1,14 +1,15 @@
 #pragma once
 
+#include "emu/module/tty/tty_device.hpp"
 #include "emu_core/device_factory.hpp"
 #include "emu_core/stream_container.hpp"
-#include "emu_tty/tty_device.hpp"
 #include <cstdint>
 
-namespace emu::tty {
+namespace emu::module::tty {
 
-struct DeviceInstance : public Device, std::enable_shared_from_this<DeviceInstance> {
-    ~DeviceInstance() override = default;
+struct TtyDeviceInstance : public Device,
+                           std::enable_shared_from_this<TtyDeviceInstance> {
+    ~TtyDeviceInstance() override = default;
 
     std::shared_ptr<Memory16> GetMemory() override { return device; }
     size_t GetMemorySize() override { return kDeviceMemorySize; };
@@ -26,4 +27,4 @@ struct TtyDeviceFactory : public DeviceFactory {
                                          std::ostream *verbose_output = nullptr) override;
 };
 
-} // namespace emu::tty
+} // namespace emu::module::tty

@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <memory>
 
-namespace emu::tty {
+namespace emu::module::tty {
 
 struct TtyDeviceSymbolFactory : public SymbolFactory {
     TtyDeviceSymbolFactory() = default;
@@ -14,4 +14,4 @@ struct TtyDeviceSymbolFactory : public SymbolFactory {
                                const MemoryConfigEntry::MappedDevice &md) override;
 };
 
-} // namespace emu::tty
+} // namespace emu::module::tty

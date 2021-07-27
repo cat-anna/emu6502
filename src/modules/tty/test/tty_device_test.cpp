@@ -1,11 +1,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "emu/module/tty/tty_device.hpp"
 #include "emu_core/clock.hpp"
-#include "emu_tty/tty_device.hpp"
 #include <sstream>
 
-namespace emu::tty::test {
+namespace emu::module::tty::test {
 namespace {
 
 using namespace ::testing;
@@ -31,7 +31,9 @@ public:
     uint64_t test_time = 0;
 
     void SetUp() override {
-        EXPECT_CALL(clock_mock, Time()).WillRepeatedly(Invoke([this]() { return static_cast<double>(test_time); }));
+        EXPECT_CALL(clock_mock, Time()).WillRepeatedly(Invoke([this]() {
+            return static_cast<double>(test_time);
+        }));
         device.SetEnabled(true);
     }
 };
@@ -130,4 +132,4 @@ TEST_F(TtyDeviceTest, EnabledLaterWrite) {
 }
 
 } // namespace
-} // namespace emu::tty::test
+} // namespace emu::module::tty::test
