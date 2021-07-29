@@ -21,3 +21,7 @@ memory:
     enabled: true
     buffer_size: 255
     baud: 115200
+- device:
+  class: random.mt19937
+  offset: 0xA010
+  name: random

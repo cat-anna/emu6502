@@ -78,10 +78,10 @@ std::vector<ArithmeticTestArg> GetTestCases() {
     // it indicates a borrow occurred.
 
     auto ADD = [](uint8_t a, uint8_t b, uint8_t c) -> std::tuple<bool, uint16_t> {
-        return {false, a + (b + c)};
+        return {false, static_cast<uint16_t>(a + (b + c))};
     };
     auto SBC = [](uint8_t a, uint8_t b, uint8_t c) -> std::tuple<bool, uint16_t> {
-        return {true, a - (b + (1 - c))};
+        return {true, static_cast<uint16_t>(a - (b + (1 - c)))};
     };
     // TODO: + add 1 cycle if page boundary crossed
     return {
