@@ -35,6 +35,11 @@ SymbolDefVector GetSymbolDefs(SymbolFactory *symbol_factory,
 
 } // namespace
 
+SymbolDefVectorBuilder::SymbolDefVectorBuilder(const std::string &device_name,
+                                               const std::string &class_name)
+    : device_name(ToUpper(device_name)), class_name(ToUpper(class_name)) {
+}
+
 SymbolDefVector SymbolFactory::GetSymbols(const MemoryConfig &memory_config) {
     SymbolDefVector r;
 
