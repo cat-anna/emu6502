@@ -57,7 +57,7 @@ public:
     virtual std::string Message() const;
     const TokenLocation &Location() const { return location; }
     TokenizerError Error() const { return error; }
-    virtual const char *what() const noexcept override { return message.c_str(); }
+    const char *what() const noexcept override { return message.c_str(); }
 
 private:
     const std::string message;
@@ -150,7 +150,7 @@ struct TokenListIterator {
         }
         Token operator*();
         void operator++();
-        bool operator!=(const Iterator &other);
+        bool operator!=(const Iterator &other) const;
     };
 
     Iterator begin() { return Iterator{&tokenizer, separator}; }

@@ -23,8 +23,11 @@ using ConflictingOptionsVec = std::vector<std::pair<std::string, std::string>>;
 // }
 
 void ConflictingOptions(const po::variables_map &vm, const char *opt1, const char *opt2) {
-    if (vm.count(opt1) && !vm[opt1].defaulted() && vm.count(opt2) && !vm[opt2].defaulted())
-        throw std::logic_error(fmt::format("Options '{}' and '{}' cannot be used together", opt1, opt2));
+    if ((vm.count(opt1) != 0) && !vm[opt1].defaulted() && (vm.count(opt2) != 0) &&
+        !vm[opt2].defaulted()) {
+        throw std::logic_error(
+            fmt::format("Options '{}' and '{}' cannot be used together", opt1, opt2));
+    }
 }
 
 void ConflictingOptions(const po::variables_map &vm, const ConflictingOptionsVec &cov) {

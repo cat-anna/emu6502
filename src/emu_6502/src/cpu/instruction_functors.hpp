@@ -314,7 +314,7 @@ void RTI(Cpu *cpu) {
 }
 
 void BRK(Cpu *cpu) {
-    auto discard = FetchNextByte(cpu);
+    (void)FetchNextByte(cpu);
     cpu->SetInterruptPending(Interrupt::Brk);
 }
 

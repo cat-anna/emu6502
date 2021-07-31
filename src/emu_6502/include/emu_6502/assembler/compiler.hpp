@@ -52,6 +52,6 @@ std::unique_ptr<Program>
 CompileFile(const std::string &file,
             InstructionSet cpu_instruction_set = InstructionSet::Default);
 
-std::string GenerateSymbolDump(Program &progam);
+std::string GenerateSymbolDump(Program &program);
 
 } // namespace emu::emu6502::assembler

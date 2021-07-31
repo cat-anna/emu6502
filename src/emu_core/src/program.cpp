@@ -30,11 +30,7 @@ std::vector<uint8_t> ToBytes(const SymbolAddress &v,
 //-----------------------------------------------------------------------------
 
 bool SymbolInfo::operator==(const SymbolInfo &other) const {
-    if (name != other.name || imported != other.imported || offset != other.offset) {
-        return false;
-    }
-
-    return true;
+    return name == other.name && imported == other.imported && offset == other.offset;
 }
 
 std::string to_string(const SymbolInfo &symbol) {
@@ -136,23 +132,7 @@ bool RelocationInfo::operator==(const RelocationInfo &other) const {
 }
 
 bool RelocationInfo::operator<(const RelocationInfo &other) const {
-    if (position < other.position) {
-        //  && mode < other.mode) {
-        return true;
-    }
-
-    return false;
-
-    // auto my_symbol = target_symbol.lock();
-    // auto oth_symbol = other.target_symbol.lock();
-    // if (static_cast<bool>(my_symbol) != static_cast<bool>(oth_symbol)) {
-    //     return false;
-    // }
-    // if (my_symbol) {
-    //     return my_symbol->name < oth_symbol->name;
-    // } else {
-    //     return true;
-    // }
+    return position < other.position;
 }
 
 std::string to_string(const RelocationInfo &relocation) {

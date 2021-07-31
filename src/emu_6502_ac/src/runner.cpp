@@ -12,7 +12,7 @@ int Runner::Start(const ExecArguments &exec_args) {
     try {
         auto compiler = InitCompiler(exec_args);
 
-        for (auto input : exec_args.input_options) {
+        for (auto &input : exec_args.input_options) {
             compiler->Compile(*input.stream, input.name);
         }
 

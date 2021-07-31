@@ -25,7 +25,7 @@ std::shared_ptr<SymbolFactory> DynamicPluginLoader::GetSymbolFactory() {
 
 SymbolDefVector
 DynamicPluginLoader::GetSymbols(const MemoryConfigEntry &entry,
-                                const MemoryConfigEntry::MappedDevice &md) {
+                                const MemoryConfigEntry::MappedDevice &md) const {
     if (auto it = symbol_factories.find(md.module_name); it != symbol_factories.end()) {
         return it->second->GetSymbols(entry, md);
     } else {
@@ -49,7 +49,7 @@ DynamicPluginLoader::GetSymbols(const MemoryConfigEntry &entry,
 std::shared_ptr<Device>
 DynamicPluginLoader::CreateDevice(const std::string &name,
                                   const MemoryConfigEntry::MappedDevice &md, Clock *clock,
-                                  std::ostream *verbose_output) {
+                                  std::ostream *verbose_output) const {
     if (auto it = device_factories.find(md.module_name); it != device_factories.end()) {
         return it->second->CreateDevice(name, md, clock, verbose_output);
     } else {
@@ -69,7 +69,7 @@ DynamicPluginLoader::CreateDevice(const std::string &name,
     }
 }
 
-SharedSmartModule DynamicPluginLoader::LoadOrGetModule(const std::string &name) {
+SharedSmartModule DynamicPluginLoader::LoadOrGetModule(const std::string &name) const {
     if (auto it = modules.find(name); it != modules.end()) {
         return it->second;
     }

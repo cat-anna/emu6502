@@ -90,7 +90,7 @@ std::shared_ptr<FileSearch> FileSearch::CreateFromEnv(const std::string &env_var
     if (v != nullptr) {
         s = v;
     }
-    return Create(std::move(s), log);
+    return Create(s, log);
 }
 
 std::shared_ptr<FileSearch> FileSearch::Create(const std::string &colon_separated_list,

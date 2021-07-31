@@ -14,7 +14,7 @@ struct ClockSteadyException : public std::runtime_error {
 };
 
 //Single thread only
-struct ClockSteady : public Clock {
+struct ClockSteady final : public Clock {
     static constexpr uint64_t kMaxFrequency = 100'000'000llu;
     static constexpr uint64_t kNanosecondsPerSecond = 1'000'000'000llu;
 
@@ -22,12 +22,14 @@ struct ClockSteady : public Clock {
 
     ClockSteady(uint64_t frequency = k1MhzFrequency,
                 std::ostream *verbose_stream = nullptr)
-        : frequency{frequency}, tick{kNanosecondsPerSecond / frequency}, next_cycle{},
-          verbose_stream(verbose_stream) {
+        : frequency{frequency}, tick{kNanosecondsPerSecond / frequency}
+    //   ,verbose_stream(verbose_stream)
+    {
         if (frequency > kMaxFrequency) {
             throw ClockSteadyException("ClockSteady: frequency > kMaxFrequency");
         }
-        Reset();
+        ClockSteady::Reset();
+        (void)verbose_stream;
     }
 
     [[nodiscard]] uint64_t CurrentCycle() const override { return current_cycle; }
@@ -71,10 +73,10 @@ private:
     uint64_t current_cycle = 0;
     const uint64_t frequency;
     std::chrono::nanoseconds const tick;
-    steady_clock::time_point next_cycle;
-    steady_clock::time_point start_time;
+    steady_clock::time_point next_cycle{};
+    steady_clock::time_point start_time{};
     uint64_t lost_cycles = 0;
-    std::ostream *const verbose_stream;
+    // std::ostream *const verbose_stream;
 };
 
 } // namespace emu

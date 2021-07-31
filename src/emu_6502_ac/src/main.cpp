@@ -3,7 +3,7 @@
 #include "runner.hpp"
 #include <filesystem>
 
-int main(int argc, char **argv) {
+int main(int argc, char *argv[]) {
     using namespace emu::emu6502::assembler;
     using namespace emu::plugins;
     namespace fs = std::filesystem;

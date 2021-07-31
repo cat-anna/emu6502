@@ -8,10 +8,10 @@ namespace emu::module::tty {
 
 struct TtyDeviceSymbolFactory : public SymbolFactory {
     TtyDeviceSymbolFactory() = default;
-    virtual ~TtyDeviceSymbolFactory() = default;
+    ~TtyDeviceSymbolFactory() override = default;
 
     SymbolDefVector GetSymbols(const MemoryConfigEntry &entry,
-                               const MemoryConfigEntry::MappedDevice &md) override;
+                               const MemoryConfigEntry::MappedDevice &md) const override;
 };
 
 } // namespace emu::module::tty

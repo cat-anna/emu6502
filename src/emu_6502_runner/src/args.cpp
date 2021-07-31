@@ -117,7 +117,7 @@ struct Options {
 protected:
     void ReadVariableMap(const po::variables_map &vm, ExecArguments &args) {
         std::set<std::string> verbose_areas;
-        if (vm.count("verbose-out")) {
+        if (vm.count("verbose-out") > 0) {
             args.verbose_stream =
                 args.streams.OpenTextOutput(vm["verbose-out"].as<std::string>());
         }
@@ -188,13 +188,13 @@ protected:
         };
 
         if (vm.count("image") > 0) {
-            for (auto image_file : vm["image"].as<std::vector<std::string>>()) {
+            for (auto &image_file : vm["image"].as<std::vector<std::string>>()) {
                 load_entry(image_file);
             }
         }
 
         if (vm.count("config") > 0) {
-            for (auto image_file : vm["config"].as<std::vector<std::string>>()) {
+            for (auto &image_file : vm["config"].as<std::vector<std::string>>()) {
                 load_entry(image_file);
             }
         }
@@ -204,7 +204,7 @@ protected:
         }
     }
 
-    [[noreturn]] void PrintHelp(int exit_code) {
+    [[noreturn]] void PrintHelp(int exit_code) const {
         std::cout << "Emu 6502 runner";
         std::cout << "\n";
         std::cout << all_options;

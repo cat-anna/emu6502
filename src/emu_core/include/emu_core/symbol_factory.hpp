@@ -24,7 +24,7 @@ struct SymbolDefVectorBuilder {
     const std::string device_name;
     const std::string class_name;
 
-    SymbolDefVectorBuilder(const std::string &class_name, const std::string &device_name);
+    SymbolDefVectorBuilder(const std::string &device_name, const std::string &class_name);
 
     template <typename V, typename O = int>
     void EmitSymbol(const std::string &name, V base, O offset = 0) {
@@ -47,10 +47,11 @@ struct SymbolDefVectorBuilder {
 struct SymbolFactory {
     virtual ~SymbolFactory() = default;
 
-    virtual SymbolDefVector GetSymbols(const MemoryConfigEntry &entry,
-                                       const MemoryConfigEntry::MappedDevice &md) = 0;
+    virtual SymbolDefVector
+    GetSymbols(const MemoryConfigEntry &entry,
+               const MemoryConfigEntry::MappedDevice &md) const = 0;
 
-    virtual SymbolDefVector GetSymbols(const MemoryConfig &memory_config);
+    virtual SymbolDefVector GetSymbols(const MemoryConfig &memory_config) const;
 };
 
 } // namespace emu

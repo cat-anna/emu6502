@@ -20,12 +20,12 @@ struct DeviceInstance : public Device, std::enable_shared_from_this<DeviceInstan
 
 struct Mt19937DeviceFactory : public DeviceFactory {
     Mt19937DeviceFactory() = default;
-    virtual ~Mt19937DeviceFactory() = default;
+    ~Mt19937DeviceFactory() override = default;
 
     std::shared_ptr<Device> CreateDevice(const std::string &name,
                                          const MemoryConfigEntry::MappedDevice &md,
                                          Clock *clock,
-                                         std::ostream *verbose_output) override {
+                                         std::ostream *verbose_output) const override {
         auto instance = std::make_shared<DeviceInstance<Mt19937Device>>();
 
         auto seed = md.GetConfigItem<int64_t>("seed", Mt19937Device::kDefaultSeed);
@@ -38,12 +38,12 @@ struct Mt19937DeviceFactory : public DeviceFactory {
 
 struct RandomDeviceFactory : public DeviceFactory {
     RandomDeviceFactory() = default;
-    virtual ~RandomDeviceFactory() = default;
+    ~RandomDeviceFactory() override = default;
 
     std::shared_ptr<Device> CreateDevice(const std::string &name,
                                          const MemoryConfigEntry::MappedDevice &md,
                                          Clock *clock,
-                                         std::ostream *verbose_output) override {
+                                         std::ostream *verbose_output) const override {
         auto instance = std::make_shared<DeviceInstance<RandomDevice>>();
         instance->device = std::make_shared<RandomDevice>(verbose_output);
         return instance;

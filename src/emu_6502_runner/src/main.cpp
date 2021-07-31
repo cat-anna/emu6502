@@ -8,7 +8,7 @@
 
 #include <memory>
 
-int main(int argc, char **argv) {
+int main(int argc, char *argv[]) {
     using namespace emu::runner;
     using namespace emu::plugins;
     namespace fs = std::filesystem;

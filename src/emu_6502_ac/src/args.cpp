@@ -105,7 +105,7 @@ protected:
                           const po::variables_map &vm) {
         opts.clear();
         if (vm.count("input") > 0) {
-            for (auto input_file : vm["input"].as<std::vector<std::string>>()) {
+            for (auto &input_file : vm["input"].as<std::vector<std::string>>()) {
                 auto input_name = input_file == "-" ? "stdin"s : input_file;
                 auto input = streams.OpenTextInput(input_file);
                 opts.emplace_back(ExecArguments::Input{input_name, input});
@@ -133,7 +133,7 @@ protected:
         opts.entries.clear();
 
         if (vm.count("config") > 0) {
-            for (auto file : vm["config"].as<std::vector<std::string>>()) {
+            for (auto &file : vm["config"].as<std::vector<std::string>>()) {
                 auto conf = LoadMemoryConfigurationFromFile(file, file_search.get());
                 opts.entries.insert(opts.entries.end(), conf.entries.begin(),
                                     conf.entries.end());
@@ -141,7 +141,7 @@ protected:
         }
     }
 
-    [[noreturn]] void PrintHelp(int exit_code) {
+    [[noreturn]] void PrintHelp(int exit_code) const {
         std::cout << "Emu 6502 assembly compiler";
         std::cout << "\n";
         std::cout << all_options;

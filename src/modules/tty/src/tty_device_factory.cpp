@@ -10,7 +10,7 @@ namespace emu::module::tty {
 std::shared_ptr<Device>
 TtyDeviceFactory::CreateDevice(const std::string &name,
                                const MemoryConfigEntry::MappedDevice &md, Clock *clock,
-                               std::ostream *verbose_output) {
+                               std::ostream *verbose_output) const {
 
     auto instance = std::make_shared<TtyDeviceInstance>();
 

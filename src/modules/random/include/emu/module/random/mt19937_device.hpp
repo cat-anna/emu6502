@@ -37,11 +37,11 @@ public:
     [[nodiscard]] std::optional<uint8_t> DebugRead(Address_t address) const override;
 
 private:
-    std::ostream *const verbose_output;
     mutable std::uniform_int_distribution<> byte_distribution{0, 0xff};
     mutable std::mt19937 mt;
     IntType current_seed;
     uint8_t control_reg = 0;
+    std::ostream *const verbose_output;
 
     [[noreturn]] void Error(const std::string &msg) const {
         if (verbose_output != nullptr) {

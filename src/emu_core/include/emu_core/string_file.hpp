@@ -22,7 +22,7 @@ inline container load_file(const std::string &p) {
     std::size_t sz = static_cast<std::size_t>(std::filesystem::file_size(p));
     container r;
     r.resize(sz, 0);
-    file.read(reinterpret_cast<char *>(&r[0]), sz);
+    file.read(reinterpret_cast<char *>(&r[0]), static_cast<std::streamsize>(sz));
     return r;
 }
 

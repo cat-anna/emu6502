@@ -29,22 +29,23 @@ struct DynamicPluginLoader : public PluginLoader,
 
     //SymbolFactory
     SymbolDefVector GetSymbols(const MemoryConfigEntry &entry,
-                               const MemoryConfigEntry::MappedDevice &md) override;
+                               const MemoryConfigEntry::MappedDevice &md) const override;
 
     //DeviceFactory
-    std::shared_ptr<Device> CreateDevice(const std::string &name,
-                                         const MemoryConfigEntry::MappedDevice &md,
-                                         Clock *clock,
-                                         std::ostream *verbose_output = nullptr) override;
+    std::shared_ptr<Device>
+    CreateDevice(const std::string &name, const MemoryConfigEntry::MappedDevice &md,
+                 Clock *clock, std::ostream *verbose_output = nullptr) const override;
 
 private:
     std::filesystem::path const module_dir;
 
-    std::unordered_map<std::string, SharedSmartModule> modules;
-    std::unordered_map<std::string, std::shared_ptr<SymbolFactory>> symbol_factories;
-    std::unordered_map<std::string, std::shared_ptr<DeviceFactory>> device_factories;
+    mutable std::unordered_map<std::string, SharedSmartModule> modules;
+    mutable std::unordered_map<std::string, std::shared_ptr<SymbolFactory>>
+        symbol_factories;
+    mutable std::unordered_map<std::string, std::shared_ptr<DeviceFactory>>
+        device_factories;
 
-    SharedSmartModule LoadOrGetModule(const std::string &name);
+    SharedSmartModule LoadOrGetModule(const std::string &name) const;
 };
 
 } // namespace emu::plugins

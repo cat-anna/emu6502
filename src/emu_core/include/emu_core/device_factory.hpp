@@ -20,7 +20,7 @@ struct DeviceFactory {
 
     virtual std::shared_ptr<Device>
     CreateDevice(const std::string &name, const MemoryConfigEntry::MappedDevice &md,
-                 Clock *clock, std::ostream *verbose_output = nullptr) = 0;
+                 Clock *clock, std::ostream *verbose_output = nullptr) const = 0;
 };
 
 } // namespace emu

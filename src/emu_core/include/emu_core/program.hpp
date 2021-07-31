@@ -121,7 +121,7 @@ struct SparseBinaryCode {
     MapType sparse_map;
 
     SparseBinaryCode(std::initializer_list<MapType::value_type> init)
-        : sparse_map(std::move(init)) {}
+        : sparse_map(init) {}
     SparseBinaryCode() = default;
     SparseBinaryCode(Address_t base_address, const VectorType &bytes) {
         PutBytes(base_address, bytes);

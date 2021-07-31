@@ -9,7 +9,7 @@ namespace emu::module::tty {
 
 SymbolDefVector
 TtyDeviceSymbolFactory::GetSymbols(const MemoryConfigEntry &entry,
-                                   const MemoryConfigEntry::MappedDevice &md) {
+                                   const MemoryConfigEntry::MappedDevice &md) const {
 
     auto base = entry.offset;
     auto upper_name = ToUpper(entry.name);

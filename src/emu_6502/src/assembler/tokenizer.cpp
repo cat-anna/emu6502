@@ -46,14 +46,16 @@ std::tuple<char, size_t> ParseEscapeSequence(std::string_view input) {
 
             char *end = nullptr;
             auto r = std::strtoul(input.data(), &end, base);
-            if (static_cast<size_t>(end - input.data()) > input.size() || r > std::numeric_limits<uint8_t>::max()) {
+            if (static_cast<size_t>(end - input.data()) > input.size() ||
+                r > std::numeric_limits<uint8_t>::max()) {
                 throw TokenizerException("Value of escape sequence exceeds uint8",
                                          TokenizerError::InvalidEscapeSequence);
             }
             consumed += end - input.data();
             return {static_cast<char>(r), consumed};
         }
-        throw TokenizerException("Malformed escape sequence", TokenizerError::InvalidEscapeSequence);
+        throw TokenizerException("Malformed escape sequence",
+                                 TokenizerError::InvalidEscapeSequence);
     }
 }
 
@@ -146,7 +148,8 @@ Token TokenListIterator::Iterator::operator*() {
     if (current_token.has_value()) {
         return *current_token;
     }
-    throw TokenizerException("Attempt to dereference empty TokenListIterator::Iterator", TokenizerError::Unknown, {});
+    throw TokenizerException("Attempt to dereference empty TokenListIterator::Iterator",
+                             TokenizerError::Unknown, {});
 }
 
 void TokenListIterator::Iterator::operator++() {
@@ -164,18 +167,20 @@ void TokenListIterator::Iterator::operator++() {
         current_token = std::nullopt;
         auto next = parent->NextToken();
         if (next.value != separator) {
-            throw TokenizerException("Not a separator", TokenizerError::Unknown, next.location);
+            throw TokenizerException("Not a separator", TokenizerError::Unknown,
+                                     next.location);
         }
         operator++();
     } else {
         current_token = parent->NextToken();
         if (current_token->value == separator) {
-            throw TokenizerException("no element in list", TokenizerError::Unknown, current_token->location);
+            throw TokenizerException("no element in list", TokenizerError::Unknown,
+                                     current_token->location);
         }
     }
 }
 
-bool TokenListIterator::Iterator::operator!=(const Iterator &other) {
+bool TokenListIterator::Iterator::operator!=(const Iterator &other) const {
     return parent != other.parent;
 }
 
@@ -226,7 +231,8 @@ Token LineTokenizer::NextToken() {
         default: {
             auto pos = line.find_first_of("\t\n ;,=");
             if (pos == 0) {
-                throw TokenizerException("TODO ERROR 2", TokenizerError::Unknown, location);
+                throw TokenizerException("TODO ERROR 2", TokenizerError::Unknown,
+                                         location);
             }
             if (pos == std::string_view::npos) {
                 pos = line.size();
@@ -273,7 +279,8 @@ bool Tokenizer::HasInput() {
 
 LineTokenizer Tokenizer::NextLine() {
     if (!HasInput()) {
-        throw TokenizerException("No more input TODO", TokenizerError::Unknown, Location());
+        throw TokenizerException("No more input TODO", TokenizerError::Unknown,
+                                 Location());
     }
 
     std::string raw_line;

@@ -7,7 +7,7 @@ namespace emu {
 
 namespace {
 
-SymbolDefVector GetSymbolDefs(SymbolFactory *symbol_factory,
+SymbolDefVector GetSymbolDefs(const SymbolFactory *symbol_factory,
                               const MemoryConfigEntry &entry,
                               const MemoryConfigEntry::RamArea &ra) {
     SymbolDefVector r;
@@ -27,7 +27,7 @@ SymbolDefVector GetSymbolDefs(SymbolFactory *symbol_factory,
     return r;
 }
 
-SymbolDefVector GetSymbolDefs(SymbolFactory *symbol_factory,
+SymbolDefVector GetSymbolDefs(const SymbolFactory *symbol_factory,
                               const MemoryConfigEntry &entry,
                               const MemoryConfigEntry::MappedDevice &md) {
     return symbol_factory->GetSymbols(entry, md);
@@ -40,7 +40,7 @@ SymbolDefVectorBuilder::SymbolDefVectorBuilder(const std::string &device_name,
     : device_name(ToUpper(device_name)), class_name(ToUpper(class_name)) {
 }
 
-SymbolDefVector SymbolFactory::GetSymbols(const MemoryConfig &memory_config) {
+SymbolDefVector SymbolFactory::GetSymbols(const MemoryConfig &memory_config) const {
     SymbolDefVector r;
 
     for (auto &entry : memory_config.entries) {

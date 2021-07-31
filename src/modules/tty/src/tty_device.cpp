@@ -150,7 +150,6 @@ std::optional<uint8_t> TtyDevice::DebugRead(Address_t address) const {
 }
 
 uint8_t TtyDevice::Load(Address_t address) const {
-
     const_cast<TtyDevice *>(this)->UpdateBuffers();
 
     switch (static_cast<Register>(address)) {
@@ -210,7 +209,8 @@ void TtyDevice::Store(Address_t address, uint8_t value) {
 
 uint64_t TtyDevice::ByteDelta() {
     auto time = (clock->Time() - start_time);
-    auto total_bytes = static_cast<uint64_t>(time * byte_rate_per_second);
+    auto total_bytes =
+        static_cast<uint64_t>(time * static_cast<double>(byte_rate_per_second));
     auto delta = total_bytes - last_byte_time;
     last_byte_time = total_bytes;
     return delta;

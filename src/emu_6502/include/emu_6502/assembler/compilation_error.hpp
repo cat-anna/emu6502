@@ -39,17 +39,17 @@ std::string GetDefaultMessage(CompilationError error, const Token &t);
 
 class CompilationException : public std::exception {
 public:
-    CompilationException(std::string message, CompilationError error, Token token = {})
-        : message(std::move(message)), error(error), token(std::move(token)) {}
+    CompilationException(std::string _message, CompilationError _error, Token _token = {})
+        : message(std::move(_message)), error(_error), token(std::move(_token)) {}
 
     virtual std::string Message() const;
     const TokenLocation &Location() const { return token.location; }
     CompilationError Error() const { return error; }
-    virtual const char *what() const noexcept { return message.c_str(); }
+    const char *what() const noexcept override { return message.c_str(); }
 
     template <typename... ARGS>
     static std::string FormatMessage(CompilationError err, const Token &t,
-                                     const char *fmt = nullptr, ARGS &&... args) {
+                                     const char *fmt = nullptr, ARGS &&...args) {
         if (fmt != nullptr) {
             return to_string(err) + ": " + fmt::format(fmt, std::forward<ARGS>(args)...);
         } else {
@@ -66,7 +66,7 @@ private:
 template <typename... ARGS>
 [[noreturn]] inline void ThrowCompilationError(CompilationError err, Token t,
                                                const char *fmt = nullptr,
-                                               ARGS &&... args) {
+                                               ARGS &&...args) {
     auto msg =
         CompilationException::FormatMessage(err, t, fmt, std::forward<ARGS>(args)...);
     throw CompilationException(msg, err, std::move(t));

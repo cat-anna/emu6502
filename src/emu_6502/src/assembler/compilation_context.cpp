@@ -174,7 +174,7 @@ void CompilationContext::ParseOriginCommand(LineTokenizer &tokenizer) {
 void CompilationContext::ParseIsrCommand(LineTokenizer &tokenizer) {
     auto isr = tokenizer.NextToken();
 
-    Address_t addr;
+    Address_t addr{};
     try {
         addr = kIsrMap.at(isr.String());
     } catch (const std::out_of_range &) {
@@ -186,7 +186,6 @@ void CompilationContext::ParseIsrCommand(LineTokenizer &tokenizer) {
 
     switch (GetTokenType(tok, program)) {
     case TokenType::kAlias:
-        break;
     case TokenType::kValue:
         break;
 
@@ -203,8 +202,9 @@ void CompilationContext::ParseIsrCommand(LineTokenizer &tokenizer) {
 void CompilationContext::ParseSymbolCommand(LineTokenizer &tokenizer) {
 }
 
-std::vector<uint8_t> CompilationContext::ParseTokenToBytes(const Token &value_token,
-                                                           size_t expected_byte_size) {
+std::vector<uint8_t>
+CompilationContext::ParseTokenToBytes(const Token &value_token,
+                                      size_t expected_byte_size) const {
     try {
         return ParseImmediateValue(value_token.View(), program.aliases,
                                    expected_byte_size);

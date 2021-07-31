@@ -44,7 +44,7 @@ private:
     Address_t current_position = 0;
 
     template <typename... ARGS>
-    void Log(ARGS &&... args) {
+    void Log(ARGS &&...args) {
         if (verbose_logs) {
             std::cout << "CompilationContext: "
                       << fmt::format(std::forward<ARGS>(args)...) << "\n";
@@ -64,7 +64,7 @@ private:
     void ParseDataCommand(LineTokenizer &tokenizer, Address_t element_size);
 
     std::vector<uint8_t> ParseTokenToBytes(const Token &value_token,
-                                           size_t expected_byte_size);
+                                           size_t expected_byte_size) const;
 
     void PutSymbolReference(RelocationMode mode, const std::string &symbol,
                             Address_t position);

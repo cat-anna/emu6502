@@ -11,12 +11,12 @@ namespace emu::module::random {
 
 struct Mt19937DeviceSymbolFactory : public SymbolFactory {
     Mt19937DeviceSymbolFactory() = default;
-    virtual ~Mt19937DeviceSymbolFactory() = default;
+    ~Mt19937DeviceSymbolFactory() override = default;
 
     static constexpr auto kClassName = "MT19937";
 
     SymbolDefVector GetSymbols(const MemoryConfigEntry &entry,
-                               const MemoryConfigEntry::MappedDevice &md) {
+                               const MemoryConfigEntry::MappedDevice &md) const override {
         auto base = entry.offset;
         SymbolDefVectorBuilder r{kClassName, entry.name};
         using Reg = Mt19937Device::Register;
@@ -33,12 +33,12 @@ struct Mt19937DeviceSymbolFactory : public SymbolFactory {
 
 struct RandomDeviceSymbolFactory : public SymbolFactory {
     RandomDeviceSymbolFactory() = default;
-    virtual ~RandomDeviceSymbolFactory() = default;
+    ~RandomDeviceSymbolFactory() override = default;
 
     static constexpr auto kClassName = "RANDOM";
 
     SymbolDefVector GetSymbols(const MemoryConfigEntry &entry,
-                               const MemoryConfigEntry::MappedDevice &md) {
+                               const MemoryConfigEntry::MappedDevice &md) const override {
         auto base = entry.offset;
         SymbolDefVectorBuilder r{kClassName, entry.name};
         r.EmitSymbol("BASE_ADDRESS"s, base);

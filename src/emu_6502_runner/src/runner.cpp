@@ -40,10 +40,10 @@ int Runner::Start() {
     return code;
 }
 
-void Runner::InitMemory(const ExecArguments &opts) {
-    for (auto &dev : opts.memory_options.entries) {
+void Runner::InitMemory(const ExecArguments &exec_args) {
+    for (auto &dev : exec_args.memory_options.entries) {
         auto [device_ptr, size] = std::visit(
-            [&](auto &item) { return CreateMemoryDevice(opts, dev.name, item); },
+            [&](auto &item) { return CreateMemoryDevice(exec_args, dev.name, item); },
             dev.entry_variant);
         if (device_ptr != nullptr) {
             memory->MapArea(static_cast<uint16_t>(dev.offset),
@@ -53,25 +53,26 @@ void Runner::InitMemory(const ExecArguments &opts) {
     }
 }
 
-void Runner::InitCpu(const ExecArguments &opts) {
-    if (opts.cpu_options.frequency == 0) {
+void Runner::InitCpu(const ExecArguments &exec_args) {
+    if (exec_args.cpu_options.frequency == 0) {
         clock = std::make_unique<ClockSimple>();
     } else {
-        clock = std::make_unique<ClockSteady>(opts.cpu_options.frequency,
-                                              opts.GetVerboseStream(Verbose::Clock));
+        clock = std::make_unique<ClockSteady>(exec_args.cpu_options.frequency,
+                                              exec_args.GetVerboseStream(Verbose::Clock));
     }
 
     memory = std::make_unique<memory::MemoryMapper16>(
-        clock.get(), false, opts.GetVerboseStream(Verbose::MemoryMapper));
+        clock.get(), false, exec_args.GetVerboseStream(Verbose::MemoryMapper));
 
-    auto debug_stream = opts.GetVerboseStream(Verbose::Cpu);
+    auto debug_stream = exec_args.GetVerboseStream(Verbose::Cpu);
     if (debug_stream != nullptr) {
         debugger = std::make_unique<emu6502::cpu::VerboseDebugger>(
-            opts.cpu_options.instruction_set, memory.get(), clock.get(), debug_stream);
+            exec_args.cpu_options.instruction_set, memory.get(), clock.get(),
+            debug_stream);
     }
 
     cpu = std::make_unique<emu6502::cpu::Cpu>(clock.get(), memory.get(), debug_stream,
-                                              opts.cpu_options.instruction_set,
+                                              exec_args.cpu_options.instruction_set,
                                               debugger.get());
 }
 
