@@ -13,6 +13,7 @@ function(define_static_lib target_name)
   target_include_directories(${target_name} PRIVATE src)
   target_link_libraries(${target_name} PUBLIC fmt::fmt)
   add_dependencies(build_all_libs ${target_name})
+  enable_clang_tidy(${target_name})
 
   set(TARGET
       ${target_name}
@@ -23,27 +24,34 @@ function(define_static_lib target_name)
 endfunction()
 
 function(define_module target_name)
-  set(MODULE_NAME "emu.module.${target_name}")
-  set(LIB_NAME "emu_${target_name}")
+  set(module_name "emu.module.${target_name}")
+  set(lib_name "emu_module_${target_name}")
 
-  define_static_lib(${LIB_NAME})
+  define_static_lib(${lib_name})
+  target_link_libraries(${lib_name} PUBLIC emu_core emu_module_core)
   file(GLOB_RECURSE SRC module/*)
 
-  message("* Adding module ${MODULE_NAME}")
-  add_library(${MODULE_NAME} MODULE ${SRC})
-  target_include_directories(${MODULE_NAME} PUBLIC include)
-  target_include_directories(${MODULE_NAME} PRIVATE src)
-  target_link_libraries(${MODULE_NAME} PUBLIC fmt::fmt ${LIB_NAME})
-  add_dependencies(build_all_modules ${MODULE_NAME})
+  message("* Adding module ${module_name}")
+  add_library(${module_name} MODULE ${SRC})
+  target_include_directories(${module_name} PUBLIC include)
+  target_include_directories(${module_name} PRIVATE src)
+  target_link_libraries(${module_name} PUBLIC fmt::fmt ${lib_name} emu_core emu_module_core)
+  add_dependencies(build_all_modules ${module_name})
+  enable_clang_tidy(${module_name})
+
+  install(
+    TARGETS ${module_name}
+    COMPONENT modules
+    DESTINATION bin)
 
   set(TARGET
-      ${LIB_NAME}
+      ${lib_name}
       PARENT_SCOPE)
   set(MODULE_TARGET
-      ${MODULE_NAME}
+      ${module_name}
       PARENT_SCOPE)
   set(LIB_TARGET
-      ${LIB_NAME}
+      ${lib_name}
       PARENT_SCOPE)
 endfunction()
 
@@ -56,6 +64,12 @@ function(define_executable target_name)
   target_include_directories(${target_name} PRIVATE src)
   target_link_libraries(${target_name} PUBLIC fmt::fmt)
   add_dependencies(build_all_executables ${target_name})
+  enable_clang_tidy(${target_name})
+
+  install(
+    TARGETS ${target_name}
+    COMPONENT executables
+    DESTINATION bin)
 
   set(TARGET
       ${target_name}
@@ -85,13 +99,18 @@ function(define_ut_target target_name ut_name)
 
   add_test(
     NAME test_${target_ut_name}
-    COMMAND ${target_ut_name} --gtest_shuffle --gtest_output=xml:${TARGET_DESTINATTION}/${target_ut_name}.xml
+    COMMAND ${target_ut_name} --gtest_shuffle --gtest_output=xml:${TEST_RESULT_DIR}/${target_ut_name}.xml
     WORKING_DIRECTORY ${TARGET_DESTINATTION})
 
   set_property(
     TARGET run_${target_ut_name}
     APPEND
-    PROPERTY ADDITIONAL_CLEAN_FILES ${TARGET_DESTINATTION}/${target_ut_name}.xml)
+    PROPERTY ADDITIONAL_CLEAN_FILES ${TEST_RESULT_DIR}/${target_ut_name}.xml)
+
+  install(
+    TARGETS ${target_ut_name}
+    COMPONENT test
+    DESTINATION test)
 
   add_dependencies(execute_all_test run_${target_ut_name})
   add_dependencies(build_all_test ${target_ut_name})
@@ -173,5 +192,4 @@ function(define_functional_test)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME})
 
   add_dependencies(execute_all_test ${ARG_NAME})
-
 endfunction()
