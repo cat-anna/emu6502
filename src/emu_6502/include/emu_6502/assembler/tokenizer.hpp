@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <memory>
 #include <optional>
 #include <stack>
 #include <stdexcept>
@@ -16,57 +17,29 @@ struct TokenListIterator;
 
 struct TokenLocation {
     TokenLocation() = default;
-    TokenLocation(const TokenLocation &, size_t) {}
+    TokenLocation(TokenLocation &&) = default;
+    TokenLocation(const TokenLocation &) = default;
+
+    TokenLocation(std::shared_ptr<const std::string> input_name,
+                  std::shared_ptr<const std::string> line_content, size_t line,
+                  size_t column)
+        : input_name(std::move(input_name)), line_content(std::move(line_content)),
+          line(line), column(column) {}
+
+    TokenLocation &operator=(const TokenLocation &) = default;
+    TokenLocation &operator=(TokenLocation &&) = default;
+
+    std::shared_ptr<const std::string> input_name = {};
+    std::shared_ptr<const std::string> line_content = {};
+    size_t line = 0;
+    size_t column = 0;
+
+    std::string GetDescription() const;
 };
 
 std::string to_string(const TokenLocation &location);
 
-enum class TokenizerError {
-    Unknown,
-    InvalidEscapeSequence,
-};
-std::string to_string(TokenizerError error);
-
-class TokenizerSubException : public std::exception {
-public:
-    TokenizerSubException(std::string message, TokenizerError error, size_t _offset = 0)
-        : message(std::move(message)), error(error), offset(_offset) {}
-
-    TokenizerSubException(const TokenizerSubException &sub_exception, size_t _offset)
-        : message(sub_exception.message), error(sub_exception.error),
-          offset(_offset + sub_exception.offset) {}
-
-    const char *what() const noexcept override { return message.c_str(); }
-
-    std::string message;
-    const TokenizerError error;
-    const size_t offset;
-};
-
-class TokenizerException : public std::exception {
-public:
-    TokenizerException(std::string message, TokenizerError error,
-                       TokenLocation location = {})
-        : message(std::move(message)), error(error), location(std::move(location)) {}
-
-    TokenizerException(const TokenizerSubException &sub_exception,
-                       TokenLocation location = {})
-        : message(sub_exception.message), error(sub_exception.error),
-          location(std::move(location), sub_exception.offset) {}
-
-    virtual std::string Message() const;
-    const TokenLocation &Location() const { return location; }
-    TokenizerError Error() const { return error; }
-    const char *what() const noexcept override { return message.c_str(); }
-
-private:
-    const std::string message;
-    const TokenizerError error;
-    const TokenLocation location;
-};
-
 struct Token {
-    LineTokenizer *line = nullptr;
     std::string value;
     TokenLocation location = {};
 
@@ -74,10 +47,16 @@ struct Token {
     Token(const Token &) = default;
     Token(Token &&) = default;
 
-    Token(LineTokenizer *line, TokenLocation location, std::string input)
-        : line(line), value(input), location(location) {}
-    Token(LineTokenizer *line, TokenLocation location, std::string_view input)
-        : line(line), value(input), location(location) {}
+    Token(const Token &other, size_t column_offset) : Token(other) {
+        location.column += column_offset;
+    }
+    Token(Token &&other, size_t column_offset) : Token(other) {
+        location.column += column_offset;
+    }
+    Token(TokenLocation location, std::string input = {})
+        : value(input), location(location) {}
+    Token(TokenLocation location, std::string_view input)
+        : value(input), location(location) {}
 
     operator bool() const { return !value.empty(); }
     bool operator==(std::string_view s) const { return value == s; }
@@ -94,9 +73,10 @@ struct Token {
 std::string to_string(const Token &token);
 
 struct LineTokenizer {
-    LineTokenizer(Tokenizer &_tokenizer, size_t _line_number, std::string _line_storage)
+    LineTokenizer(Tokenizer &_tokenizer, size_t _line_number,
+                  std::shared_ptr<const std::string> _line_storage)
         : tokenizer(_tokenizer), line_number(_line_number), line_storage(_line_storage),
-          line(line_storage) {}
+          line(*line_storage) {}
 
     bool HasInput();
     Token NextToken();
@@ -107,7 +87,7 @@ struct LineTokenizer {
 private:
     Tokenizer &tokenizer;
     const size_t line_number;
-    const std::string line_storage;
+    std::shared_ptr<const std::string> line_storage;
     size_t column = 0;
     std::string_view line;
 
@@ -116,15 +96,18 @@ private:
 
 struct Tokenizer {
     Tokenizer(std::istream &_input, std::string _input_name)
-        : input(_input), input_name(_input_name) {}
+        : input(_input), input_name(std::make_shared<std::string>(_input_name)) {}
 
     LineTokenizer NextLine();
     bool HasInput();
     TokenLocation Location() const;
 
+    auto GetInputName() const { return input_name; }
+
 private:
     std::istream &input;
-    const std::string input_name;
+    const std::shared_ptr<const std::string> input_name;
+    std::shared_ptr<const std::string> current_line = std::make_shared<std::string>();
     size_t line = 0;
 };
 

@@ -1,4 +1,5 @@
 #include "emu_6502/assembler/tokenizer.hpp"
+#include "emu_6502/assembler/compilation_error.hpp"
 #include <algorithm>
 #include <fmt/format.h>
 #include <stdexcept>
@@ -9,8 +10,7 @@ namespace {
 
 std::tuple<char, size_t> ParseEscapeSequence(std::string_view input) {
     if (input.empty()) {
-        //todo:
-        throw false;
+        throw std::runtime_error("Empty input for ParseEscapeSequence");
     }
 
     auto c = input[0];
@@ -48,14 +48,14 @@ std::tuple<char, size_t> ParseEscapeSequence(std::string_view input) {
             auto r = std::strtoul(input.data(), &end, base);
             if (static_cast<size_t>(end - input.data()) > input.size() ||
                 r > std::numeric_limits<uint8_t>::max()) {
-                throw TokenizerException("Value of escape sequence exceeds uint8",
-                                         TokenizerError::InvalidEscapeSequence);
+                throw CompilationException("Value of escape sequence exceeds uint8",
+                                           CompilationError::InvalidEscapeSequence);
             }
             consumed += end - input.data();
             return {static_cast<char>(r), consumed};
         }
-        throw TokenizerException("Malformed escape sequence",
-                                 TokenizerError::InvalidEscapeSequence);
+        throw CompilationException("Malformed escape sequence",
+                                   CompilationError::InvalidEscapeSequence);
     }
 }
 
@@ -78,8 +78,8 @@ std::tuple<std::string, size_t> ParseQuotedString(std::string_view input) {
                 input.remove_prefix(escape_consumed);
                 out += character;
                 continue;
-            } catch (const TokenizerSubException &e) {
-                throw TokenizerSubException(e, consumed);
+            } catch (const CompilationSubException &e) {
+                throw CompilationSubException(e, consumed);
             }
         }
 
@@ -90,7 +90,8 @@ std::tuple<std::string, size_t> ParseQuotedString(std::string_view input) {
     }
 
     if (!ended) {
-        throw false; //TODO
+        throw CompilationSubException("Quoted string not terminated",
+                                      CompilationError::UnfinishedQuotedString, consumed);
     }
 
     return {out, consumed};
@@ -100,26 +101,15 @@ std::tuple<std::string, size_t> ParseQuotedString(std::string_view input) {
 
 //-----------------------------------------------------------------------------
 
+std::string TokenLocation::GetDescription() const {
+    std::string s;
+    s += fmt::format("{:04}: {}\n", line, *line_content);
+    s += fmt::format("{}^\n", std::string(column + 6, ' '));
+    return s;
+}
+
 std::string to_string(const TokenLocation &location) {
-    return "location(TODO)";
-}
-
-//-----------------------------------------------------------------------------
-
-std::string to_string(TokenizerError error) {
-    switch (error) {
-    case TokenizerError::Unknown:
-        return "Unknown";
-    case TokenizerError::InvalidEscapeSequence:
-        return "InvalidEscapeSequence";
-    }
-    return fmt::format("Invalid error id {}", static_cast<int>(error));
-}
-
-//-----------------------------------------------------------------------------
-
-std::string TokenizerException::Message() const {
-    return fmt::format("{} : {} : {}", to_string(location), to_string(error), what());
+    return fmt::format("{}:{}:{}", *location.input_name, location.line, location.column);
 }
 
 //-----------------------------------------------------------------------------
@@ -148,8 +138,8 @@ Token TokenListIterator::Iterator::operator*() {
     if (current_token.has_value()) {
         return *current_token;
     }
-    throw TokenizerException("Attempt to dereference empty TokenListIterator::Iterator",
-                             TokenizerError::Unknown, {});
+    throw CompilationException("Attempt to dereference empty TokenListIterator::Iterator",
+                               CompilationError::InternalError, {});
 }
 
 void TokenListIterator::Iterator::operator++() {
@@ -167,15 +157,15 @@ void TokenListIterator::Iterator::operator++() {
         current_token = std::nullopt;
         auto next = parent->NextToken();
         if (next.value != separator) {
-            throw TokenizerException("Not a separator", TokenizerError::Unknown,
-                                     next.location);
+            throw CompilationException("Not a separator", CompilationError::Unknown,
+                                       next);
         }
         operator++();
     } else {
         current_token = parent->NextToken();
         if (current_token->value == separator) {
-            throw TokenizerException("no element in list", TokenizerError::Unknown,
-                                     current_token->location);
+            throw CompilationException("no element in list", CompilationError::Unknown,
+                                       *current_token);
         }
     }
 }
@@ -200,29 +190,30 @@ Token LineTokenizer::NextToken() {
 
     if (line.empty()) {
         //todo: throw?
-        return Token{this, Location(), std::string_view{}};
+        return Token{Location(), std::string_view{}};
     }
-
-    const auto location = Location();
 
     auto Consume = [&](size_t c) {
         if (line.size() < c) {
-            throw TokenizerException("TODO ERROR", TokenizerError::Unknown, location);
+            throw CompilationException("TODO ERROR", CompilationError::Unknown,
+                                       Token{Location()});
         }
         auto token = line.substr(0, c);
         column += c;
         line.remove_prefix(c);
-        return Token{this, location, token};
+        return Token{Location(), token};
     };
 
     try {
         switch (line[0]) {
         case '"': {
+            // Consume(2);
+            // location = Location();
             auto [token, consumed] = ParseQuotedString(line);
             column += consumed;
             line.remove_prefix(consumed);
             ConsumeUntilNextToken();
-            return Token{this, location, token};
+            return Token{Location(), token};
         }
         case ',':
         case '=':
@@ -231,8 +222,8 @@ Token LineTokenizer::NextToken() {
         default: {
             auto pos = line.find_first_of("\t\n ;,=");
             if (pos == 0) {
-                throw TokenizerException("TODO ERROR 2", TokenizerError::Unknown,
-                                         location);
+                throw CompilationException("TODO ERROR 2", CompilationError::Unknown,
+                                           Token{Location()});
             }
             if (pos == std::string_view::npos) {
                 pos = line.size();
@@ -242,13 +233,18 @@ Token LineTokenizer::NextToken() {
             return t;
         }
         }
-    } catch (const TokenizerSubException &e) {
-        throw TokenizerException(e, location);
+    } catch (const CompilationSubException &e) {
+        throw CompilationException(e, Token{Location()});
     }
 }
 
 TokenLocation LineTokenizer::Location() const {
-    return {};
+    return TokenLocation{
+        tokenizer.GetInputName(),
+        line_storage,
+        line_number,
+        column,
+    };
 }
 
 void LineTokenizer::ConsumeUntilNextToken() {
@@ -279,19 +275,27 @@ bool Tokenizer::HasInput() {
 
 LineTokenizer Tokenizer::NextLine() {
     if (!HasInput()) {
-        throw TokenizerException("No more input TODO", TokenizerError::Unknown,
-                                 Location());
+        throw CompilationException("No more input TODO",
+                                   CompilationError::UnexpectedEndOfInput,
+                                   Token{Location()});
     }
 
     std::string raw_line;
     std::getline(input, raw_line);
+
+    current_line = std::make_shared<std::string>(std::move(raw_line));
     ++line;
 
-    return LineTokenizer(*this, line, std::move(raw_line));
+    return LineTokenizer(*this, line, current_line);
 }
 
 TokenLocation Tokenizer::Location() const {
-    return {};
+    return TokenLocation{
+        GetInputName(),
+        current_line,
+        line,
+        current_line->size(),
+    };
 }
 
 } // namespace emu::emu6502::assembler

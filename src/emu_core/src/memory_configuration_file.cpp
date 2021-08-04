@@ -3,10 +3,7 @@
 #include <iostream>
 #include <map>
 #include <unordered_map>
-#pragma warning(push)
-#pragma warning(disable : 4251 4996)
-#include "yaml-cpp/yaml.h"
-#pragma warning(pop)
+#include <yaml-cpp/yaml.h>
 
 namespace YAML {
 namespace {

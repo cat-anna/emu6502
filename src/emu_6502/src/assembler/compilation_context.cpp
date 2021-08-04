@@ -256,7 +256,7 @@ void CompilationContext::EmitInstruction(LineTokenizer &tokenizer,
         token += value.value;
     }
 
-    Token meta_token{first_token.line, first_token.location, token};
+    Token meta_token{first_token.location, token};
     auto argument = ParseInstructionArgument(meta_token, program.aliases);
 
     std::set<AddressMode> instruction_address_modes;

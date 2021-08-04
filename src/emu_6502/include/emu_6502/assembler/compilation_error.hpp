@@ -11,7 +11,11 @@ enum class CompilationError {
     NoError = 0,
 
     Unknown,
+    InternalError,
     UnknownCommand,
+
+    InvalidEscapeSequence,
+    UnfinishedQuotedString,
 
     UnexpectedInput,
     UnexpectedEndOfInput,
@@ -37,10 +41,31 @@ enum class CompilationError {
 std::string to_string(CompilationError error);
 std::string GetDefaultMessage(CompilationError error, const Token &t);
 
+class CompilationSubException : public std::exception {
+public:
+    CompilationSubException(std::string message, CompilationError error,
+                            size_t _offset = 0)
+        : message(std::move(message)), error(error), offset(_offset) {}
+
+    CompilationSubException(const CompilationSubException &sub_exception, size_t _offset)
+        : message(sub_exception.message), error(sub_exception.error),
+          offset(_offset + sub_exception.offset) {}
+
+    const char *what() const noexcept override { return message.c_str(); }
+
+    std::string message;
+    const CompilationError error;
+    const size_t offset;
+};
+
 class CompilationException : public std::exception {
 public:
     CompilationException(std::string _message, CompilationError _error, Token _token = {})
         : message(std::move(_message)), error(_error), token(std::move(_token)) {}
+
+    CompilationException(const CompilationSubException &sub_exception, Token token = {})
+        : message(sub_exception.message), error(sub_exception.error),
+          token(std::move(token), sub_exception.offset) {}
 
     virtual std::string Message() const;
     const TokenLocation &Location() const { return token.location; }

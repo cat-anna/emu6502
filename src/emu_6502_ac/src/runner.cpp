@@ -22,7 +22,7 @@ int Runner::Start(const ExecArguments &exec_args) {
         return 0;
     } catch (const CompilationException &e) {
         std::cout << "Error: " << e.Message() << "\n";
-        // std::cout << "at " << to_string(e.Location()) << "\n";
+        std::cout << e.Location().GetDescription();
         return static_cast<int>(e.Error());
     } catch (const std::exception &e) {
         std::cout << "Error: " << e.what() << "\n";

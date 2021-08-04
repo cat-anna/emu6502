@@ -2,8 +2,8 @@
 #include "emu_6502/assembler/compiler.hpp"
 #include "emu_6502/cpu/opcode.hpp"
 #include "emu_6502/instruction_set.hpp"
-#include <emu_core/byte_utils.hpp>
-#include <emu_core/program.hpp>
+#include "emu_core/byte_utils.hpp"
+#include "emu_core/program.hpp"
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <string_view>

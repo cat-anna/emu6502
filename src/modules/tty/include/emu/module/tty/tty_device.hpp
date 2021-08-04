@@ -76,8 +76,8 @@ private:
     double start_time = 0;
     bool enabled = false;
 
-    mutable std::queue<uint8_t> input_queue; //TODO: switch to something fancier
-    std::queue<uint8_t> output_queue;        //TODO: switch to something fancier
+    mutable std::queue<uint8_t> input_queue;
+    std::queue<uint8_t> output_queue;
 
     void UpdateBuffers();
 

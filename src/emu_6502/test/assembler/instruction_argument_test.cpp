@@ -31,7 +31,7 @@ class ArgumentParseTest : public testing::Test,
 TEST_P(ArgumentParseTest, ) {
     auto &[input, output] = GetParam();
 
-    Token test_token{nullptr, {}, input};
+    Token test_token{{}, input};
     if (output.has_value()) {
         InstructionArgument r;
         std::cout << "E: " << to_string(output.value()) << "\n";
@@ -142,7 +142,7 @@ class GetTokenTypeTest : public testing::Test,
 
 TEST_P(GetTokenTypeTest, ) {
     auto [input, output] = GetParam();
-    Token tok{nullptr, {}, input};
+    Token tok{{}, input};
     EXPECT_EQ(GetTokenType(tok, &kTestAliases, &kTestSymbolMap), output);
 }
 
