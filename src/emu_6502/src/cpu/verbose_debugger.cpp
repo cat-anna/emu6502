@@ -89,9 +89,7 @@ void VerboseDebugger::OnNextInstruction(const Registers &regs) {
             case 0:
                 break;
             default:
-                // throw std::runtime_error
-                //todo
-                break;
+                throw std::runtime_error(fmt::format("Invalid operand size {}", size));
             }
 
             if (byte_low.has_value()) {

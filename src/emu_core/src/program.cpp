@@ -12,7 +12,8 @@ NearOffset_t RelativeJumpOffset(Address_t position, Address_t target) {
     auto off = static_cast<int>(target) - static_cast<int>(position);
     using Limit = std::numeric_limits<NearOffset_t>;
     if (off > Limit::max() || off < Limit::min()) {
-        throw std::runtime_error("Jump is too far"); //TODO
+        throw std::runtime_error(
+            fmt::format("Relative jump {:04x}->{:04x} is too far", position, target));
     }
     return static_cast<NearOffset_t>(off);
 }
@@ -21,8 +22,7 @@ std::vector<uint8_t> ToBytes(const SymbolAddress &v,
                              std::optional<size_t> expected_size) {
     auto r = std::visit([](auto &i) { return ToBytes(i); }, v);
     if (expected_size.has_value() && expected_size.value() != r.size()) {
-        throw std::runtime_error(
-            "TODO if(expected_size.has_value() && expected_size.value() != r.size())");
+        throw std::runtime_error("Symbol address does not have expected size");
     }
     return r;
 }

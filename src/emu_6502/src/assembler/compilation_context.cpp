@@ -336,7 +336,9 @@ void CompilationContext::UpdateRelocations() {
     for (const auto &relocation : program.relocations) {
         auto symbol = relocation->target_symbol.lock();
         if (!symbol) {
-            throw std::runtime_error("TODO (!symbol)");
+            ThrowCompilationError(CompilationError::InternalError, std::nullopt,
+                                  "Failed to relocate at {:04x}: target symbol expired",
+                                  relocation->position);
         }
         Log("Relocating reference to symbol '{}' at {}", symbol->name,
             to_string(relocation));

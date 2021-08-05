@@ -98,7 +98,11 @@ std::string GetDefaultMessage(CompilationError error, const Token &t) {
 }
 
 std::string CompilationException::Message() const {
-    return fmt::format("{} : {} : {}", to_string(token), to_string(error), what());
+    if (token.has_value()) {
+        return fmt::format("{} : {} : {}", to_string(*token), to_string(error), what());
+    } else {
+        return fmt::format("{} : {}", to_string(error), what());
+    }
 }
 
 } // namespace emu::emu6502::assembler

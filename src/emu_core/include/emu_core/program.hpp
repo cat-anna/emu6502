@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fmt/format.h>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -53,7 +54,8 @@ inline T GetOr(const SymbolAddress &v, T t) {
         return t;
     }
     if (!std::holds_alternative<T>(v)) {
-        throw std::runtime_error("TODO !std::holds_alternative<T>(v)");
+        throw std::runtime_error(fmt::format(
+            "SymbolAddress does not hold expected {} alternative", typeid(T).name()));
     }
     return std::get<T>(v);
 }

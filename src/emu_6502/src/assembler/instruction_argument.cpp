@@ -52,12 +52,11 @@ ByteVector ParseImmediateValue(std::string_view data, const AliasMap &aliases,
 ByteVector ParseTextValue(const Token &token, bool include_trailing_zero) {
     auto view = token.View();
 
-    if (!view.starts_with("\"")) {
-        throw std::runtime_error("no \" "); //TODO
+    if (view.starts_with("\"")) {
+        view.remove_prefix(1);
+        view.remove_suffix(1);
     }
 
-    view.remove_prefix(1);
-    view.remove_suffix(1);
     auto r = ToBytes(view);
     if (include_trailing_zero) {
         r.push_back(0);
@@ -154,8 +153,7 @@ InstructionArgument ParseInstructionArgument(const Token &token,
             auto value = std::string_view(s_value);
 
             if (value.empty()) {
-                //TODO:
-                throw std::runtime_error("value.empty()");
+                throw std::runtime_error("Failed to match operand argument with regex");
             }
 
             InstructionArgument ia;

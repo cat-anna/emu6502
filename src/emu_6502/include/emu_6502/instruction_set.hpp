@@ -46,7 +46,6 @@ struct OpcodeInfo {
     Opcode opcode;
     std::string_view mnemonic;
     AddressMode addres_mode;
-    // uint8_t execution_cycles; //TODO
 };
 
 using OpcodeInstructionMap = std::unordered_map<Opcode, OpcodeInfo>;

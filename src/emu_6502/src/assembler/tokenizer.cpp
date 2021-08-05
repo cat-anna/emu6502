@@ -103,13 +103,22 @@ std::tuple<std::string, size_t> ParseQuotedString(std::string_view input) {
 
 std::string TokenLocation::GetDescription() const {
     std::string s;
-    s += fmt::format("{:04}: {}\n", line, *line_content);
+    s += fmt::format("{:04}: ", line);
+    if (line_content != nullptr) {
+        s += *line_content;
+    }
+    s += "\n";
     s += fmt::format("{}^\n", std::string(column + 6, ' '));
     return s;
 }
 
 std::string to_string(const TokenLocation &location) {
-    return fmt::format("{}:{}:{}", *location.input_name, location.line, location.column);
+    if (location.input_name == nullptr) {
+        return "?";
+    } else {
+        return fmt::format("{}:{}:{}", *location.input_name, location.line,
+                           location.column);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -164,7 +173,7 @@ void TokenListIterator::Iterator::operator++() {
     } else {
         current_token = parent->NextToken();
         if (current_token->value == separator) {
-            throw CompilationException("no element in list", CompilationError::Unknown,
+            throw CompilationException("No element in list", CompilationError::Unknown,
                                        *current_token);
         }
     }
@@ -189,13 +198,13 @@ Token LineTokenizer::NextToken() {
     ConsumeUntilNextToken();
 
     if (line.empty()) {
-        //todo: throw?
         return Token{Location(), std::string_view{}};
     }
 
     auto Consume = [&](size_t c) {
         if (line.size() < c) {
-            throw CompilationException("TODO ERROR", CompilationError::Unknown,
+            throw CompilationException("Attempt to consume more input than available",
+                                       CompilationError::InternalError,
                                        Token{Location()});
         }
         auto token = line.substr(0, c);
@@ -207,8 +216,6 @@ Token LineTokenizer::NextToken() {
     try {
         switch (line[0]) {
         case '"': {
-            // Consume(2);
-            // location = Location();
             auto [token, consumed] = ParseQuotedString(line);
             column += consumed;
             line.remove_prefix(consumed);
@@ -222,7 +229,8 @@ Token LineTokenizer::NextToken() {
         default: {
             auto pos = line.find_first_of("\t\n ;,=");
             if (pos == 0) {
-                throw CompilationException("TODO ERROR 2", CompilationError::Unknown,
+                throw CompilationException("Invalid byte at front of input",
+                                           CompilationError::InternalError,
                                            Token{Location()});
             }
             if (pos == std::string_view::npos) {
@@ -275,9 +283,8 @@ bool Tokenizer::HasInput() {
 
 LineTokenizer Tokenizer::NextLine() {
     if (!HasInput()) {
-        throw CompilationException("No more input TODO",
-                                   CompilationError::UnexpectedEndOfInput,
-                                   Token{Location()});
+        throw CompilationException(
+            "No more input", CompilationError::UnexpectedEndOfInput, Token{Location()});
     }
 
     std::string raw_line;
