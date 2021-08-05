@@ -83,7 +83,7 @@ std::vector<ArithmeticTestArg> GetTestCases() {
     auto SBC = [](uint8_t a, uint8_t b, uint8_t c) -> std::tuple<bool, uint16_t> {
         return {true, static_cast<uint16_t>(a - (b + (1 - c)))};
     };
-    // TODO: + add 1 cycle if page boundary crossed
+    // + add 1 cycle if page boundary crossed
     return {
         // MODE           SYNTAX       HEX LEN TIM
         // Immediate     ADC #$44      $69  2   2

@@ -8,7 +8,7 @@ namespace {
 
 using OpFunctor = std::function<uint8_t(uint8_t, uint8_t)>;
 using LogicalTestArg =
-    std::tuple<Opcode, const char *, AddressMode, uint8_t, uint8_t, OpFunctor>;
+    std::tuple<Opcode, const char *, AddressMode, uint8_t, uint8_t, OpFunctor, bool>;
 
 class LogicalTest : public BaseTest,
                     public ::testing::WithParamInterface<LogicalTestArg> {
@@ -19,12 +19,14 @@ public:
     // ORA (bitwise OR with Accumulator)
 
     void SetUp() override {
+        auto [opcode, name, mode, len, cycles, func, crosspage] = GetParam();
         random_reg_values = true;
+        SetupTestValues(crosspage);
         BaseTest::SetUp();
     }
 
     void Execute(const std::vector<uint8_t> &data) override {
-        auto [opcode, name, mode, len, cycles, func] = GetParam();
+        auto [opcode, name, mode, len, cycles, func, crosspage] = GetParam();
         expected_code_length = len;
         expected_cycles = cycles;
 
@@ -39,65 +41,74 @@ public:
 };
 
 TEST_P(LogicalTest, ) {
-    auto [opcode, name, mode, len, cycles, func] = GetParam();
+    auto [opcode, name, mode, len, cycles, func, crosspage] = GetParam();
     Execute(MakeCode(opcode, mode));
 }
 
 std::vector<LogicalTestArg> GetLogicalTestCases() {
-    // TODO: + add 1 cycle if page boundary crossed
+    // + add 1 cycle if page boundary crossed
     auto AND = [](uint8_t a, uint8_t b) -> uint8_t { return a & b; };
     auto EOR = [](uint8_t a, uint8_t b) -> uint8_t { return a ^ b; };
     auto ORA = [](uint8_t a, uint8_t b) -> uint8_t { return a | b; };
     return {
         // MODE           SYNTAX       HEX LEN TIM
         // Immediate     AND #$44      $29  2   2
-        {INS_AND_IM, "AND", AddressMode::IM, 2_u8, 2_u8, AND},
+        {INS_AND_IM, "AND", AddressMode::IM, 2_u8, 2_u8, AND, false},
         // Zero Page     AND $44       $25  2   3
-        {INS_AND_ZP, "AND", AddressMode::ZP, 2_u8, 3_u8, AND},
+        {INS_AND_ZP, "AND", AddressMode::ZP, 2_u8, 3_u8, AND, false},
         // Zero Page,X   AND $44,X     $35  2   4
-        {INS_AND_ZPX, "AND", AddressMode::ZPX, 2_u8, 4_u8, AND},
+        {INS_AND_ZPX, "AND", AddressMode::ZPX, 2_u8, 4_u8, AND, false},
         // Absolute      AND $4400     $2D  3   4
-        {INS_AND_ABS, "AND", AddressMode::ABS, 3_u8, 4_u8, AND},
+        {INS_AND_ABS, "AND", AddressMode::ABS, 3_u8, 4_u8, AND, false},
         // Absolute,X    AND $4400,X   $3D  3   4+
-        {INS_AND_ABSX, "AND", AddressMode::ABSX, 3_u8, 4_u8, AND},
+        {INS_AND_ABSX, "AND", AddressMode::ABSX, 3_u8, 4_u8, AND, false},
+        {INS_AND_ABSX, "AND_CROSSPAGE", AddressMode::ABSX, 3_u8, 4_u8, AND, true},
         // Absolute,Y    AND $4400,Y   $39  3   4+
-        {INS_AND_ABSY, "AND", AddressMode::ABSY, 3_u8, 4_u8, AND},
+        {INS_AND_ABSY, "AND", AddressMode::ABSY, 3_u8, 4_u8, AND, false},
+        {INS_AND_ABSY, "AND_CROSSPAGE", AddressMode::ABSY, 3_u8, 4_u8, AND, true},
         // Indirect,X    AND ($44,X)   $21  2   6
-        {INS_AND_INDX, "AND", AddressMode::INDX, 2_u8, 6_u8, AND},
+        {INS_AND_INDX, "AND", AddressMode::INDX, 2_u8, 6_u8, AND, false},
         // Indirect,Y    AND ($44),Y   $31  2   5+
-        {INS_AND_INDY, "AND", AddressMode::INDY, 2_u8, 5_u8, AND},
+        {INS_AND_INDY, "AND", AddressMode::INDY, 2_u8, 5_u8, AND, false},
+        {INS_AND_INDY, "AND_CROSSPAGE", AddressMode::INDY, 2_u8, 5_u8, AND, true},
         // Immediate     EOR #$44      $49  2   2
-        {INS_EOR_IM, "EOR", AddressMode::IM, 2_u8, 2_u8, EOR},
+        {INS_EOR_IM, "EOR", AddressMode::IM, 2_u8, 2_u8, EOR, false},
         // Zero Page     EOR $44       $45  2   3
-        {INS_EOR_ZP, "EOR", AddressMode::ZP, 2_u8, 3_u8, EOR},
+        {INS_EOR_ZP, "EOR", AddressMode::ZP, 2_u8, 3_u8, EOR, false},
         // Zero Page,X   EOR $44,X     $55  2   4
-        {INS_EOR_ZPX, "EOR", AddressMode::ZPX, 2_u8, 4_u8, EOR},
+        {INS_EOR_ZPX, "EOR", AddressMode::ZPX, 2_u8, 4_u8, EOR, false},
         // Absolute      EOR $4400     $4D  3   4
-        {INS_EOR_ABS, "EOR", AddressMode::ABS, 3_u8, 4_u8, EOR},
+        {INS_EOR_ABS, "EOR", AddressMode::ABS, 3_u8, 4_u8, EOR, false},
         // Absolute,X    EOR $4400,X   $5D  3   4+
-        {INS_EOR_ABSX, "EOR", AddressMode::ABSX, 3_u8, 4_u8, EOR},
+        {INS_EOR_ABSX, "EOR", AddressMode::ABSX, 3_u8, 4_u8, EOR, false},
+        {INS_EOR_ABSX, "EOR_CROSSPAGE", AddressMode::ABSX, 3_u8, 4_u8, EOR, true},
         // Absolute,Y    EOR $4400,Y   $59  3   4+
-        {INS_EOR_ABSY, "EOR", AddressMode::ABSY, 3_u8, 4_u8, EOR},
+        {INS_EOR_ABSY, "EOR", AddressMode::ABSY, 3_u8, 4_u8, EOR, false},
+        {INS_EOR_ABSY, "EOR_CROSSPAGE", AddressMode::ABSY, 3_u8, 4_u8, EOR, true},
         // Indirect,X    EOR ($44,X)   $41  2   6
-        {INS_EOR_INDX, "EOR", AddressMode::INDX, 2_u8, 6_u8, EOR},
+        {INS_EOR_INDX, "EOR", AddressMode::INDX, 2_u8, 6_u8, EOR, false},
         // Indirect,Y    EOR ($44),Y   $51  2   5+
-        {INS_EOR_INDY, "EOR", AddressMode::INDY, 2_u8, 5_u8, EOR},
+        {INS_EOR_INDY, "EOR", AddressMode::INDY, 2_u8, 5_u8, EOR, false},
+        {INS_EOR_INDY, "EOR_CROSSPAGE", AddressMode::INDY, 2_u8, 5_u8, EOR, true},
         // Immediate     ORA #$44      $09  2   2
-        {INS_ORA_IM, "ORA", AddressMode::IM, 2_u8, 2_u8, ORA},
+        {INS_ORA_IM, "ORA", AddressMode::IM, 2_u8, 2_u8, ORA, false},
         // Zero Page     ORA $44       $05  2   3
-        {INS_ORA_ZP, "ORA", AddressMode::ZP, 2_u8, 3_u8, ORA},
+        {INS_ORA_ZP, "ORA", AddressMode::ZP, 2_u8, 3_u8, ORA, false},
         // Zero Page,X   ORA $44,X     $15  2   4
-        {INS_ORA_ZPX, "ORA", AddressMode::ZPX, 2_u8, 4_u8, ORA},
+        {INS_ORA_ZPX, "ORA", AddressMode::ZPX, 2_u8, 4_u8, ORA, false},
         // Absolute      ORA $4400     $0D  3   4
-        {INS_ORA_ABS, "ORA", AddressMode::ABS, 3_u8, 4_u8, ORA},
+        {INS_ORA_ABS, "ORA", AddressMode::ABS, 3_u8, 4_u8, ORA, false},
         // Absolute,X    ORA $4400,X   $1D  3   4+
-        {INS_ORA_ABSX, "ORA", AddressMode::ABSX, 3_u8, 4_u8, ORA},
+        {INS_ORA_ABSX, "ORA", AddressMode::ABSX, 3_u8, 4_u8, ORA, false},
+        {INS_ORA_ABSX, "ORA_CROSSPAGE", AddressMode::ABSX, 3_u8, 4_u8, ORA, true},
         // Absolute,Y    ORA $4400,Y   $19  3   4+
-        {INS_ORA_ABSY, "ORA", AddressMode::ABSY, 3_u8, 4_u8, ORA},
+        {INS_ORA_ABSY, "ORA", AddressMode::ABSY, 3_u8, 4_u8, ORA, false},
+        {INS_ORA_ABSY, "ORA_CROSSPAGE", AddressMode::ABSY, 3_u8, 4_u8, ORA, true},
         // Indirect,X    ORA ($44,X)   $01  2   6
-        {INS_ORA_INDX, "ORA", AddressMode::INDX, 2_u8, 6_u8, ORA},
+        {INS_ORA_INDX, "ORA", AddressMode::INDX, 2_u8, 6_u8, ORA, false},
         // Indirect,Y    ORA ($44),Y   $11  2   5+
-        {INS_ORA_INDY, "ORA", AddressMode::INDY, 2_u8, 5_u8, ORA},
+        {INS_ORA_INDY, "ORA", AddressMode::INDY, 2_u8, 5_u8, ORA, false},
+        {INS_ORA_INDY, "ORA_CROSSPAGE", AddressMode::INDY, 2_u8, 5_u8, ORA, true},
     };
 }
 
@@ -119,7 +130,7 @@ public:
     }
 
     void Execute(const std::vector<uint8_t> &data) override {
-        auto [opcode, name, mode, len, cycles, func] = GetParam();
+        auto [opcode, name, mode, len, cycles, func, crosspage] = GetParam();
         expected_code_length = len;
         expected_cycles = cycles;
         uint8_t result = func(expected_regs.a, target_byte);
@@ -133,7 +144,7 @@ public:
 };
 
 TEST_P(BitTest, ) {
-    auto [opcode, name, mode, len, cycles, func] = GetParam();
+    auto [opcode, name, mode, len, cycles, func, crosspage] = GetParam();
     Execute(MakeCode(opcode, mode));
 }
 
@@ -143,9 +154,9 @@ std::vector<LogicalTestArg> GetBITTestCases() {
     return {
         // MODE           SYNTAX       HEX LEN TIM
         // Zero Page     BIT $44       $24  2   3
-        {INS_BIT_ZP, "BIT", AddressMode::ZP, 2_u8, 3_u8, AND},
+        {INS_BIT_ZP, "BIT", AddressMode::ZP, 2_u8, 3_u8, AND, false},
         // Absolute      BIT $4400     $2C  3   4
-        {INS_BIT_ABS, "BIT", AddressMode::ABS, 3_u8, 4_u8, AND},
+        {INS_BIT_ABS, "BIT", AddressMode::ABS, 3_u8, 4_u8, AND, false},
     };
 }
 
