@@ -72,7 +72,7 @@ function(build_6502_image)
   add_custom_command(
     OUTPUT ${IMMEDIATE}.bin
     COMMENT "Compiling ${ARG_NAME}"
-    COMMAND emu_6502_ac -v --config ${ARG_CONFIG} --input ${ARG_SOURCE} --hex-dump ${IMMEDIATE}.hex --bin-output
+    COMMAND emu_6502_ac --config ${ARG_CONFIG} --input ${ARG_SOURCE} --hex-dump ${IMMEDIATE}.hex --bin-output
             ${IMMEDIATE}.bin
     DEPENDS ${ARG_SOURCE} ${ARG_DEPENDS} emu_6502_ac build_all_modules
     VERBATIM)

@@ -15,8 +15,8 @@
 namespace emu::emu6502::assembler {
 
 struct CompilationContext {
-    CompilationContext(Program &program, bool verbose = false)
-        : program(program), verbose_logs(verbose) {}
+    CompilationContext(Program &program, std::ostream *verbose_stream = nullptr)
+        : program(program), verbose_stream(verbose_stream) {}
 
     using CommandParserFunc = void (CompilationContext::*)(LineTokenizer &);
     struct CommandParsingInfo {
@@ -40,14 +40,14 @@ struct CompilationContext {
 
 private:
     Program &program;
-    const bool verbose_logs = false;
+    std::ostream *const verbose_stream;
     Address_t current_position = 0;
 
     template <typename... ARGS>
     void Log(ARGS &&...args) {
-        if (verbose_logs) {
-            std::cout << "CompilationContext: "
-                      << fmt::format(std::forward<ARGS>(args)...) << "\n";
+        if (verbose_stream != nullptr) {
+            (*verbose_stream) << "CompilationContext: "
+                              << fmt::format(std::forward<ARGS>(args)...) << "\n";
         }
     }
 

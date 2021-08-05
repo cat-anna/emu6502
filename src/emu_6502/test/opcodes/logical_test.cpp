@@ -149,7 +149,7 @@ TEST_P(BitTest, ) {
 }
 
 std::vector<LogicalTestArg> GetBITTestCases() {
-    // TODO: + add 1 cycle if page boundary crossed
+    // + add 1 cycle if page boundary crossed
     auto AND = [](uint8_t a, uint8_t b) -> uint8_t { return a & b; };
     return {
         // MODE           SYNTAX       HEX LEN TIM

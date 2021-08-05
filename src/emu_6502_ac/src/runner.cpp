@@ -31,8 +31,8 @@ int Runner::Start(const ExecArguments &exec_args) {
 }
 
 std::unique_ptr<Compiler6502> Runner::InitCompiler(const ExecArguments &exec_args) {
-    auto compiler =
-        std::make_unique<Compiler6502>(exec_args.cpu_options.instruction_set, verbose);
+    auto compiler = std::make_unique<Compiler6502>(exec_args.cpu_options.instruction_set,
+                                                   verbose ? &std::cout : nullptr);
 
     auto symbols = symbol_factory->GetSymbols(exec_args.memory_options);
     compiler->AddDefinitions(symbols);

@@ -20,7 +20,7 @@ struct InstructionParsingInfo {
 class Compiler6502 {
 public:
     Compiler6502(InstructionSet cpu_instruction_set = InstructionSet::Default,
-                 bool verbose = true);
+                 std::ostream *verbose_stream = &std::cout);
     ~Compiler6502();
 
     void Compile(Tokenizer &tokenizer);
@@ -33,7 +33,7 @@ public:
 
 private:
     std::unordered_map<std::string_view, InstructionParsingInfo> instruction_set;
-    bool verbose = true;
+    std::ostream *const verbose_stream;
 
     std::unique_ptr<Program> program;
     std::unique_ptr<CompilationContext> context;

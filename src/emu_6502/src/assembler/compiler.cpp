@@ -41,8 +41,9 @@ std::string GenerateSymbolDump(Program &program) {
 
 //-----------------------------------------------------------------------------
 
-Compiler6502::Compiler6502(InstructionSet cpu_instruction_set, bool verbose)
-    : verbose(verbose) {
+Compiler6502::Compiler6502(InstructionSet cpu_instruction_set,
+                           std::ostream *verbose_stream)
+    : verbose_stream(verbose_stream) {
     for (auto &[opcode, info] : GetInstructionSet(cpu_instruction_set)) {
         instruction_set[info.mnemonic].variants[info.addres_mode] = info;
     }
@@ -153,7 +154,7 @@ bool Compiler6502::TryDefinition(const Token &first_token, LineTokenizer &line) 
 void Compiler6502::Start() {
     if (!program) {
         program = std::make_unique<Program>();
-        context = std::make_unique<CompilationContext>(*program, verbose);
+        context = std::make_unique<CompilationContext>(*program, verbose_stream);
     }
 }
 
