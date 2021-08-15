@@ -28,8 +28,7 @@ struct Options {
     po::options_description memory_options{"memory options"};
     po::positional_options_description positional_opt;
 
-    std::shared_ptr<FileSearch> file_search =
-        FileSearch::CreateFromEnv("EMU6502_CONFIG_PATH");
+    std::shared_ptr<FileSearch> file_search = FileSearch::CreateDefault();
 
     Options() {
         // clang-format off

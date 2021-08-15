@@ -5,7 +5,6 @@
 #include "runner.hpp"
 #include <array>
 #include <chrono>
-
 #include <memory>
 
 int main(int argc, char *argv[]) {

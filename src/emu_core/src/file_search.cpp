@@ -124,4 +124,9 @@ std::shared_ptr<FileSearch> FileSearch::PrependPath(const std::string &name,
                                               std::filesystem::path(name), log);
 }
 
+std::shared_ptr<FileSearch> FileSearch::CreateDefault(std::ostream *log) {
+    return CreateFromEnv(kDefaultSearcherEnvName, log)
+        ->PrependPath(std::filesystem::current_path().generic_string());
+}
+
 } // namespace emu

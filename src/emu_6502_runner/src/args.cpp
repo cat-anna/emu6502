@@ -32,18 +32,7 @@ const std::unordered_map<std::string, std::set<Verbose>> kVerboseAreas = {
             Verbose::Device,
         },
     },
-    {
-        "base",
-        {
-            // Verbose::Memory,
-            // Verbose::MemoryMapper,
-            Verbose::Result,
-            Verbose::Cpu,
-            Verbose::Clock,
-            Verbose::Device,
-        },
-    },
-
+    {"base", {Verbose::Result, Verbose::Cpu, Verbose::Clock, Verbose::Device}},
     {"device", {Verbose::Device}},
     {"result", {Verbose::Result}},
     {"cpu", {Verbose::Cpu}},
@@ -60,8 +49,7 @@ struct Options {
     po::options_description image_options{"Image load options"};
     po::positional_options_description image_positional_opt;
 
-    std::shared_ptr<FileSearch> file_search =
-        FileSearch::CreateFromEnv("EMU6502_CONFIG_PATH");
+    std::shared_ptr<FileSearch> file_search = FileSearch::CreateDefault();
 
     Options() {
         // clang-format off

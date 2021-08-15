@@ -14,6 +14,8 @@ struct FileNotFoundException : public std::runtime_error {
     const std::string long_message;
 };
 
+constexpr auto kDefaultSearcherEnvName = "EMU6502_CONFIG_PATH";
+
 struct FileSearch {
     virtual ~FileSearch() = default;
 
@@ -25,14 +27,16 @@ struct FileSearch {
 
     static std::shared_ptr<FileSearch> PrependPath(const std::string &name,
                                                    FileSearch *searcher,
-                                                   std::ostream *log = &std::cout);
+                                                   std::ostream *log = nullptr);
 
     static std::shared_ptr<FileSearch> CreateFromEnv(const std::string &env_var_name,
-                                                     std::ostream *log = &std::cout);
+                                                     std::ostream *log = nullptr);
     static std::shared_ptr<FileSearch> Create(const std::string &colon_separated_list,
-                                              std::ostream *log = &std::cout);
+                                              std::ostream *log = nullptr);
     static std::shared_ptr<FileSearch> Create(std::vector<std::string> list,
-                                              std::ostream *log = &std::cout);
+                                              std::ostream *log = nullptr);
+
+    static std::shared_ptr<FileSearch> CreateDefault(std::ostream *log = nullptr);
 };
 
 } // namespace emu
