@@ -23,7 +23,7 @@ std::istream *StreamContainer::OpenInput(const std::string &file, bool is_binary
         return f.get();
     }
 
-    throw std::runtime_error(fmt::format("Input file '{}' is not valid"));
+    throw std::runtime_error(fmt::format("Input file '{}' is not valid", file));
 }
 
 std::ostream *StreamContainer::OpenOutput(const std::string &file, bool is_binary) {

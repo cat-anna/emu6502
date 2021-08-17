@@ -24,6 +24,7 @@ find_package(Boost REQUIRED COMPONENTS program_options filesystem)
 find_package(fmt CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 find_package(yaml-cpp CONFIG REQUIRED)
+find_package(libzippp CONFIG REQUIRED)
 
 if((NOT ca65_EXECUTABLE) OR (NOT ld65_EXECUTABLE))
   message("* ca65 linker or compiler are not available")
