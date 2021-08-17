@@ -36,12 +36,12 @@ struct MemoryConfigEntry {
     struct RamArea {
         struct Image {
             std::string file;
-            std::optional<uint32_t> offset;
+            std::optional<uint64_t> offset;
             bool operator==(const Image &o) const = default;
         };
 
         std::optional<Image> image;
-        std::optional<uint32_t> size;
+        std::optional<uint64_t> size;
         bool writable;
         bool operator==(const RamArea &o) const = default;
     };
@@ -63,7 +63,7 @@ struct MemoryConfigEntry {
     };
 
     std::string name;
-    uint32_t offset;
+    uint64_t offset;
     std::variant<RamArea, MappedDevice> entry_variant;
 
     bool operator==(const MemoryConfigEntry &o) const = default;
@@ -75,10 +75,14 @@ struct MemoryConfig {
     bool operator==(const MemoryConfig &o) const = default;
 };
 
+using ConfigOverrides = std::unordered_map<std::string, std::string>;
+
 MemoryConfig LoadMemoryConfigurationFromFile(const std::string &file_name,
-                                             FileSearch *searcher = nullptr);
+                                             FileSearch *searcher = nullptr,
+                                             const ConfigOverrides &overrides = {});
 MemoryConfig LoadMemoryConfigurationFromString(const std::string &text,
-                                               FileSearch *searcher = nullptr);
+                                               FileSearch *searcher = nullptr,
+                                               const ConfigOverrides &overrides = {});
 
 std::string StoreMemoryConfigurationToString(const MemoryConfig &config);
 

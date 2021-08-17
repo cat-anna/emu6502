@@ -114,5 +114,72 @@ memory:
     }
 }
 
+TEST_F(MemoryConfigFileTest, overrides) {
+    auto t = R"==(
+memory:
+- rom:
+  offset: 0x0200
+  size: 0x0200
+  image:
+    file: $image_file
+    offset: 0x01
+- device:
+  offset: 0xF000
+  name: $dev_name
+  class: $dev_class
+  config:
+    a: $dev_arg_text
+    i: $dev_arg_int
+    b: $dev_arg_bool
+)=="s;
+
+    const auto overrides = ConfigOverrides{
+        {"image_file", "test.bin"},  //
+        {"dev_name", "tty"},         //
+        {"dev_class", "tty.simple"}, //
+        {"dev_arg_text", "b"},       //
+        {"dev_arg_bool", "false"},   //
+        {"dev_arg_int", "5"},
+    };
+
+    try {
+        auto config = LoadMemoryConfigurationFromString(t, search_mock.get(), overrides);
+
+        const MemoryConfigEntry i1{
+            .name = "",
+            .offset = 0x0200,
+            .entry_variant =
+                MemoryConfigEntry::RamArea{
+                    .image =
+                        MemoryConfigEntry::RamArea::Image{
+                            .file = "test.bin",
+                            .offset = 0x01,
+                        },
+                    .size = 0x0200,
+                    .writable = false,
+                },
+        };
+        const MemoryConfigEntry i2{
+            .name = "tty",
+            .offset = 0xf000,
+            .entry_variant =
+                MemoryConfigEntry::MappedDevice{
+                    .module_name = "tty",
+                    .class_name = "simple",
+                    .config = {{"a", "b"}, {"i", 5}, {"b", false}},
+                },
+        };
+
+        auto expected = MemoryConfig{
+            .entries = {i1, i2},
+        };
+        std::cout << StoreMemoryConfigurationToString(config);
+        EXPECT_EQ(config, expected);
+    } catch (const std::exception &e) {
+        std::cout << "ERR: " << e.what() << "\n";
+        throw;
+    }
+}
+
 } // namespace
 } // namespace emu::test
