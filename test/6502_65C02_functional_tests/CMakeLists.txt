@@ -23,11 +23,10 @@ if(HAVE_CA65)
     LINKER_CONFIG
     ${CMAKE_CURRENT_SOURCE_DIR}/linker.cfg
     DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/report.i65)
+    ${CMAKE_CURRENT_SOURCE_DIR}/report.i65
+    CONFIG
+    ${CMAKE_CURRENT_SOURCE_DIR}/memory.yaml)
 
-  define_functional_test(
-    NAME 6502_functional_test #
-    CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/memory.yaml #
-    IMAGE ${6502_functional_test_image})
+  define_functional_test(NAME 6502_functional_test IMAGE ${6502_functional_test_image})
 
 endif()

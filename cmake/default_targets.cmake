@@ -154,42 +154,48 @@ function(define_module_with_ut target_name)
       PARENT_SCOPE)
 endfunction()
 
+set(FUNCTIONAL_IMAGES_DIR ${TARGET_DESTINATTION}/functional_test_images)
+file(MAKE_DIRECTORY ${FUNCTIONAL_IMAGES_DIR})
+
+add_test(
+  NAME functional_tests
+  COMMAND emu_functional_test_runner_ut --gtest_shuffle --gtest_output=xml:${TEST_RESULT_DIR}/functional_tests.xml
+  WORKING_DIRECTORY ${TARGET_DESTINATTION})
+
+add_custom_target(
+  run_functional_tests
+  COMMENT "Running functional tests"
+  COMMAND emu_functional_test_runner_ut --gtest_shuffle
+  WORKING_DIRECTORY ${TARGET_DESTINATTION}
+  DEPENDS emu_functional_test_runner_ut build_all_modules build_all_test)
+
+add_dependencies(execute_all_test run_functional_tests)
+
 function(define_functional_test)
   set(options)
-  set(oneValueArgs NAME IMAGE CONFIG)
+  set(oneValueArgs NAME IMAGE)
   set(multiValueArgs DEPENDS)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME})
   message("* Adding functional test ${ARG_NAME}")
 
-  set(TEST_IMAGE ${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}/test_image.bin)
+  get_filename_component(IMAGE_FILE_NAME ${ARG_IMAGE} NAME)
+  set(TEST_IMAGE ${FUNCTIONAL_IMAGES_DIR}/${IMAGE_FILE_NAME})
+
   add_custom_command(
     OUTPUT ${TEST_IMAGE}
-    COMMENT "Preparing test image for ${ARG_NAME}"
+    COMMENT "Copy functional test image ${ARG_NAME}"
     COMMAND ${CMAKE_COMMAND} -E copy ${ARG_IMAGE} ${TEST_IMAGE}
-    DEPENDS ${ARG_IMAGE})
+    DEPENDS ${ARG_IMAGE}
+    VERBATIM)
 
-  add_custom_target(test_image_${ARG_NAME} DEPENDS ${ARG_IMAGE} ${TEST_IMAGE})
-  add_dependencies(build_all_test test_image_${ARG_NAME})
+  add_custom_target(${ARG_NAME} DEPENDS emu_6502_runner build_all_modules ${TEST_IMAGE} ${ARG_DEPENDS} ${ARG_IMAGE})
 
-  add_custom_target(
-    ${ARG_NAME}
-    COMMENT "Running functional test ${ARG_NAME}"
-    COMMAND emu_6502_runner --frequency 0 --verbose=result --config ${ARG_CONFIG} --verbose-out verbose_out.txt
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME}
-    DEPENDS emu_6502_runner
-            build_all_modules
-            ${ARG_DEPENDS}
-            ${ARG_CONFIG}
-            ${ARG_IMAGE}
-            ${TEST_IMAGE}
-            test_image_${ARG_NAME})
+  set_property(
+    TARGET ${ARG_NAME}
+    APPEND
+    PROPERTY ADDITIONAL_CLEAN_FILES ${TEST_IMAGE})
 
-  add_test(
-    NAME test_${ARG_NAME}
-    COMMAND emu_6502_runner --frequency 0 --verbose=result --config ${ARG_CONFIG} --verbose-out verbose_out.txt
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME})
-
-  add_dependencies(execute_all_test ${ARG_NAME})
+  add_dependencies(build_all_test ${ARG_NAME})
 endfunction()

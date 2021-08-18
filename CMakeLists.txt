@@ -2,18 +2,19 @@ cmake_minimum_required(VERSION 3.16)
 
 project(emu)
 
+if(NOT DEFINED TARGET_DESTINATTION)
+  set(TARGET_DESTINATTION "${CMAKE_CURRENT_BINARY_DIR}/output")
+endif()
+message("* Target destination: " ${TARGET_DESTINATTION})
+
+enable_testing()
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 include("add_all_subdirectories")
 include("default_targets")
 include("compiler_setup")
 include("6502_image")
 
-enable_testing()
-
-if(NOT DEFINED TARGET_DESTINATTION)
-  set(TARGET_DESTINATTION "${CMAKE_CURRENT_BINARY_DIR}/output")
-endif()
-message("* Target destination: " ${TARGET_DESTINATTION})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TARGET_DESTINATTION})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${TARGET_DESTINATTION})
 set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/install")

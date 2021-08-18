@@ -10,11 +10,12 @@ add_dependencies(build_all_6502_images build_all_modules)
 
 function(build_6502_image_with_ca65)
   set(options)
-  set(oneValueArgs SOURCE NAME LINKER_CONFIG PATCH)
+  set(oneValueArgs SOURCE NAME LINKER_CONFIG PATCH CONFIG)
   set(multiValueArgs DEPENDS)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   set(IMMEDIATE ${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME})
+  set(TARGET_IMAGE ${TARGET_DESTINATTION}/${ARG_NAME}.emu_image)
   message("* Adding image ${ARG_NAME}")
 
   get_filename_component(SRC_NAME ${ARG_SOURCE} NAME)
@@ -22,6 +23,7 @@ function(build_6502_image_with_ca65)
   if(DEFINED ARG_PATCH)
     set(PATCH_DIR ${IMMEDIATE}/patch)
     set(COMPILE_SOURCE ${PATCH_DIR}/${SRC_NAME})
+    set(PATCHED_SOURCE ${COMPILE_SOURCE})
 
     file(RELATIVE_PATH PATCH_RELATIVE ${PROJECT_SOURCE_DIR} ${PATCH_DIR})
     add_custom_command(
@@ -51,13 +53,31 @@ function(build_6502_image_with_ca65)
     DEPENDS ${IMMEDIATE}.o ${ARG_LINKER_CONFIG}
     VERBATIM)
 
-  add_custom_target(${ARG_NAME} DEPENDS ${IMMEDIATE}.bin)
+  add_custom_command(
+    OUTPUT ${TARGET_IMAGE}
+    COMMENT "Packing ${ARG_NAME}"
+    COMMAND emu_packager --config ${ARG_CONFIG} --output ${TARGET_IMAGE} --override image_file=${IMMEDIATE}.bin
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS ${IMMEDIATE}.bin ${ARG_CONFIG} emu_packager
+    VERBATIM)
+
+  add_custom_target(${ARG_NAME} DEPENDS ${TARGET_IMAGE})
   add_dependencies(build_all_6502_images ${ARG_NAME})
 
-  set(${ARG_NAME}
-      ${IMMEDIATE}.bin
-      PARENT_SCOPE)
+  set_property(
+    TARGET ${ARG_NAME}
+    APPEND
+    PROPERTY ADDITIONAL_CLEAN_FILES
+             ${PATCHED_SOURCE}
+             ${IMMEDIATE}.bin
+             ${IMMEDIATE}.o
+             ${IMMEDIATE}.lst
+             ${IMMEDIATE}.map
+             ${TEST_IMAGE})
 
+  set(${ARG_NAME}
+      ${TARGET_IMAGE}
+      PARENT_SCOPE)
 endfunction()
 
 function(build_6502_image)
@@ -67,6 +87,7 @@ function(build_6502_image)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   set(IMMEDIATE ${CMAKE_CURRENT_BINARY_DIR}/${ARG_NAME})
+  set(TARGET_IMAGE ${TARGET_DESTINATTION}/${ARG_NAME}.emu_image)
   message("* Adding image ${ARG_NAME}")
 
   add_custom_command(
@@ -77,11 +98,24 @@ function(build_6502_image)
     DEPENDS ${ARG_SOURCE} ${ARG_DEPENDS} emu_6502_ac build_all_modules
     VERBATIM)
 
-  add_custom_target(${ARG_NAME} DEPENDS build_all_modules ${IMMEDIATE}.bin)
+  add_custom_command(
+    OUTPUT ${TARGET_IMAGE}
+    COMMENT "Packing ${ARG_NAME}"
+    COMMAND emu_packager --config ${ARG_CONFIG} --output ${TARGET_IMAGE} --override image_file=${IMMEDIATE}.bin
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS ${ARG_SOURCE} ${ARG_DEPENDS} ${IMMEDIATE}.bin emu_packager
+    VERBATIM)
+
+  add_custom_target(${ARG_NAME} DEPENDS build_all_modules ${TARGET_IMAGE})
   add_dependencies(build_all_6502_images ${ARG_NAME})
 
+  set_property(
+    TARGET ${ARG_NAME}
+    APPEND
+    PROPERTY ADDITIONAL_CLEAN_FILES ${IMMEDIATE}.bin ${TEST_IMAGE})
+
   set(${ARG_NAME}
-      ${IMMEDIATE}.bin
+      ${TARGET_IMAGE}
       PARENT_SCOPE)
 
 endfunction()

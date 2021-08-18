@@ -4,12 +4,12 @@ memory:
   offset: 0x0000
   size: 0xF000
   image:
-    file: test_image.bin
+    file: $image_file
 - ram:
   offset: 0xF100
   size: 0x0F00
   image:
-    file: test_image.bin
+    file: $image_file
     offset: 0xF100
 - device:
   offset: 0xF000
