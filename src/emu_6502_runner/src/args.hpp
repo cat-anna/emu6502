@@ -2,6 +2,7 @@
 
 #include "emu_6502/instruction_set.hpp"
 #include "emu_core/memory_configuration_file.hpp"
+#include "emu_core/package/package.hpp"
 #include "emu_core/stream_container.hpp"
 #include <set>
 #include <string>
@@ -21,7 +22,6 @@ enum class Verbose {
 };
 
 struct ExecArguments {
-
     struct CpuOptions {
         uint64_t frequency = 0;
         emu6502::InstructionSet instruction_set = emu6502::InstructionSet::NMOS6502Emu;
@@ -32,7 +32,7 @@ struct ExecArguments {
     std::ostream *GetVerboseStream(Verbose v) const;
 
     CpuOptions cpu_options;
-    MemoryConfig memory_options;
+    std::unique_ptr<package::IPackage> package;
 
     StreamContainer streams;
 };

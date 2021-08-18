@@ -41,7 +41,7 @@ int Runner::Start() {
 }
 
 void Runner::InitMemory(const ExecArguments &exec_args) {
-    for (auto &dev : exec_args.memory_options.entries) {
+    for (auto &dev : exec_args.package->LoadMemoryConfig().entries) {
         auto [device_ptr, size] = std::visit(
             [&](auto &item) { return CreateMemoryDevice(exec_args, dev.name, item); },
             dev.entry_variant);
@@ -91,15 +91,9 @@ Runner::MappedDevice Runner::CreateMemoryDevice(const ExecArguments &opts,
     auto mode = ra.writable ? MemoryMode::kReadWrite : MemoryMode::kReadOnly;
     std::vector<uint8_t> bytes;
     if (ra.image.has_value()) {
-        auto data = load_file<std::vector<uint8_t>>(ra.image->file);
-        if (auto offset = ra.image->offset.value_or(0); offset == 0) {
-            bytes.swap(data);
-        } else {
-            bytes.insert(bytes.end(), data.begin() + offset, data.end());
-        }
+        bytes = opts.package->LoadFile(ra.image->file, ra.image->offset, ra.size);
     }
-    bytes.resize(ra.size.value_or(bytes.size()), 0);
-    auto size = bytes.size();
+    const auto size = bytes.size();
     return {
         std::make_shared<memory::MemoryBlock16>(clock.get(), std::move(bytes), mode,
                                                 opts.GetVerboseStream(Verbose::Memory)),

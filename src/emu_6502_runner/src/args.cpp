@@ -2,6 +2,9 @@
 #include "emu_core/boost_po_utils.hpp"
 #include "emu_core/clock.hpp"
 #include "emu_core/file_search.hpp"
+#include "emu_core/package/package_builder.hpp"
+#include "emu_core/package/package_fs.hpp"
+#include "emu_core/package/package_zip.hpp"
 #include "emu_core/string_file.hpp"
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/string_file.hpp>
@@ -68,8 +71,7 @@ struct Options {
 
         image_positional_opt.add("image", -1);
         image_options.add_options()
-            ("image", po::value<std::vector<std::string>>(), "Image to run")
-            ("config", po::value<std::vector<std::string>>(), "Config to run")
+            ("image", po::value<std::string>()->required(), "Image to run")
             ;
 
         // clang-format on
@@ -128,7 +130,11 @@ protected:
         }
 
         ReadCpuOptions(args.streams, args.cpu_options, vm);
-        ReadMemoryOptions(args.streams, args.memory_options, vm);
+        OpenPackage(args, vm);
+
+        if (!args.package) {
+            throw std::logic_error("Image/config to run was not provided");
+        }
     }
 
     void ReadCpuOptions(StreamContainer &streams, ExecArguments::CpuOptions &opts,
@@ -136,61 +142,49 @@ protected:
         opts.frequency = vm["frequency"].as<uint64_t>();
     }
 
-    void ReadMemoryOptions(StreamContainer &streams, MemoryConfig &opts,
-                           const po::variables_map &vm) {
-        opts.entries.clear();
-
-        bool was_binary = false;
-        bool was_yaml = false;
-
-        auto load_entry = [&](auto image_file) {
-            auto ext = std::filesystem::path(image_file).extension().generic_string();
-            if (ext == ".yaml") {
-                if (was_binary) {
-                    throw std::logic_error(
-                        "Binary files cannot be loaded together with yaml configs");
-                }
-                was_yaml = true;
-                auto conf =
-                    LoadMemoryConfigurationFromFile(image_file, file_search.get());
-                opts.entries.insert(opts.entries.end(), conf.entries.begin(),
-                                    conf.entries.end());
-            } else {
-                if (was_yaml || !opts.entries.empty()) {
-                    throw std::logic_error(
-                        "Binary files cannot be loaded together with yaml configs");
-                }
-                was_binary = true;
-
-                MemoryConfigEntry area;
-                area.offset = 0;
-                area.name = image_file;
-                MemoryConfigEntry::RamArea ram_area{
-                    .image = MemoryConfigEntry::RamArea::Image{.file = image_file,
-                                                               .offset = 0},
-                    .writable = true,
-                };
-                area.entry_variant = ram_area;
-                opts.entries.emplace_back(area);
-            }
-        };
-
-        if (vm.count("image") > 0) {
-            for (auto &image_file : vm["image"].as<std::vector<std::string>>()) {
-                load_entry(image_file);
-            }
+    void OpenPackage(ExecArguments &args, const po::variables_map &vm) {
+        if (vm.count("image") != 1) {
+            throw std::runtime_error("image path is not correct");
         }
 
-        if (vm.count("config") > 0) {
-            for (auto &image_file : vm["config"].as<std::vector<std::string>>()) {
-                load_entry(image_file);
-            }
-        }
+        auto config = vm["image"].as<std::string>();
 
-        if (opts.entries.empty()) {
-            throw std::logic_error("Image/config to run is not provided");
+        auto path = std::filesystem::path(config);
+        if (!std::filesystem::is_regular_file(path)) {
+            throw std::runtime_error(fmt::format("file {} is not valid", config));
+        }
+        auto base_path = path.parent_path();
+        auto ext = path.extension().generic_string();
+        std::shared_ptr<FileSearch> searcher =
+            file_search->PrependPath(base_path.generic_string());
+
+        if (ext == ".yaml") {
+            args.package = std::make_unique<package::FsPackage>(config, searcher);
+            return;
+        } else if (ext == package::kEmuImageExtension) {
+            args.package = std::make_unique<package::ZipPackage>(config);
+            return;
+        } else {
+            auto config_name = path.filename().generic_string();
+            MemoryConfigEntry area;
+            area.offset = 0;
+            area.name = config;
+            MemoryConfigEntry::RamArea ram_area{
+                .image =
+                    MemoryConfigEntry::RamArea::Image{.file = config_name, .offset = 0},
+                .writable = true,
+            };
+            area.entry_variant = ram_area;
+            MemoryConfig mem_config;
+            mem_config.entries.emplace_back(area);
+            args.package = std::make_unique<package::FsPackage>(mem_config, searcher);
+            return;
         }
     }
+
+    std::unique_ptr<package::IPackage> OpenFsPackage(const std::string &config,
+                                                     ExecArguments &args,
+                                                     const po::variables_map &vm) {}
 
     [[noreturn]] void PrintHelp(int exit_code) const {
         std::cout << "Emu 6502 runner";
