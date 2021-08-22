@@ -56,6 +56,8 @@ std::string GetDefaultMessage(CompilationError error, const Token &t) {
         return "Unknown error";
     case CompilationError::InternalError:
         return "Internal compiler error";
+    case CompilationError::UnknownCommand:
+        return fmt::format("Unknown command '{}'", t.View());
 
     case CompilationError::InvalidEscapeSequence:
         return "Invalid escape sequence";

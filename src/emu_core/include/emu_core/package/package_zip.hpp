@@ -17,7 +17,7 @@ constexpr auto kEmuImageExtension = ".emu_image";
 
 class ZipPackage : public IPackage {
 public:
-    ~ZipPackage() override = default;
+    ~ZipPackage() override;
     ZipPackage(std::string container_path);
 
     MemoryConfig LoadMemoryConfig() const override;

@@ -7,14 +7,14 @@
 #include <chrono>
 #include <memory>
 
-int main(int argc, char *argv[]) {
+int main(int argc, char **argv) {
     using namespace emu::runner;
     using namespace emu::plugins;
     namespace fs = std::filesystem;
 
     try {
         auto plugin_loader =
-            PluginLoader::CreateDynamic(fs::absolute(fs::path(argv[0])).parent_path());
+            PluginLoader::CreateDynamic(fs::absolute(fs::path(*argv)).parent_path());
         auto runner = std::make_shared<Runner>(plugin_loader->GetDeviceFactory());
         auto args = ParseComandline(argc, argv);
         runner->Setup(args);

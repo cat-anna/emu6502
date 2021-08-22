@@ -21,6 +21,8 @@ ZipPackage::ZipPackage(std::string container_path)
     : impl(std::make_unique<Impl>(container_path)) {
 }
 
+ZipPackage::~ZipPackage() = default;
+
 MemoryConfig ZipPackage::LoadMemoryConfig() const {
     auto entry = impl->archive.getEntry(kMemoryMetafileName);
     if (entry.isNull()) {
@@ -40,8 +42,8 @@ ByteVector ZipPackage::LoadFile(const std::string &file_name,
     }
     auto data = entry.readAsText();
     auto beg = data.begin() + offset.value_or(0);
-    auto to_read =
-        std::min(data.size() - offset.value_or(0), length.value_or(data.size()));
+    auto to_read = static_cast<std::streamsize>(
+        std::min(data.size() - offset.value_or(0), length.value_or(data.size())));
     if (beg + to_read >= data.end()) {
         to_read = data.end() - beg; //trim if overflow
     }

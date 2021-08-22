@@ -24,6 +24,16 @@ struct EmuSimulation {
     const std::vector<std::shared_ptr<Device>> devices;
     const std::vector<std::shared_ptr<Memory16>> mapped_devices;
 
+    EmuSimulation(std::unique_ptr<Clock> _clock,
+                  std::unique_ptr<memory::MemoryMapper16> _memory,
+                  std::unique_ptr<emu6502::cpu::Cpu> _cpu,
+                  std::unique_ptr<emu6502::cpu::Debugger> _debugger,
+                  std::vector<std::shared_ptr<Device>> _devices,
+                  std::vector<std::shared_ptr<Memory16>> _mapped_devices)
+        : clock(std::move(_clock)), memory(std::move(_memory)), cpu(std::move(_cpu)),
+          debugger(std::move(_debugger)), devices(std::move(_devices)),
+          mapped_devices(std::move(_mapped_devices)) {}
+
     struct Result {
         double duration;
         uint64_t cpu_cycles;
@@ -41,8 +51,8 @@ struct EmuSimulation {
         std::exception_ptr Get() const { return exception; }
 
     private:
-        Result result;
         std::exception_ptr exception;
+        Result result;
     };
 
     Result Run(std::chrono::nanoseconds timeout = {});

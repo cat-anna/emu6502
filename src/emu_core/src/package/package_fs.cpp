@@ -18,13 +18,13 @@ MemoryConfig FsPackage::LoadMemoryConfig() const {
 ByteVector FsPackage::LoadFile(const std::string &file_name, std::optional<size_t> offset,
                                std::optional<size_t> length) const {
     auto file = searcher->OpenFile(file_name);
-    file->seekg(0, std::ios::end);
+    file->seekg(0u, std::ios::end);
     auto file_size = static_cast<size_t>(file->tellg());
-    file->seekg(offset.value_or(0), std::ios::beg);
+    file->seekg(static_cast<std::streamsize>(offset.value_or(0)), std::ios::beg);
     auto to_read = std::min(file_size - offset.value_or(0), length.value_or(file_size));
     ByteVector data;
     data.resize(to_read);
-    file->read(reinterpret_cast<char *>(&data[0]), to_read);
+    file->read(reinterpret_cast<char *>(&data[0]), static_cast<std::streamsize>(to_read));
     return data;
 }
 

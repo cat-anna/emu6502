@@ -13,7 +13,7 @@ EmuSimulation::Result EmuSimulation::Run(std::chrono::nanoseconds timeout) {
             auto end = std::chrono::steady_clock::now();
             auto delta =
                 std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-            result.duration = delta.count() / 1.0e6;
+            result.duration = static_cast<double>(delta.count()) / 1.0e6;
             result.cpu_cycles = clock->CurrentCycle();
         };
 
