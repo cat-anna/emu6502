@@ -33,7 +33,7 @@ MemoryConfig ZipPackage::LoadMemoryConfig() const {
 ByteVector ZipPackage::LoadFile(const std::string &file_name,
                                 std::optional<size_t> offset,
                                 std::optional<size_t> length) const {
-    auto entry = impl->archive.getEntry(kMemoryMetafileName);
+    auto entry = impl->archive.getEntry(file_name);
     if (entry.isNull()) {
         throw std::runtime_error(
             fmt::format("Failed to find '{}' in package", file_name));

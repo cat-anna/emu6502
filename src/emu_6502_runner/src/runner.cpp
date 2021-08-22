@@ -2,103 +2,62 @@
 #include "emu_6502/cpu/verbose_debugger.hpp"
 #include "emu_core/clock_steady.hpp"
 #include "emu_core/memory/memory_block.hpp"
+#include "emu_core/simulation/simulation_builder.hpp"
 #include "emu_core/string_file.hpp"
 
 namespace emu::runner {
 
 void Runner::Setup(const ExecArguments &exec_args) {
     result_verbose = exec_args.GetVerboseStream(Verbose::Result);
-    InitCpu(exec_args);
-    InitMemory(exec_args);
+
+    auto vc = SimulationBuildVerboseConfig{
+        .memory = exec_args.GetVerboseStream(Verbose::Memory),
+        .memory_mapper = exec_args.GetVerboseStream(Verbose::MemoryMapper),
+        .device = exec_args.GetVerboseStream(Verbose::Device),
+        .cpu = exec_args.GetVerboseStream(Verbose::Cpu),
+        .clock = exec_args.GetVerboseStream(Verbose::Clock),
+    };
+
+    auto cpu = SimulationBuildCpuConfig{
+        .frequency = exec_args.cpu_options.frequency,
+        .instruction_set = exec_args.cpu_options.instruction_set,
+    };
+
+    simulation = BuildEmuSimulation(device_factory, exec_args.package.get(), cpu, vc);
 }
 
 int Runner::Start() {
-    auto start = std::chrono::steady_clock::now();
-    int code = 0;
+    std::optional<EmuSimulation::Result> result;
     try {
-        clock->Reset();
-        cpu->Execute();
-    } catch (const emu6502::cpu::ExecutionHalted &e) {
-        code = e.halt_code;
+        result = simulation->Run();
+    } catch (const EmuSimulation::SimulationFailedException &e) {
         if (result_verbose != nullptr) {
-            (*result_verbose) << "HALT code: " << std::hex << code << "\n";
+            (*result_verbose) << "FATAL: " << e.what() << "\n";
         }
+        result = e.GetResult();
     } catch (const std::exception &e) {
-        std::cerr << "Run error: " << e.what() << "\n";
-        code = -1;
-    }
-    if (result_verbose != nullptr) {
-        auto end = std::chrono::steady_clock::now();
-        auto delta = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        auto seconds = delta.count() / 1.0e6;
-        (*result_verbose) << fmt::format("Took {:.6f} seconds\n", seconds);
-        (*result_verbose) << fmt::format(
-            "Cpu cycles: {} ({:.3f} Hz) Lost: {}\n", clock->CurrentCycle(),
-            static_cast<double>(clock->CurrentCycle()) / seconds, clock->LostCycles());
-    }
-
-    return code;
-}
-
-void Runner::InitMemory(const ExecArguments &exec_args) {
-    for (auto &dev : exec_args.package->LoadMemoryConfig().entries) {
-        auto [device_ptr, size] = std::visit(
-            [&](auto &item) { return CreateMemoryDevice(exec_args, dev.name, item); },
-            dev.entry_variant);
-        if (device_ptr != nullptr) {
-            memory->MapArea(static_cast<uint16_t>(dev.offset),
-                            static_cast<uint16_t>(size), device_ptr.get());
-            mapped_devices.emplace_back(std::move(device_ptr));
+        if (result_verbose != nullptr) {
+            (*result_verbose) << "FATAL: " << e.what() << "\n";
         }
     }
-}
 
-void Runner::InitCpu(const ExecArguments &exec_args) {
-    if (exec_args.cpu_options.frequency == 0) {
-        clock = std::make_unique<ClockSimple>();
-    } else {
-        clock = std::make_unique<ClockSteady>(exec_args.cpu_options.frequency,
-                                              exec_args.GetVerboseStream(Verbose::Clock));
+    if (!result.has_value()) {
+        return -1;
     }
 
-    memory = std::make_unique<memory::MemoryMapper16>(
-        clock.get(), false, exec_args.GetVerboseStream(Verbose::MemoryMapper));
-
-    auto debug_stream = exec_args.GetVerboseStream(Verbose::Cpu);
-    if (debug_stream != nullptr) {
-        debugger = std::make_unique<emu6502::cpu::VerboseDebugger>(
-            exec_args.cpu_options.instruction_set, memory.get(), clock.get(),
-            debug_stream);
+    const auto &r = *result;
+    if (result_verbose != nullptr) {
+        std::string halt_code = "-";
+        if (r.halt_code.has_value()) {
+            halt_code = std::to_string(r.halt_code.value_or(0));
+        }
+        (*result_verbose) << fmt::format("Halt code {}\n", halt_code);
+        (*result_verbose) << fmt::format("Took {:.6f} seconds\n", r.duration);
+        (*result_verbose) << fmt::format("Cpu cycles: {} ({:.3f} Hz)\n", r.cpu_cycles,
+                                         static_cast<double>(r.cpu_cycles) / r.duration);
     }
 
-    cpu = std::make_unique<emu6502::cpu::Cpu>(clock.get(), memory.get(), debug_stream,
-                                              exec_args.cpu_options.instruction_set,
-                                              debugger.get());
-}
-
-Runner::MappedDevice
-Runner::CreateMemoryDevice(const ExecArguments &opts, std::string name,
-                           const MemoryConfigEntry::MappedDevice &md) {
-    auto device = device_factory->CreateDevice(name, md, clock.get(),
-                                               opts.GetVerboseStream(Verbose::Device));
-    devices.emplace_back(device);
-    return {device->GetMemory(), device->GetMemorySize()};
-}
-
-Runner::MappedDevice Runner::CreateMemoryDevice(const ExecArguments &opts,
-                                                std::string name,
-                                                const MemoryConfigEntry::RamArea &ra) {
-    auto mode = ra.writable ? MemoryMode::kReadWrite : MemoryMode::kReadOnly;
-    std::vector<uint8_t> bytes;
-    if (ra.image.has_value()) {
-        bytes = opts.package->LoadFile(ra.image->file, ra.image->offset, ra.size);
-    }
-    const auto size = bytes.size();
-    return {
-        std::make_shared<memory::MemoryBlock16>(clock.get(), std::move(bytes), mode,
-                                                opts.GetVerboseStream(Verbose::Memory)),
-        size,
-    };
+    return r.halt_code.value_or(0);
 }
 
 } // namespace emu::runner

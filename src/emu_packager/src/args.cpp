@@ -3,6 +3,7 @@
 #include "emu_core/clock.hpp"
 #include "emu_core/file_search.hpp"
 #include "emu_core/package/package_builder.hpp"
+#include "emu_core/package/package_builder_zip.hpp"
 #include "emu_core/string_file.hpp"
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/string_file.hpp>

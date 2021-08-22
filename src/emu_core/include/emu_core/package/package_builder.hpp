@@ -11,8 +11,6 @@
 
 namespace emu::package {
 
-constexpr auto kEmuImageExtension = ".emu_image";
-
 using ByteVector = std::vector<uint8_t>;
 
 class IPackageBuilder {

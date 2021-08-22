@@ -13,6 +13,7 @@
 namespace emu::package {
 
 constexpr auto kMemoryMetafileName = ".memory.yaml";
+constexpr auto kEmuImageExtension = ".emu_image";
 
 class ZipPackage : public IPackage {
 public:

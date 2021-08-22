@@ -1,6 +1,7 @@
 #pragma once
 
 #include "package_builder.hpp"
+#include "package_zip.hpp"
 
 namespace emu::package {
 
