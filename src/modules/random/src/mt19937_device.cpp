@@ -10,6 +10,29 @@ size_t bit_offset(size_t v) {
     return v * 8;
 }
 
+// class ByteDistribution
+// {
+
+//  public:
+//     ByteDistribution()
+//     {}
+
+//     void reset() {}
+
+//     template <class Generator>
+//     uint8_t operator()(Generator &_g)
+//     {
+//         double dScale = (m_b - m_a) / ((T)(_g.max() - _g.min()) + (T)1);
+//         return (_g() - _g.min()) * dScale  + m_a;
+//     }
+
+//     T a() const {return m_a;}
+//     T b() const {return m_b;}
+
+//  protected:
+//     T       m_b;
+// };
+
 } // namespace
 
 Mt19937Device::Mt19937Device(IntType default_seed, std::ostream *verbose_output)
@@ -40,6 +63,7 @@ uint8_t Mt19937Device::Load(Address_t address) const {
     case Register::kSeed3:
         return (current_seed >> bit_offset(address)) & 0xFF;
     case Register::kEntropy:
+        // mt.operator();
         return static_cast<uint8_t>(byte_distribution(mt));
     case Register::kCR0:
         return control_reg;

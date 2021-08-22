@@ -1,6 +1,7 @@
 #pragma once
 
 #include "emu_core/memory.hpp"
+#include <boost/random/uniform_int_distribution.hpp>
 #include <cstdint>
 #include <iostream>
 #include <list>
@@ -37,7 +38,7 @@ public:
     [[nodiscard]] std::optional<uint8_t> DebugRead(Address_t address) const override;
 
 private:
-    mutable std::uniform_int_distribution<> byte_distribution{0, 0xff};
+    mutable boost::random::uniform_int_distribution<uint8_t> byte_distribution{0, 0xff};
     mutable std::mt19937 mt;
     IntType current_seed;
     uint8_t control_reg = 0;

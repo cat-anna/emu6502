@@ -58,7 +58,7 @@ FLUSH:
     RTS
 
 EXPECTED_RESULT:
-.byte 0x43
+.byte 0x7c
 
 .align page
 CRC8_TABLE:
