@@ -250,14 +250,11 @@ bool Program::operator==(const Program &other) const {
         }
     }
 
-    if (!std::equal(relocations.begin(), relocations.end(), other.relocations.begin(),
-                    other.relocations.end(),
-                    [](auto &a, auto &b) { return (*a) == (*b); })) {
-        return false;
-    }
-
-    return true;
+    return std::equal(relocations.begin(), relocations.end(), other.relocations.begin(),
+                      other.relocations.end(),
+                      [](auto &a, auto &b) { return (*a) == (*b); });
 }
+
 std::shared_ptr<ValueAlias> Program::FindAlias(const std::string &name) const {
     auto it = aliases.find(name);
     return it == aliases.end() ? nullptr : it->second;

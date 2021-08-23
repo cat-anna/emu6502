@@ -36,7 +36,7 @@ void Runner::HandleEntry(MemoryConfigEntry &entry, MemoryConfigEntry::RamArea &r
     auto file_size = static_cast<uint64_t>(std::filesystem::file_size(image.file));
     if (image.offset.has_value()) {
         auto offset = image.offset.value();
-        input->seekg(offset, std::ios::beg);
+        input->seekg(static_cast<std::streamsize>(offset), std::ios::beg);
         if (offset > file_size) {
             file_size = 0;
         } else {
@@ -58,7 +58,8 @@ void Runner::HandleEntry(MemoryConfigEntry &entry, MemoryConfigEntry::RamArea &r
     file_name += ".bin";
 
     package::ByteVector data(file_size, '\0');
-    input->read(reinterpret_cast<char *>(&data[0]), file_size);
+    input->read(reinterpret_cast<char *>(&data[0]),
+                static_cast<std::streamsize>(file_size));
 
     image = MemoryConfigEntry::RamArea::Image{
         .file = file_name,

@@ -41,7 +41,7 @@ ByteVector ZipPackage::LoadFile(const std::string &file_name,
             fmt::format("Failed to find '{}' in package", file_name));
     }
     auto data = entry.readAsText();
-    auto beg = data.begin() + offset.value_or(0);
+    auto beg = data.begin() + static_cast<std::streamsize>(offset.value_or(0));
     auto to_read = static_cast<std::streamsize>(
         std::min(data.size() - offset.value_or(0), length.value_or(data.size())));
     if (beg + to_read >= data.end()) {

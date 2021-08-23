@@ -42,10 +42,15 @@ else()
   message("* Using clang-tidy ${clang_tidy_executable}")
   set(CLANG_TIDY_COMMAND
       ${clang_tidy_executable} -header-filter=${CMAKE_CURRENT_SOURCE_DIR}/.*
-      -checks=modernize*,diagnostic*,cppcoreguidelines*,readability*,clang-analyzer*,bugprone*,performance*,-diagnostic-missing-field-initializers,-modernize-use-trailing-return-type,-readability-magic-numbers,-cppcoreguidelines-avoid-magic-numbers,-readability-uppercase-literal-suffix,-modernize-use-nodiscard,-modernize-pass-by-value,-readability-convert-member-functions-to-static,-readability-qualified-auto,-performance-unnecessary-value-param,-performance-unnecessary-value-param,-cppcoreguidelines-non-private-member-variables-in-classes,-readability-else-after-return,-cppcoreguidelines-special-member-functions,-cppcoreguidelines-pro-type-member-init,-cppcoreguidelines-pro-type-member-init,-bugprone-reserved-identifier,-modernize-use-equals-default,-readability-named-parameter,-cppcoreguidelines-macro-usage,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-modernize-use-nullptr,-clang-diagnostic-unused-private-field,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-type-const-cast
+      --warnings-as-errors=*
+      -checks=modernize*,diagnostic*,cppcoreguidelines*,readability*,clang-analyzer*,bugprone*,performance*,-diagnostic-missing-field-initializers,-modernize-use-trailing-return-type,-readability-magic-numbers,-cppcoreguidelines-avoid-magic-numbers,-readability-uppercase-literal-suffix,-modernize-use-nodiscard,-modernize-pass-by-value,-readability-convert-member-functions-to-static,-readability-qualified-auto,-performance-unnecessary-value-param,-performance-unnecessary-value-param,-cppcoreguidelines-non-private-member-variables-in-classes,-readability-else-after-return,-cppcoreguidelines-special-member-functions,-cppcoreguidelines-pro-type-member-init,-cppcoreguidelines-pro-type-member-init,-bugprone-reserved-identifier,-modernize-use-equals-default,-readability-named-parameter,-cppcoreguidelines-macro-usage,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-modernize-use-nullptr,-clang-diagnostic-unused-private-field,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-type-const-cast,-readability-use-anyofallof,-cppcoreguidelines-pro-type-vararg
   )
 endif()
 
 function(enable_clang_tidy TARGET_NAME)
   set_target_properties(${TARGET_NAME} PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_COMMAND}")
+endfunction()
+
+function(disable_clang_tidy TARGET_NAME)
+  set_target_properties(${TARGET_NAME} PROPERTIES CXX_CLANG_TIDY "")
 endfunction()

@@ -50,7 +50,7 @@ VerboseDebugger::VerboseDebugger(InstructionSet instruction_set, Memory16 *memor
 
     known_opcodes.fill(nullptr);
     for (auto &[opcode, info] : GetInstructionSet(instruction_set)) {
-        known_opcodes[opcode] = &info;
+        known_opcodes.at(opcode) = &info;
     }
 }
 
@@ -66,7 +66,7 @@ void VerboseDebugger::OnNextInstruction(const Registers &regs) {
     if (!opcode.has_value()) {
         debug_line += "?";
     } else {
-        auto *opcode_info = known_opcodes[opcode.value()];
+        auto *opcode_info = known_opcodes.at(opcode.value());
         std::array<std::string, 4> consumed_bytes;
         consumed_bytes.fill("  ");
         consumed_bytes[0] = fmt::format("{:02x}", opcode.value());

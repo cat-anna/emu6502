@@ -17,12 +17,12 @@ struct TestCase {
     std::string image;
 };
 
-std::filesystem::path executable_path =
+const std::filesystem::path executable_path =
     std::filesystem::absolute(
         std::filesystem::path(boost::dll::program_location().generic_string()))
         .parent_path();
 
-std::filesystem::path images_base_path = executable_path / "functional_test_images";
+const std::filesystem::path images_base_path = executable_path / "functional_test_images";
 
 std::vector<TestCase> FindTestCases() {
     using namespace emu;

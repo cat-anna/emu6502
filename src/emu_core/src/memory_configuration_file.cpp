@@ -205,7 +205,7 @@ MemoryConfigEntry::MappedDevice LoadMappedDeviceEntry(const YAML::Node &node,
     }
 
     auto cl = ReadString("class", node, false, overrides);
-    if (auto pos = cl.find("."); pos == std::string::npos) {
+    if (auto pos = cl.find('.'); pos == std::string::npos) {
         rhs.module_name = cl;
         rhs.class_name = "default";
     } else {
@@ -229,9 +229,9 @@ MemoryConfigEntry::RamArea LoadRamAreaEntry(const YAML::Node &node,
         throw std::runtime_error("Unknown memory config entry RamArea type");
     }
 
-    if (node["ram"]) {
+    if (static_cast<bool>(node["ram"])) {
         rhs.writable = true;
-    } else if (node["rom"]) {
+    } else if (static_cast<bool>(node["rom"])) {
         rhs.writable = false;
     } else {
         throw std::runtime_error("Unknown memory config entry RamArea mode");
@@ -256,9 +256,9 @@ MemoryConfigEntry LoadMemoryConfigEntry(const YAML::Node &node,
     rhs.offset = node["offset"].as<uint64_t>();
     rhs.name = ReadString("name", node, true, overrides);
 
-    if (node["ram"] || node["rom"]) {
+    if (static_cast<bool>(node["ram"]) || static_cast<bool>(node["rom"])) {
         rhs.entry_variant = LoadRamAreaEntry(node, overrides);
-    } else if (node["device"]) {
+    } else if (static_cast<bool>(node["device"])) {
         rhs.entry_variant = LoadMappedDeviceEntry(node, overrides);
     } else {
         throw std::runtime_error("Unknown memory config entry");

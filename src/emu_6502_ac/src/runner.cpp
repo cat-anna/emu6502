@@ -43,8 +43,9 @@ std::unique_ptr<Compiler6502> Runner::InitCompiler(const ExecArguments &exec_arg
 void Runner::StoreOutput(const ExecArguments::Output &output_options, Program &program) {
     if (output_options.binary_output != nullptr) {
         auto bin_data = program.sparse_binary_code.DumpMemory();
-        output_options.binary_output->write(reinterpret_cast<const char *>(&bin_data[0]),
-                                            bin_data.size());
+        output_options.binary_output->write(
+            reinterpret_cast<const char *>(&bin_data[0]),
+            static_cast<std::streamsize>(bin_data.size()));
     }
     if (output_options.hex_dump != nullptr) {
         auto hex = program.sparse_binary_code.HexDump();

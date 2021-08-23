@@ -16,8 +16,7 @@ namespace {
 
 struct PathListSearcher : public FileSearch,
                           public std::enable_shared_from_this<PathListSearcher> {
-    PathListSearcher(std::vector<std::string> list, std::ostream *log)
-        : path_list(), log(log) {
+    PathListSearcher(std::vector<std::string> list, std::ostream *log) : log(log) {
         std::transform(list.begin(), list.end(), std::back_inserter(path_list),
                        [](auto i) {
                            return std::filesystem::absolute(
@@ -85,10 +84,10 @@ private:
 
 std::shared_ptr<FileSearch> FileSearch::CreateFromEnv(const std::string &env_var_name,
                                                       std::ostream *log) {
-    auto v = getenv(env_var_name.c_str());
+    auto env_var = getenv(env_var_name.c_str());
     std::string s;
-    if (v != nullptr) {
-        s = v;
+    if (env_var != nullptr) {
+        s = env_var;
     }
     return Create(s, log);
 }
@@ -96,7 +95,9 @@ std::shared_ptr<FileSearch> FileSearch::CreateFromEnv(const std::string &env_var
 std::shared_ptr<FileSearch> FileSearch::Create(const std::string &colon_separated_list,
                                                std::ostream *log) {
     std::vector<std::string> r;
-    boost::split(r, colon_separated_list, boost::is_any_of(":"));
+    if (!colon_separated_list.empty()) {
+        boost::split(r, colon_separated_list, boost::is_any_of(":"));
+    }
     return Create(r);
 }
 

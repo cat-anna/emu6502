@@ -182,10 +182,6 @@ protected:
         }
     }
 
-    std::unique_ptr<package::IPackage> OpenFsPackage(const std::string &config,
-                                                     ExecArguments &args,
-                                                     const po::variables_map &vm) {}
-
     [[noreturn]] void PrintHelp(int exit_code) const {
         std::cout << "Emu 6502 runner";
         std::cout << "\n";

@@ -44,14 +44,14 @@ std::tuple<char, size_t> ParseEscapeSequence(std::string_view input) {
                 base = 16;
             }
 
-            char *end = nullptr;
-            auto r = std::strtoul(input.data(), &end, base);
-            if (static_cast<size_t>(end - input.data()) > input.size() ||
+            char *parsed_chars = nullptr;
+            auto r = std::strtoul(input.data(), &parsed_chars, base);
+            if (static_cast<size_t>(parsed_chars - input.data()) > input.size() ||
                 r > std::numeric_limits<uint8_t>::max()) {
                 throw CompilationException("Value of escape sequence exceeds uint8",
                                            CompilationError::InvalidEscapeSequence);
             }
-            consumed += end - input.data();
+            consumed += parsed_chars - input.data();
             return {static_cast<char>(r), consumed};
         }
         throw CompilationException("Malformed escape sequence",

@@ -55,7 +55,7 @@ function(define_module target_name)
       PARENT_SCOPE)
 endfunction()
 
-function(define_executable target_name)
+function(define_executable target_name )
   file(GLOB_RECURSE SRC src/*.cpp src/*.hpp include/*.hpp)
 
   message("* Adding executable ${target_name}")

@@ -147,7 +147,7 @@ InstructionArgument ParseInstructionArgument(const Token &token,
 
     for (const auto &[regex, matched_modes] : fmt_regex) {
         std::smatch match;
-        auto str = token.String();
+        const auto &str = token.String();
         if (std::regex_match(str, match, regex)) {
             std::string s_value = match[1];
             auto value = std::string_view(s_value);
